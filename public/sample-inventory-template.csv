@@ -1,0 +1,11 @@
+Item Code,Item Name,Category,Stock Qty,Monthly Usage,Unit Cost,Lead Time
+SKU-001,Widget Type A,Components,500,120,24.50,1.5
+SKU-002,Widget Type B,Components,80,45,38.00,2.0
+SKU-003,Fastener M8x20,Hardware,2000,600,0.45,1.0
+SKU-004,Bearing 6205,Mechanical,15,8,12.75,3.0
+SKU-005,Fuse 16A,Electrical,300,0,1.20,1.0
+SKU-006,Gasket Set A,Seals,40,22,18.90,2.5
+SKU-007,O-Ring 50mm,Seals,850,30,0.85,1.0
+SKU-008,Motor 0.5kW,Motors,3,2,285.00,6.0
+SKU-009,Cable 2.5mm 100m,Electrical,12,5,95.00,2.0
+SKU-010,Sensor Temp NTC,Electronics,25,18,34.50,4.0

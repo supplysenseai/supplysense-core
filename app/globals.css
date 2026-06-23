@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+/* ── Brand + Surface Palette ─────────────────────────────────────────────── */
+@theme inline {
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+
+  --color-surface-950: #020617;
+  --color-surface-900: #0f172a;
+  --color-surface-800: #1e293b;
+  --color-surface-700: #334155;
+
+  --color-status-critical: #ef4444;
+  --color-status-warning:  #f59e0b;
+  --color-status-success:  #10b981;
+  --color-status-info:     #3b82f6;
+  --color-status-dead:     #a78bfa;
+
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-body:    "DM Sans", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+/* ── Theme CSS variables ─────────────────────────────────────────────────── */
+:root {
+  --bg-page:        #020617;
+  --bg-card:        #0f172a;
+  --bg-elevated:    #1e293b;
+  --bg-nav:         rgba(2, 6, 23, 0.88);
+  --bg-glass:       rgba(30, 41, 59, 0.6);
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-card:    rgba(255, 255, 255, 0.08);
+  --text-primary:   #f1f5f9;
+  --text-muted:     #94a3b8;
+  --text-faint:     #64748b;
+  --accent:         #6366f1;
+  --accent-soft:    rgba(99, 102, 241, 0.15);
+  --scrollbar:      rgba(100, 116, 139, 0.4);
+}
+
+/* ── Light theme ─────────────────────────────────────────────────────────── */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg-page:        #f1f5f9;
+  --bg-card:        #ffffff;
+  --bg-elevated:    #f8fafc;
+  --bg-nav:         rgba(248, 250, 252, 0.95);
+  --bg-glass:       rgba(255, 255, 255, 0.8);
+  --border-subtle:  rgba(15, 23, 42, 0.07);
+  --border-card:    rgba(15, 23, 42, 0.10);
+  --text-primary:   #0f172a;
+  --text-muted:     #475569;
+  --text-faint:     #94a3b8;
+  --accent:         #6366f1;
+  --accent-soft:    rgba(99, 102, 241, 0.10);
+  --scrollbar:      rgba(100, 116, 139, 0.3);
+}
+
+/* ── Professional (GitHub-dark charcoal) theme ───────────────────────────── */
+html[data-theme="professional"] {
+  color-scheme: dark;
+  --bg-page:        #0d1117;
+  --bg-card:        #161b22;
+  --bg-elevated:    #21262d;
+  --bg-nav:         rgba(13, 17, 23, 0.94);
+  --bg-glass:       rgba(22, 27, 34, 0.7);
+  --border-subtle:  rgba(255, 255, 255, 0.07);
+  --border-card:    rgba(255, 255, 255, 0.10);
+  --text-primary:   #e6edf3;
+  --text-muted:     #8b949e;
+  --text-faint:     #6e7681;
+  --accent:         #0ea5e9;
+  --accent-soft:    rgba(14, 165, 233, 0.12);
+  --scrollbar:      rgba(139, 148, 158, 0.3);
+}
+
+/* ── Root Reset ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  height: 100%;
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100%;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* ── Typography Helpers ──────────────────────────────────────────────────── */
+.font-display { font-family: "Syne", system-ui, sans-serif; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glass / Card Surfaces ───────────────────────────────────────────────── */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.card-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+/* ── Hardcoded bg overrides for themed pages ─────────────────────────────── */
+/* Applied via .ss-page, .ss-card, .ss-elevated helper classes added to page wrappers */
+.ss-page     { background-color: var(--bg-page)     !important; transition: background-color 0.25s ease; }
+.ss-card     { background-color: var(--bg-card)     !important; transition: background-color 0.25s ease; }
+.ss-elevated { background-color: var(--bg-elevated) !important; transition: background-color 0.25s ease; }
+
+/* ── Light mode: text color remapping ───────────────────────────────────── */
+html[data-theme="light"] .text-white      { color: #0f172a  !important; }
+html[data-theme="light"] .text-slate-100  { color: #1e293b  !important; }
+html[data-theme="light"] .text-slate-200  { color: #334155  !important; }
+html[data-theme="light"] .text-slate-300  { color: #475569  !important; }
+html[data-theme="light"] .text-slate-400  { color: #64748b  !important; }
+html[data-theme="light"] .text-slate-500  { color: #94a3b8  !important; }
+html[data-theme="light"] .text-slate-600  { color: #cbd5e1  !important; }
+html[data-theme="light"] .text-slate-700  { color: #e2e8f0  !important; }
+
+/* ── Light mode: white/opacity surfaces → black/opacity equivalents ──────── */
+html[data-theme="light"] .bg-white\/4,
+html[data-theme="light"] .bg-white\/5,
+html[data-theme="light"] .bg-white\/6,
+html[data-theme="light"] .bg-white\/8  { background-color: rgba(0,0,0,0.04) !important; }
+html[data-theme="light"] .border-white\/4,
+html[data-theme="light"] .border-white\/5,
+html[data-theme="light"] .border-white\/6,
+html[data-theme="light"] .border-white\/8,
+html[data-theme="light"] .border-white\/10 { border-color: rgba(0,0,0,0.08) !important; }
+html[data-theme="light"] .hover\:bg-white\/5:hover  { background-color: rgba(0,0,0,0.05) !important; }
+html[data-theme="light"] .hover\:bg-white\/8:hover  { background-color: rgba(0,0,0,0.07) !important; }
+html[data-theme="light"] .divide-white\/4 > * + *   { border-color: rgba(0,0,0,0.06) !important; }
+
+/* ── Professional mode: accent swap indigo → sky (via CSS var) ───────────── */
+html[data-theme="professional"] .ss-accent-bg  { background-color: #0ea5e9 !important; }
+html[data-theme="professional"] .ss-accent-text { color: #38bdf8 !important; }
+
+/* ── Custom Scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.7); }
+
+/* ── Focus Ring ──────────────────────────────────────────────────────────── */
+.focus-ring {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+*:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Status Badge Base ───────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* ── Risk Score Mini Bar ─────────────────────────────────────────────────── */
+.risk-bar-track {
+  width: 52px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+html[data-theme="light"] .risk-bar-track { background: rgba(0,0,0,0.08) !important; }
+.risk-bar-fill { height: 100%; border-radius: 3px; }
+
+/* ── Animated gradient hero bg ──────────────────────────────────────────── */
+.hero-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* ── Landing nav glass ───────────────────────────────────────────────────── */
+.nav-glass {
+  background: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Page transition ─────────────────────────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeSlideUp 0.4s ease forwards; }
+
+/* ── Upload drop zone pulse ──────────────────────────────────────────────── */
+@keyframes pulseBorder {
+  0%, 100% { border-color: rgba(99, 102, 241, 0.4); }
+  50%       { border-color: rgba(99, 102, 241, 0.9); }
+}
+.drop-active { animation: pulseBorder 1s ease-in-out infinite; }
+
+/* ── Progress bar animation ──────────────────────────────────────────────── */
+@keyframes progressFill {
+  from { width: 0%; }
+  to   { width: var(--progress-width, 0%); }
+}
+.progress-bar { animation: progressFill 0.6s ease forwards; }
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* ── Stagger delay helpers ───────────────────────────────────────────────── */
+.delay-0   { animation-delay: 0ms; }
+.delay-1   { animation-delay: 70ms; }
+.delay-2   { animation-delay: 140ms; }
+.delay-3   { animation-delay: 210ms; }
+.delay-4   { animation-delay: 280ms; }
+.delay-5   { animation-delay: 350ms; }
+.delay-6   { animation-delay: 420ms; }
+.delay-7   { animation-delay: 490ms; }
