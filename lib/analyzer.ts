@@ -294,7 +294,7 @@ export function analyzeInventory(rows: InventoryRow[]): {
   const cogs = analyzedSkus.reduce((s, r) => s + r.units_sold_90d * r.unit_cost, 0) * (365 / 90);
   const turnoverRatio = totalInvValue > 0 ? parseFloat((cogs / totalInvValue).toFixed(2)) : 0;
 
-  // Placeholder health trend (competition demo — use realistic spread)
+  // Placeholder health trend for demo data - use realistic spread
   const healthTrend = [
     { m: "Jan", v: Math.max(30, healthScore - 18) },
     { m: "Feb", v: Math.max(30, healthScore - 14) },

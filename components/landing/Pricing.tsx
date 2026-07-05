@@ -6,7 +6,7 @@ const PLANS = [
     name: "Starter",
     price: "$10",
     period: "/month",
-    description: "For operations teams getting started with AI analytics.",
+    description: "For operations teams getting started with inventory intelligence.",
     badge: null,
     cta: "Start free trial",
     ctaHref: "/login",
@@ -17,7 +17,7 @@ const PLANS = [
       { text: "5 uploads / month",          live: true  },
       { text: "Up to 5,000 SKUs",           live: true  },
       { text: "All 8 analytics modules",    live: true  },
-      { text: "AI Insights (GPT-4o)",       live: true  },
+      { text: "Executive insights",         live: true  },
       { text: "Reorder recommendations",    live: true  },
       { text: "Email support",              live: true  },
     ],
@@ -55,7 +55,7 @@ const PLANS = [
       { text: "Unlimited warehouses",         live: true  },
       { text: "Unlimited users",              live: true  },
       { text: "Unlimited uploads & SKUs",     live: true  },
-      { text: "Custom AI models",             live: false },
+      { text: "Custom analytics models",      live: false },
       { text: "SSO + audit logs",             live: false },
       { text: "Dedicated CSM",                live: true  },
       { text: "99.9% SLA",                    live: true  },
@@ -73,9 +73,9 @@ export function Pricing() {
             Simple pricing
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-4">
-            10× cheaper than SAP.
+            10x cheaper than SAP.
             <br />
-            <span className="gradient-text">100× faster to value.</span>
+            <span className="gradient-text">100x faster to value.</span>
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto">
             Start with a free trial. No credit card required. Cancel any time.
@@ -146,12 +146,12 @@ export function Pricing() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
             {[
               { text: "CSV upload & inventory parsing",        live: true  },
-              { text: "Inventory Health Score (0–100)",       live: true  },
+              { text: "Inventory Health Score (0-100)",       live: true  },
               { text: "Risk Heatmap (6 scenarios per SKU)",   live: true  },
               { text: "ABC Analysis + Pareto chart",          live: true  },
               { text: "Inventory Turnover benchmarks",        live: true  },
               { text: "Reorder recommendations (EOQ/ROP)",    live: true  },
-              { text: "AI Insights (GPT-4o narrative)",       live: true  },
+              { text: "Executive insights narrative",         live: true  },
               { text: "Dead stock & slow mover detection",    live: true  },
               { text: "Ageing analysis (age-bucket reports)", live: true  },
               { text: "CSV report exports",                   live: true  },
@@ -160,7 +160,7 @@ export function Pricing() {
               { text: "ERP integrations (SAP / NetSuite)",    live: false },
               { text: "Supply Chain Copilot (chat)",          live: false },
               { text: "SSO / SAML authentication",            live: false },
-              { text: "Custom AI models",                     live: false },
+              { text: "Custom analytics models",              live: false },
             ].map((f) => (
               <div key={f.text} className="flex items-center gap-2">
                 {f.live

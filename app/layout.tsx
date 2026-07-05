@@ -3,11 +3,11 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-context";
 
 export const metadata: Metadata = {
-  title: "SupplySense AI — Supply Chain Intelligence for US Manufacturers",
+  title: "SupplySense — Inventory Intelligence Suite",
   description:
-    "Upload your inventory spreadsheet. Get AI-powered risk scores, dead stock analysis, ABC classification, and an executive brief in under 60 seconds.",
+    "Upload your inventory spreadsheet and get inventory health, stockout risk, dead stock, ABC classification, and executive reporting in minutes.",
   keywords: "supply chain analytics, inventory management, dead stock, stockout risk, ABC analysis, SME manufacturing",
-  authors: [{ name: "SupplySense AI" }],
+  authors: [{ name: "SupplySense" }],
   robots: "index, follow",
 };
 

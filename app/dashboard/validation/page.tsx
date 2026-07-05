@@ -332,7 +332,7 @@ export default function ValidationPage() {
               <p className="text-xs text-slate-400 leading-relaxed">
                 <span className="text-white font-semibold">All analytics are generated directly from your uploaded data</span> and can be independently verified through this Validation Mode.
                 Select any KPI below to see its live calculation, exact formula, source columns, and the specific records that contribute to each figure.
-                No estimates, benchmarks, or AI-generated assumptions are used unless explicitly stated.
+                No estimates, benchmarks, or generated assumptions are used unless explicitly stated.
               </p>
             </div>
 

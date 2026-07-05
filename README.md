@@ -1,14 +1,14 @@
-# SupplySense AI
+# SupplySense
 
-> AI-powered inventory analytics for SME manufacturers. Upload your spreadsheet. Get board-ready insights in under 60 seconds.
+> SupplySense Inventory Intelligence Suite helps manufacturers turn inventory spreadsheets into operational dashboards, executive reports, and replenishment actions.
 
 ---
 
 ## Overview
 
-SupplySense AI transforms raw inventory spreadsheets into actionable intelligence. It auto-maps 50+ column naming variations, runs eight analytics modules, and delivers a printable executive brief — all client-side, with no data ever leaving the browser.
+SupplySense Inventory Intelligence Suite transforms raw inventory spreadsheets into actionable intelligence. It auto-maps 50+ column naming variations, runs inventory analytics modules, and delivers a printable executive brief - all client-side, with no data ever leaving the browser.
 
-Built for operations managers, supply chain leads, and CFOs who need answers without a $50,000 ERP implementation.
+Built for operations managers, supply chain leads, and CFOs who need inventory visibility without a long ERP implementation.
 
 ---
 
@@ -16,12 +16,12 @@ Built for operations managers, supply chain leads, and CFOs who need answers wit
 
 | Module | Description |
 |--------|-------------|
-| **Inventory Health Score** | 0–100 composite score across dead stock %, slow mover %, stockout risk %, and A-item revenue concentration |
-| **Dead Stock Detection** | Auto-flags SKUs with zero movement ≥365 days; shows capital locked, carry cost, and liquidation action per SKU |
+| **Inventory Health Score** | 0-100 composite score across dead stock %, slow mover %, stockout risk %, and A-item revenue concentration |
+| **Dead Stock Detection** | Auto-flags SKUs with zero movement >=365 days; shows capital locked, carry cost, and liquidation action per SKU |
 | **Stockout Risk Scores** | Per-SKU risk score using days-of-stock vs lead time and demand variance |
-| **ABC Analysis** | Full Pareto classification — A-items drive 70% of revenue |
+| **ABC Analysis** | Full Pareto classification - A-items drive 70% of revenue |
 | **EOQ Reorder Engine** | Economic Order Quantity + 95% service-level safety stock per SKU with urgency tiers |
-| **AI Executive Brief** | Boardroom-ready narrative for CEO, Supply Chain, and Procurement audiences |
+| **Executive Brief** | Boardroom-ready narrative for CEO, Supply Chain, and Procurement audiences |
 | **Inventory Turnover** | Turnover ratio vs industry benchmarks (Manufacturing, Wholesale, Retail, FMCG) |
 | **Working Capital Report** | Capital locked in dead stock and slow movers with estimated cash recovery |
 
@@ -79,7 +79,7 @@ supplysense-app/
 │   ├── auth.ts                 # Authentication helpers
 │   ├── inventory-analyzer.ts   # Core analysis engine
 │   ├── inventory-parser.ts     # XLSX/CSV parsing + multi-sheet merge
-│   ├── insights-generator.ts   # AI executive brief generator
+│   ├── insights-generator.ts   # Executive brief generator
 │   ├── html-report-generator.ts# Exportable HTML report
 │   ├── demo-data.ts            # Built-in demo dataset
 │   ├── types.ts                # TypeScript interfaces
@@ -124,7 +124,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Demo Mode
 
-Click **"Try Demo"** on the landing page — no login required. A pre-built dataset of 100 SKUs loads automatically and showcases all eight modules.
+Click **"Try Demo"** on the landing page - no login required. A pre-built dataset loads automatically and showcases the core modules.
 
 ### Login (for file uploads)
 
@@ -133,7 +133,7 @@ Click **"Try Demo"** on the landing page — no login required. A pre-built data
 | `tamkeen` | `matco123` | Growth |
 | `abc` | `abc` | Starter |
 
-> **Note:** Authentication is localStorage-based for this MVP. No backend or database is required.
+> **Note:** Authentication is localStorage-based for this early product foundation. No backend or database is required.
 
 ---
 
@@ -169,12 +169,12 @@ None required. The application is fully client-side with no external API depende
 
 ## Deployment on Vercel
 
-### Option 1 — Vercel Dashboard (Recommended)
+### Option 1 - Vercel Dashboard (Recommended)
 
 1. Push this repository to GitHub
 2. Go to [vercel.com](https://vercel.com) → **Add New Project**
 3. Import your GitHub repository
-4. Leave all settings at defaults — Vercel auto-detects Next.js
+4. Leave all settings at defaults - Vercel auto-detects Next.js
 5. Click **Deploy**
 
 No environment variables need to be configured.
@@ -204,7 +204,7 @@ vercel deploy --prod
 | Health Score | ✅ | ✅ | ✅ |
 | ABC Analysis | ✅ | ✅ | ✅ |
 | Risk Heatmap | ✅ | ✅ | ✅ |
-| AI Insights | ❌ | ✅ | ✅ |
+| Insights | ❌ | ✅ | ✅ |
 | Turnover Analysis | ❌ | ✅ | ✅ |
 | Financial Impact | ❌ | ✅ | ✅ |
 
@@ -212,10 +212,10 @@ vercel deploy --prod
 
 ## Supported File Formats
 
-- `.xlsx` — Excel workbook (single or multi-sheet — sheets with identical structure are merged automatically)
-- `.xls` — Legacy Excel
-- `.csv` — Comma-separated values
-- `.tsv` — Tab-separated values
+- `.xlsx` - Excel workbook (single or multi-sheet; sheets with identical structure are merged automatically)
+- `.xls` - Legacy Excel
+- `.csv` - Comma-separated values
+- `.tsv` - Tab-separated values
 
 Maximum file size: **10 MB**
 
@@ -223,10 +223,10 @@ Maximum file size: **10 MB**
 
 ## Browser Compatibility
 
-All modern browsers — Chrome, Edge, Firefox, Safari. File parsing runs entirely in the browser via WebAssembly (SheetJS).
+All modern browsers - Chrome, Edge, Firefox, Safari. File parsing runs entirely in the browser via SheetJS.
 
 ---
 
 ## License
 
-Private — All rights reserved © 2025 SupplySense AI
+Private - All rights reserved (c) 2025 SupplySense

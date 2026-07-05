@@ -1,6 +1,6 @@
 const STATS = [
   { value: "$1.1T",  label: "Annual US SME inventory losses", sub: "McKinsey, 2023" },
-  { value: "82%",    label: "SMEs still use Excel for inventory", sub: "No AI analytics layer" },
+  { value: "82%",    label: "SMEs still use Excel for inventory", sub: "No intelligence layer" },
   { value: "60 sec", label: "Time to first insight", sub: "From upload to dashboard" },
   { value: "10×",    label: "Cheaper than SAP/Oracle", sub: "Starting at $299/month" },
 ];

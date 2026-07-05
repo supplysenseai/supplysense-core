@@ -34,8 +34,7 @@ export function Hero() {
         </h1>
 
         <p className="text-center text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-          Upload your existing inventory spreadsheet. Get AI-powered risk scores, dead stock analysis,
-          ABC classification, and a boardroom-ready brief — no ERP required.
+          Upload your existing inventory spreadsheet. Get risk scores, dead stock analysis, ABC classification, reorder guidance, and an executive-ready brief — no ERP required.
         </p>
 
         {/* CTAs */}

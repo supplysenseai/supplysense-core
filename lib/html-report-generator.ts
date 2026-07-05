@@ -442,7 +442,7 @@ export function generateHtmlReport(
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>${companyName ? esc(companyName) + " — " : ""}SupplySense AI — Inventory Report — ${esc(generatedAt)}</title>
+  <title>${companyName ? esc(companyName) + " — " : ""}SupplySense Inventory Report — ${esc(generatedAt)}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;background:#fff;color:#111827;font-size:13px;}
@@ -480,7 +480,7 @@ export function generateHtmlReport(
 
 <!-- Print bar -->
 <div id="print-bar">
-  <span>${companyName ? esc(companyName) + " &mdash; " : ""}SupplySense AI &mdash; Inventory Report &mdash; ${esc(generatedAt)}</span>
+  <span>${companyName ? esc(companyName) + " &mdash; " : ""}SupplySense &mdash; Inventory Report &mdash; ${esc(generatedAt)}</span>
   <div style="display:flex;gap:8px;">
     <button id="btn-print" onclick="window.print()">&#128438; Save as PDF / Print</button>
     <button id="btn-close" onclick="window.close()">&#10005; Close</button>
@@ -496,7 +496,7 @@ export function generateHtmlReport(
   <div style="display:flex;align-items:center;gap:12px;">
     <div class="brand-icon">S</div>
     <div>
-      <div style="font-size:20px;font-weight:800;color:#111827;letter-spacing:-0.02em;">SupplySense AI</div>
+      <div style="font-size:20px;font-weight:800;color:#111827;letter-spacing:-0.02em;">SupplySense</div>
       ${companyName ? `<div style="font-size:14px;font-weight:700;color:#374151;margin-top:1px;">${esc(companyName)}</div>` : ""}
       <div style="font-size:11px;color:#6b7280;margin-top:2px;">Inventory Intelligence Report</div>
     </div>
@@ -844,7 +844,7 @@ export function generateHtmlReport(
 
 <!-- Footer -->
 <div class="report-footer">
-  <span>SupplySense AI &mdash; Inventory Intelligence Platform</span>
+  <span>SupplySense Inventory Intelligence Suite</span>
   <span>Generated ${esc(generatedAt)} &bull; ${esc(sourceFile)}</span>
   <span>CONFIDENTIAL &mdash; ${metrics.total_skus} SKUs analyzed</span>
 </div>

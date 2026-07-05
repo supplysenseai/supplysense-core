@@ -10,7 +10,7 @@ import { clearAuth } from "@/lib/auth";
 
 const NAV_MAIN = [
   { label: "Dashboard",  href: "/dashboard",            icon: LayoutDashboard },
-  { label: "AI Insights",href: "/dashboard/insights",   icon: Brain,        badge: "New" },
+  { label: "Insights",   href: "/dashboard/insights",   icon: Brain,        badge: "New" },
   { label: "Validation", href: "/dashboard/validation", icon: ShieldCheck },
   { label: "Reports",    href: "/dashboard/reports",    icon: FileText },
 ];
@@ -61,7 +61,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <span className="text-white text-[10px] font-bold" style={{ fontFamily: "Syne, sans-serif" }}>S</span>
             </div>
             <span className="text-xs font-semibold text-white leading-tight" style={{ fontFamily: "Syne, sans-serif" }}>
-              SupplySense AI
+              SupplySense
             </span>
           </Link>
           <button

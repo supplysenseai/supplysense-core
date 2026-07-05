@@ -1,8 +1,8 @@
 "use client";
 /**
- * DemoBanner — Competition presentation guide
+ * DemoBanner - product walkthrough guide
  * Fixed bottom bar visible only in demo mode.
- * Narrates the story across 3 steps; guides presenter & judges.
+ * Narrates the product workflow across 3 steps.
  */
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -18,8 +18,8 @@ const STEPS = [
     route:     "/dashboard",
     label:     "Dashboard Overview",
     headline:  "200 SKUs analyzed in under 5 seconds.",
-    body:      "10 critical stockout risks · $469K dead stock · $1.02M recoverable capital — visible the moment data loads.",
-    cta:       "View AI Insights",
+    body:      "10 critical stockout risks · $469K dead stock · $1.02M recoverable capital - visible the moment data loads.",
+    cta:       "View Insights",
     nextRoute: "/dashboard/insights",
     color:     "#ef4444",
     dotColor:  "bg-red-400",
@@ -27,9 +27,9 @@ const STEPS = [
   {
     step: 2,
     route:     "/dashboard/insights",
-    label:     "AI Executive Brief",
-    headline:  "Boardroom-ready report — generated automatically.",
-    body:      "Risk analysis, recommended actions, and financial exposure — presented for CEO, Supply Chain, and Procurement audiences.",
+    label:     "Executive Brief",
+    headline:  "Boardroom-ready report generated automatically.",
+    body:      "Risk analysis, recommended actions, and financial exposure - presented for CEO, Supply Chain, and Procurement audiences.",
     cta:       "See Financial Impact",
     nextRoute: "/dashboard/financial-impact",
     color:     "#818cf8",
@@ -39,8 +39,8 @@ const STEPS = [
     step: 3,
     route:     "/dashboard/financial-impact",
     label:     "Financial Impact",
-    headline:  "$1.02M total financial opportunity — 3-year horizon.",
-    body:      "CFO-ready scenario analysis: recoverable capital, carrying cost savings, and working capital improvement — no ERP required.",
+    headline:  "$1.02M total financial opportunity - 3-year horizon.",
+    body:      "CFO-ready scenario analysis: recoverable capital, carrying cost savings, and working capital improvement - no ERP required.",
     cta:       "Back to Dashboard",
     nextRoute: "/dashboard",
     color:     "#10b981",

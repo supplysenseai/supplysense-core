@@ -505,7 +505,7 @@ export default function DashboardPage() {
                     <div className="px-4 py-2.5 border-t border-white/5">
                       <Link href="/dashboard/insights" onClick={() => setBellOpen(false)}
                         className="text-[11px] text-[#818cf8] hover:text-white transition-colors">
-                        View full AI analysis →
+                        View full analysis →
                       </Link>
                     </div>
                   </div>
@@ -646,7 +646,7 @@ export default function DashboardPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-[#818cf8] border border-[#6366f1]/25 bg-[#6366f1]/8 hover:bg-[#6366f1]/15 hover:text-white transition-colors"
                 >
                   <Zap className="w-3.5 h-3.5" />
-                  AI Insights
+                  Insights
                 </Link>
                 <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 border border-white/8 hover:border-white/16 hover:text-white transition-colors">
                   <FileDown className="w-3.5 h-3.5" />

@@ -12,7 +12,7 @@ const PLANS: { key: Plan; name: string; price: string; desc: string; features: s
     key: "free",
     name: "Free",
     price: "$0",
-    desc: "Try SupplySense AI with your first upload.",
+    desc: "Try SupplySense with your first upload.",
     features: ["1 upload / month", "Up to 500 SKUs", "Health Score, ABC & Risk modules"],
   },
   {
@@ -106,7 +106,7 @@ export default function LoginPage() {
         <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
           <Zap className="w-4 h-4 text-white" />
         </div>
-        <span className="font-display font-bold text-white text-lg">SupplySense AI</span>
+        <span className="font-display font-bold text-white text-lg">SupplySense</span>
       </Link>
 
       <div className="w-full max-w-md">

@@ -695,7 +695,7 @@ export default function InsightsPage() {
             </button>
             <div className="flex items-center gap-2">
               <Brain className="w-3.5 h-3.5 text-[#818cf8]" />
-              <span className="text-xs font-semibold text-white">AI Insights</span>
+              <span className="text-xs font-semibold text-white">Insights</span>
               {isDemo && <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20">Demo</span>}
             </div>
             <div className="flex-1" />
@@ -759,7 +759,7 @@ export default function InsightsPage() {
             )}
             {/* Footer */}
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-              <p className="text-[10px] text-slate-600">AI-generated analysis · Powered by SupplySense</p>
+              <p className="text-[10px] text-slate-600">Generated analysis · Powered by SupplySense</p>
               <Link href="/dashboard" className="inline-flex items-center gap-1 text-[10px] text-[#818cf8] hover:text-white transition-colors">
                 Full dashboard <ChevronRight className="w-3 h-3" />
               </Link>

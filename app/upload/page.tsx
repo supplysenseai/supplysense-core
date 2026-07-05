@@ -82,7 +82,7 @@ export default function UploadPage() {
       return;
     }
 
-    // Step 3: Running AI analysis
+    // Step 3: Running inventory analysis
     setStep(3); setProgress(72);
     await delay(600);
 
@@ -162,7 +162,7 @@ export default function UploadPage() {
             <div className="w-6 h-6 rounded-md bg-[#6366f1] flex items-center justify-center">
               <span className="text-white text-[10px] font-bold" style={{ fontFamily: "Syne, sans-serif" }}>S</span>
             </div>
-            <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>SupplySense AI</span>
+            <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>SupplySense</span>
           </div>
           <Link
             href="/dashboard"
@@ -186,7 +186,7 @@ export default function UploadPage() {
               Upload your inventory file
             </h1>
             <p className="text-sm text-slate-500 max-w-xs mx-auto">
-              Any Excel or CSV format. AI auto-maps your columns.
+              Any Excel or CSV format. SupplySense auto-maps your columns.
               No reformatting required.
             </p>
           </div>

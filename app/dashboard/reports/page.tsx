@@ -98,7 +98,7 @@ function exportDeadStockReport(metrics: DashboardMetrics) {
 function exportInventorySummary(metrics: DashboardMetrics) {
   const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const lines = [
-    "SupplySense AI — Inventory Summary Report",
+    "SupplySense Inventory Summary Report",
     `Generated: ${date}`,
     "",
     "KPI,Value",
@@ -357,13 +357,13 @@ export default function ReportsPage() {
               />
             </div>
 
-            {/* AI Brief link */}
+            {/* Executive brief link */}
             <div className="card p-5 flex items-center gap-4">
               <div className="w-9 h-9 rounded-xl bg-[#6366f1]/15 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-4 h-4 text-[#818cf8]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-white">AI Executive Brief</h3>
+                <h3 className="text-sm font-semibold text-white">Executive Brief</h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Full narrative analysis with critical risks, recommendations, and strategic actions.
                   Use your browser&apos;s print function (Ctrl+P) to save as PDF.

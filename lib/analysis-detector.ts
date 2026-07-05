@@ -27,5 +27,5 @@ export const MODE_LABELS: Record<AnalysisMode, string> = {
 export const MODE_DESCRIPTIONS: Record<AnalysisMode, string> = {
   health:   "Health score, ABC classification, stockout risk, reorder recommendations",
   aging:    "Ageing buckets, dead stock, blocked capital, liquidation opportunities",
-  complete: "Full health analysis + ageing analysis + combined AI recommendations",
+  complete: "Full health analysis + ageing analysis + combined recommendations",
 };

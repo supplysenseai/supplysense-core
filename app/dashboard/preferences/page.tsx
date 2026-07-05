@@ -168,7 +168,7 @@ export default function PreferencesPage() {
               />
               <FieldRow
                 label="Company / Organisation name"
-                hint="Appears on exported reports and the AI executive brief."
+                hint="Appears on exported reports and the executive brief."
               >
                 <input
                   type="text"

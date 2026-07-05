@@ -14,7 +14,7 @@ const STEPS = [
   "Uploading file",
   "Parsing columns",
   "Validating data",
-  "Running AI analysis",
+  "Running inventory analysis",
   "Generating insights",
 ];
 
@@ -259,7 +259,7 @@ export function ValidationProgress({
             <Link href="/dashboard/insights"
               className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white/4 hover:bg-white/8 text-[#818cf8] hover:text-white text-xs font-medium border border-[#6366f1]/20 transition-colors">
               <Brain className="w-3.5 h-3.5" />
-              Skip to AI Insights →
+              Skip to Insights →
             </Link>
           </div>
 

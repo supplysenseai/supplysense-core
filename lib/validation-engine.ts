@@ -748,7 +748,7 @@ export function buildValidationExport(
   detectedFields: string[]
 ): string {
   const lines: string[] = [
-    "SupplySense AI — Validation Report",
+    "SupplySense Validation Report",
     `Generated: ${new Date().toISOString()}`,
     `Source file: ${filename}`,
     `Total SKUs analysed: ${metrics.total_skus}`,
