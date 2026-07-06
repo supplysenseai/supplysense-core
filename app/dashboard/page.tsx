@@ -648,10 +648,13 @@ export default function DashboardPage() {
                   <Zap className="w-3.5 h-3.5" />
                   Insights
                 </Link>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 border border-white/8 hover:border-white/16 hover:text-white transition-colors">
+                <Link
+                  href="/dashboard/reports"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 border border-white/8 hover:border-white/16 hover:text-white transition-colors"
+                >
                   <FileDown className="w-3.5 h-3.5" />
                   Export
-                </button>
+                </Link>
               </div>
             </div>
 
