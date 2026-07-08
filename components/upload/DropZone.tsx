@@ -44,15 +44,16 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
       <div
         {...getRootProps()}
         className={cn(
-          "relative rounded-2xl border-2 border-dashed transition-all duration-200 cursor-pointer",
-          "bg-[#0f172a] px-8 py-12 text-center",
+          "relative min-h-[320px] rounded-2xl border-2 border-dashed transition-all duration-200 cursor-pointer",
+          "bg-[#0f172a] px-6 py-10 text-center sm:px-8 sm:py-12 flex flex-col items-center justify-center",
           isDragActive
-            ? "border-[#6366f1] bg-[#6366f1]/5 drop-active"
+            ? "border-[#6366f1] bg-[#6366f1]/8 drop-active"
             : isDragReject
-            ? "border-red-500/60 bg-red-500/5"
+            ? "border-red-500/70 bg-red-500/8"
             : "border-white/12 hover:border-white/20 hover:bg-white/2",
           disabled && "opacity-50 cursor-not-allowed"
         )}
+        aria-busy={disabled || demoLoading}
       >
         <input {...getInputProps()} />
 
@@ -78,7 +79,7 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
         )}
 
         <p className="text-xs text-slate-500 mb-6">
-          Or click to browse your files
+          {isDragReject ? "Use an Excel, CSV, or TSV file." : "Or click to browse your files"}
         </p>
 
         {/* Format tags */}
@@ -104,7 +105,7 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
       </div>
 
       {/* Helper links */}
-      <div className="flex items-center justify-center gap-6 text-xs text-slate-500">
+      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
         <a
           href="/sample-inventory-template.csv"
           download
@@ -119,11 +120,10 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
           disabled={demoLoading}
           onClick={async () => {
             setDemoLoading(true);
-            await new Promise(r => setTimeout(r, 300));
             loadDemoIntoSession();
             router.push("/dashboard");
           }}
-          className="inline-flex items-center gap-1.5 hover:text-slate-300 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 hover:text-slate-300 transition-colors disabled:opacity-50 disabled:cursor-wait"
         >
           <Play className="w-3 h-3 fill-current" />
           {demoLoading ? "Loading…" : "Try demo dataset"}

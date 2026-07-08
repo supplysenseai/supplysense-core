@@ -10,6 +10,7 @@ import { detectAnalysisMode } from "@/lib/analysis-detector";
 import { getAuth } from "@/lib/auth";
 
 type UploadState = "idle" | "processing" | "done" | "error";
+const STEP_TRANSITION_MS = 120;
 
 export default function UploadPage() {
   const router = useRouter();
@@ -32,11 +33,11 @@ export default function UploadPage() {
 
     // Step 0: Uploading
     setStep(0); setProgress(10);
-    await delay(400);
+    await delay(STEP_TRANSITION_MS);
 
     // Step 1: Parsing columns
     setStep(1); setProgress(28);
-    await delay(300);
+    await delay(STEP_TRANSITION_MS);
 
     // Dynamically import parser + analyzer (client-side)
     const { parseInventoryFile } = await import("@/lib/inventory-parser");
@@ -64,7 +65,7 @@ export default function UploadPage() {
 
     // Step 2: Validating data
     setStep(2); setProgress(50);
-    await delay(400);
+    await delay(STEP_TRANSITION_MS);
 
     if (parseResult.errors.length > 0) {
       const errResult: UploadResult = {
@@ -84,7 +85,7 @@ export default function UploadPage() {
 
     // Step 3: Running inventory analysis
     setStep(3); setProgress(72);
-    await delay(600);
+    await delay(STEP_TRANSITION_MS);
 
     const mode = detectAnalysisMode(parseResult.detected_fields);
     setAnalysisMode(mode);
@@ -95,10 +96,10 @@ export default function UploadPage() {
 
     // Step 4: Generating insights
     setStep(4); setProgress(90);
-    await delay(500);
+    await delay(STEP_TRANSITION_MS);
 
     setProgress(100);
-    await delay(300);
+    await delay(STEP_TRANSITION_MS);
 
     const finalResult: UploadResult = {
       success: true,
@@ -174,10 +175,10 @@ export default function UploadPage() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-16">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-16">
         <div className="w-full max-w-[520px]">
           {/* Page header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-7 sm:mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20 mb-4">
               <Zap className="w-3 h-3" />
               60-second analysis

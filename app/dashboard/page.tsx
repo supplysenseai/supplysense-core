@@ -85,7 +85,7 @@ function ReorderList({ metrics }: { metrics: DashboardMetrics }) {
         <button
           onClick={() => exportPOCsv(metrics.reorder_recommendations)}
           disabled={metrics.reorder_recommendations.length === 0}
-          className="inline-flex items-center gap-1.5 text-xs text-[#818cf8] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#818cf8] hover:text-white hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
           Export PO draft
@@ -112,9 +112,12 @@ function ReorderList({ metrics }: { metrics: DashboardMetrics }) {
           );
         })}
         {recs.length === 0 && (
-          <div className="px-5 py-6 text-center">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
-            <p className="text-xs text-slate-500">No critical reorders needed right now</p>
+          <div className="px-5 py-8 text-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            </div>
+            <p className="text-xs font-medium text-slate-300">No critical reorders needed</p>
+            <p className="text-[11px] text-slate-600 mt-1">Current stock coverage is within policy.</p>
           </div>
         )}
       </div>
@@ -201,7 +204,7 @@ export default function DashboardPage() {
   if (noData) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#020617] px-4">
-        <div className="card p-8 max-w-sm w-full text-center space-y-5">
+        <div className="card p-8 max-w-md w-full text-center space-y-5">
           <div className="w-12 h-12 rounded-2xl bg-[#6366f1]/15 border border-[#6366f1]/25 flex items-center justify-center mx-auto">
             <Upload className="w-5 h-5 text-[#818cf8]" />
           </div>
@@ -225,9 +228,10 @@ export default function DashboardPage() {
   if (!metrics) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#020617]">
-        <div className="flex flex-col items-center gap-3">
+        <div className="card px-6 py-5 flex flex-col items-center gap-3 min-w-64">
           <RefreshCw className="w-6 h-6 text-[#818cf8] animate-spin" />
-          <span className="text-sm text-slate-500">Loading analysis…</span>
+          <span className="text-sm text-slate-400">Loading analysis…</span>
+          <span className="text-[11px] text-slate-600">Preparing your dashboard</span>
         </div>
       </div>
     );
@@ -551,7 +555,7 @@ export default function DashboardPage() {
 
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1280px] mx-auto px-4 py-5 space-y-5">
+          <div className="max-w-[1280px] mx-auto px-4 py-5 sm:py-6 space-y-5 sm:space-y-6">
 
             {/* Analysis mode banner */}
             {mode !== "health" && (
@@ -580,7 +584,7 @@ export default function DashboardPage() {
                 .filter(([k, v]) => pRec[k] !== v)
                 .map(([k, v]) => `${k.replace(/_days$|_/g, " ").replace(/^\w/, (c) => c.toUpperCase())}: ${pRec[k]}d (default ${v}d)`);
               return (
-                <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-[11px] flex-wrap ${
+                <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-[11px] flex-wrap sm:flex-nowrap ${
                   isUser ? "bg-amber-500/10 border-amber-500/25 text-amber-300" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
                 }`}>
                   <div className="flex items-center gap-2 font-semibold">
@@ -599,7 +603,7 @@ export default function DashboardPage() {
                   )}
                   {/* suppress unused-var for cPct */}
                   <span className="hidden">{cPct}</span>
-                  <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+                  <div className="sm:ml-auto flex items-center gap-3 flex-shrink-0">
                     {isUser && (
                       <Link href="/settings" className="text-amber-400 hover:text-white transition-colors underline underline-offset-2">
                         Reset to defaults →
@@ -616,22 +620,22 @@ export default function DashboardPage() {
 
             {/* Critical alert banner */}
             {metrics.critical_stockout_count > 0 && mode !== "aging" && (
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 animate-in">
+              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 animate-in">
                 <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
                 <span className="text-xs text-red-300">
                   <strong className="font-medium">{metrics.critical_stockout_count} critical alert{metrics.critical_stockout_count > 1 ? "s" : ""}:</strong>
                   {" "}
                   {metrics.top_risk_items[0]?.product_name} stockout in {Math.floor(metrics.top_risk_items[0]?.days_stock_remaining ?? 0)} days
                 </span>
-                <Link href="/dashboard/insights" className="ml-auto text-xs text-red-400/70 hover:text-red-300 transition-colors whitespace-nowrap flex-shrink-0">
+                <Link href="/dashboard/insights" className="sm:ml-auto text-xs text-red-400/70 hover:text-red-300 transition-colors whitespace-nowrap flex-shrink-0">
                   View all →
                 </Link>
               </div>
             )}
 
             {/* Page header */}
-            <div className="flex items-start justify-between gap-4">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="min-w-0">
                 <h1 className="text-lg font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
                   Inventory overview
                 </h1>
@@ -639,7 +643,7 @@ export default function DashboardPage() {
                   {isDemo ? "Demo Company" : filename.replace(/\.\w+$/, "")} · {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {metrics.total_skus} SKUs
                 </p>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                 <TrustBadge variant="compact" />
                 <Link
                   href="/dashboard/insights"
@@ -659,7 +663,7 @@ export default function DashboardPage() {
             </div>
 
             {/* KPI Grid — adapts to analysis mode */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               {(mode === "aging" ? AGING_KPI_CARDS : KPI_CARDS).map((card, i) => (
                 <KPICard
                   key={card.label}
@@ -679,7 +683,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Transparency statement */}
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
+            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
               <p className="text-[11px] text-slate-500 flex-1">
                 <span className="text-emerald-400 font-medium">Transparent calculations.</span>

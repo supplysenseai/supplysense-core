@@ -39,7 +39,7 @@ export function KPICard({
 }: KPICardProps) {
   return (
     <div
-      className={cn("card-elevated p-4 animate-in flex flex-col items-center text-center relative", className)}
+      className={cn("card-elevated p-4 min-h-[156px] animate-in flex flex-col items-center justify-start text-center relative", className)}
       style={{ animationDelay: `${animDelay}ms`, opacity: 0, animationFillMode: "forwards" }}
     >
       {/* ⓘ trigger — always visible, top-right corner */}
@@ -55,16 +55,16 @@ export function KPICard({
       </div>
 
       {/* Label */}
-      <span className="text-sm text-slate-400 font-medium leading-snug mb-2">{label}</span>
+      <span className="text-sm text-slate-400 font-medium leading-snug mb-2 pr-5">{label}</span>
 
       {/* Value */}
-      <div className={cn("text-2xl font-bold leading-none mb-1", valueColor)}>
+      <div className={cn("text-xl sm:text-2xl font-bold leading-tight mb-1 break-words max-w-full", valueColor)}>
         {value}
       </div>
 
       {/* Sub line */}
       {(sub || delta) && (
-        <div className="flex items-center justify-center gap-1.5 mt-2">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-auto pt-2">
           {delta && (
             <span className={cn(
               "text-xs font-medium",
@@ -75,7 +75,7 @@ export function KPICard({
               {delta}
             </span>
           )}
-          {sub && <span className="text-xs text-slate-600">{sub}</span>}
+          {sub && <span className="text-xs text-slate-600 leading-snug">{sub}</span>}
         </div>
       )}
     </div>

@@ -161,7 +161,7 @@ function ReportCard({
   }
 
   return (
-    <div className={`card p-5 flex flex-col gap-4 transition-all duration-200 ${disabled ? "opacity-40" : "hover:border-white/10"}`}>
+    <div className={`card p-5 min-h-[220px] flex flex-col gap-4 transition-all duration-200 ${disabled ? "opacity-40" : "hover:border-white/10"}`}>
       <div className="flex items-start gap-3">
         <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
           <Icon className={`w-4 h-4 ${iconColor}`} />
@@ -179,12 +179,12 @@ function ReportCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-1 border-t border-white/5">
+      <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-white/5">
         <span className="text-[10px] text-slate-600">{meta}</span>
         <button
           onClick={handleDownload}
           disabled={disabled}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+          className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 sm:w-auto ${
             downloaded
               ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
               : disabled
@@ -229,8 +229,10 @@ export default function ReportsPage() {
   if (noData) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#020617] px-4">
-        <div className="card p-8 max-w-sm w-full text-center space-y-4">
-          <Upload className="w-8 h-8 text-[#818cf8] mx-auto" />
+        <div className="card p-8 max-w-md w-full text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#6366f1]/15 border border-[#6366f1]/25 flex items-center justify-center mx-auto">
+            <Upload className="w-6 h-6 text-[#818cf8]" />
+          </div>
           <div>
             <h2 className="text-base font-bold text-white mb-1">No data loaded</h2>
             <p className="text-xs text-slate-500">Upload a file or load the demo to generate reports.</p>
@@ -247,7 +249,10 @@ export default function ReportsPage() {
   if (!metrics) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#020617]">
-        <RefreshCw className="w-5 h-5 text-[#818cf8] animate-spin" />
+        <div className="card px-6 py-5 flex flex-col items-center gap-3 min-w-60">
+          <RefreshCw className="w-5 h-5 text-[#818cf8] animate-spin" />
+          <span className="text-xs text-slate-500">Loading reports…</span>
+        </div>
       </div>
     );
   }
@@ -279,10 +284,10 @@ export default function ReportsPage() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[900px] mx-auto px-4 py-6 space-y-6">
+          <div className="max-w-[900px] mx-auto px-4 py-5 sm:py-6 space-y-5 sm:space-y-6">
 
             {/* Page header */}
-            <div>
+            <div className="max-w-2xl">
               <h1 className="text-lg font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
                 Reports & Exports
               </h1>
@@ -358,7 +363,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Executive brief link */}
-            <div className="card p-5 flex items-center gap-4">
+            <div className="card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="w-9 h-9 rounded-xl bg-[#6366f1]/15 flex items-center justify-center flex-shrink-0">
                 <FileText className="w-4 h-4 text-[#818cf8]" />
               </div>
@@ -371,7 +376,7 @@ export default function ReportsPage() {
               </div>
               <Link
                 href="/dashboard/insights"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#6366f1]/15 text-[#818cf8] border border-[#6366f1]/20 hover:bg-[#6366f1]/25 hover:text-white transition-colors flex-shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#6366f1]/15 text-[#818cf8] border border-[#6366f1]/20 hover:bg-[#6366f1]/25 hover:text-white transition-colors flex-shrink-0"
               >
                 View Brief →
               </Link>

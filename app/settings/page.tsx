@@ -125,7 +125,7 @@ function FieldInput({
   isModified: boolean;
 }) {
   return (
-    <div className="flex items-start gap-4 py-4 border-b border-white/5 last:border-0">
+    <div className="flex flex-col gap-3 py-4 border-b border-white/5 last:border-0 sm:flex-row sm:items-start sm:gap-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-sm font-medium text-white">{label}</span>
@@ -149,7 +149,7 @@ function FieldInput({
               const n = parseFloat(e.target.value);
               if (!isNaN(n) && n > 0) onChange(n);
             }}
-            className="w-24 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white text-right focus:outline-none focus:border-[#6366f1]/60 focus:bg-white/8 transition-colors"
+            className="w-28 sm:w-24 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white text-right focus:outline-none focus:border-[#6366f1]/60 focus:bg-white/8 transition-colors"
           />
           {unit && (
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 pointer-events-none">
@@ -401,10 +401,10 @@ export default function SettingsPage() {
 
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[720px] mx-auto px-4 py-6 space-y-6">
+          <div className="max-w-[720px] mx-auto px-4 py-5 sm:py-6 space-y-5 sm:space-y-6">
 
             {/* Page header */}
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h1 className="text-lg font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
                   Inventory Policy
@@ -414,7 +414,7 @@ export default function SettingsPage() {
                   Settings are saved locally and apply to all future uploads.
                 </p>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                 <button
                   onClick={handleResetAll}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 border border-white/8 hover:border-white/16 hover:text-white transition-colors"
@@ -435,7 +435,7 @@ export default function SettingsPage() {
 
             {/* Section 1: Inventory Thresholds */}
             <div className="card p-5">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-1">
                 <div>
                   <h2 className="text-sm font-semibold text-white">Inventory Thresholds</h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -471,7 +471,7 @@ export default function SettingsPage() {
 
             {/* Section 2: ABC Classification */}
             <div className="card p-5">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-1">
                 <div>
                   <h2 className="text-sm font-semibold text-white">ABC Classification</h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -511,7 +511,7 @@ export default function SettingsPage() {
 
             {/* Section 3: Health Score Weights */}
             <div className="card p-5">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-1">
                 <div>
                   <h2 className="text-sm font-semibold text-white">Health Score Weights</h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -576,19 +576,19 @@ export default function SettingsPage() {
 
             {/* Save bar */}
             {hasUnsaved && (
-              <div className="sticky bottom-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[#0f172a] border border-white/10 shadow-2xl">
+              <div className="sticky bottom-4 flex flex-col gap-3 px-4 py-3 rounded-xl bg-[#0f172a] border border-white/10 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-xs text-slate-400">You have unsaved changes.</span>
-                <div className="flex items-center gap-2">
+                <div className="flex w-full items-center gap-2 sm:w-auto">
                   <button
                     onClick={resetAll}
-                    className="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white border border-white/8 hover:border-white/16 transition-colors"
+                    className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white border border-white/8 hover:border-white/16 transition-colors"
                   >
                     Discard
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={abcOverflow}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Save className="w-3.5 h-3.5" />
                     Save settings

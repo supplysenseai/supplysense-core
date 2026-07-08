@@ -54,12 +54,12 @@ function SectionHeader({ icon: Icon, label, desc }: { icon: React.ElementType; l
 
 function FieldRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-6">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
       <div className="flex-1 min-w-0 pt-0.5">
         <p className="text-xs font-medium text-slate-300">{label}</p>
         {hint && <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">{hint}</p>}
       </div>
-      <div className="flex-shrink-0">{children}</div>
+      <div className="w-full sm:w-auto flex-shrink-0">{children}</div>
     </div>
   );
 }
@@ -97,7 +97,7 @@ export default function PreferencesPage() {
     setSaved(false);
   }
 
-  const inputCls = "bg-white/4 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#6366f1]/50 focus:bg-white/6 transition-colors w-52";
+  const inputCls = "bg-white/4 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[#6366f1]/50 focus:bg-white/6 transition-colors w-full sm:w-52";
   const selectCls = inputCls + " cursor-pointer";
 
   return (
@@ -147,7 +147,7 @@ export default function PreferencesPage() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[680px] mx-auto px-4 py-6 space-y-6">
+          <div className="max-w-[680px] mx-auto px-4 py-5 sm:py-6 space-y-5 sm:space-y-6">
 
             {/* Page header */}
             <div>

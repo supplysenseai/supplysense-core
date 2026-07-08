@@ -634,7 +634,7 @@ export default function InsightsPage() {
     } catch { const { metrics: dm } = getDemoData(); m = dm; }
     setMetrics(m);
 
-    const delay = isDemoMode() ? 600 : 1400;
+    const delay = isDemoMode() ? 160 : 220;
     const t1 = setTimeout(() => {
       setSummary(generateExecutiveSummary(m, fields));
       setGenerating(false);
@@ -650,7 +650,7 @@ export default function InsightsPage() {
     return (
       <div className="flex h-screen bg-[#020617] overflow-hidden">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4">
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-[#6366f1]/15 border border-[#6366f1]/25 flex items-center justify-center">
               <Brain className="w-7 h-7 text-[#818cf8]" />
@@ -665,7 +665,7 @@ export default function InsightsPage() {
           </div>
           <div className="space-y-2 w-56">
             {["Reading inventory metrics", "Identifying risk patterns", "Calculating financial impact", "Drafting role-specific briefings"].map((step, i) => (
-              <GeneratingStep key={step} label={step} delay={i * 320} />
+              <GeneratingStep key={step} label={step} delay={i * 90} />
             ))}
           </div>
         </div>
@@ -705,7 +705,6 @@ export default function InsightsPage() {
                 onClick={async () => {
                   if (!summary || !metrics) return;
                   setExporting(true);
-                  await new Promise(r => setTimeout(r, 120));
                   openHtmlReport(metrics, summary, sourceFile, companyName);
                   setExporting(false);
                 }}
@@ -723,12 +722,12 @@ export default function InsightsPage() {
 
         {/* Audience tab bar */}
         <div className="flex-shrink-0 border-b border-white/5 bg-[#020617]/80 backdrop-blur-sm">
-          <div className="max-w-[900px] mx-auto px-4 flex items-center gap-1 py-2">
+          <div className="max-w-[900px] mx-auto px-4 flex items-center gap-1 py-2 overflow-x-auto">
             {TABS.map(tab => (
               <button key={tab.key}
                 onClick={() => setActiveAudience(tab.key)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all",
+                  "flex flex-shrink-0 items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all",
                   activeAudience === tab.key
                     ? "bg-[#6366f1] text-white shadow-lg shadow-[#6366f1]/20"
                     : "text-slate-500 hover:text-white hover:bg-white/5"
@@ -739,7 +738,7 @@ export default function InsightsPage() {
                 </span>
               </button>
             ))}
-            <div className="ml-auto flex items-center gap-1.5">
+            <div className="ml-auto hidden sm:flex items-center gap-1.5 flex-shrink-0">
               <Target className="w-3 h-3 text-slate-600" />
               <span className="text-[10px] text-slate-600">{metrics.total_skus} SKUs · {new Date(summary.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
             </div>
@@ -778,7 +777,7 @@ function GeneratingStep({ label, delay }: { label: string; delay: number }) {
   const [done, setDone]       = useState(false);
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), delay);
-    const t2 = setTimeout(() => setDone(true), delay + 500);
+    const t2 = setTimeout(() => setDone(true), delay + 220);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [delay]);
   return (
