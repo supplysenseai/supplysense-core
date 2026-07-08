@@ -118,7 +118,7 @@ export function Pricing() {
                       {f.text}
                       {!f.live && (
                         <span className="ml-1.5 text-[10px] font-medium text-slate-600 bg-white/5 border border-white/8 px-1.5 py-0.5 rounded-full align-middle">
-                          Coming soon
+                          Planned
                         </span>
                       )}
                     </span>
@@ -155,7 +155,7 @@ export function Pricing() {
               { text: "Dead stock & slow mover detection",    live: true  },
               { text: "Ageing analysis (age-bucket reports)", live: true  },
               { text: "CSV report exports",                   live: true  },
-              { text: "KPI explainability (ⓘ modals)",       live: true  },
+              { text: "KPI explainability (info modals)",       live: true  },
               { text: "Multi-warehouse analysis",             live: false },
               { text: "ERP integrations (SAP / NetSuite)",    live: false },
               { text: "Supply Chain Copilot (chat)",          live: false },
@@ -169,7 +169,7 @@ export function Pricing() {
                 }
                 <span className={`text-[11px] ${f.live ? "text-slate-400" : "text-slate-600"}`}>
                   {f.text}
-                  {!f.live && <span className="ml-1 text-slate-700">· coming soon</span>}
+                  {!f.live && <span className="ml-1 text-slate-700">· planned</span>}
                 </span>
               </div>
             ))}

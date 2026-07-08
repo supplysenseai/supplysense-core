@@ -1,5 +1,7 @@
 # SupplySense
 
+**Version 1.0 Release Candidate**
+
 > SupplySense Inventory Intelligence Suite helps manufacturers turn inventory spreadsheets into operational dashboards, executive reports, and replenishment actions.
 
 ---
@@ -46,50 +48,50 @@ Built for operations managers, supply chain leads, and CFOs who need inventory v
 
 ```
 supplysense-app/
-├── app/                        # Next.js App Router pages
-│   ├── api/analyze/            # Server-side file analysis API route
-│   ├── dashboard/              # All dashboard pages
-│   │   ├── abc-analysis/
-│   │   ├── financial-impact/
-│   │   ├── health-score/
-│   │   ├── insights/
-│   │   ├── kpi/[key]/
-│   │   ├── preferences/
-│   │   ├── reports/
-│   │   ├── risk/
-│   │   ├── risk-heatmap/
-│   │   ├── turnover/
-│   │   ├── validation/
-│   │   └── layout.tsx          # Auth guard
-│   ├── login/                  # Authentication page
-│   ├── settings/               # Policy configuration
-│   ├── upload/                 # File upload & analysis
-│   ├── globals.css
-│   ├── layout.tsx              # Root layout
-│   └── page.tsx                # Landing page
-├── components/
-│   ├── dashboard/              # KPI cards, charts, sidebar, tables
-│   ├── demo/                   # Demo mode banner
-│   ├── landing/                # Hero, Features, Pricing, SocialProof
-│   ├── upload/                 # DropZone, ValidationProgress
-│   ├── validation/             # TrustBadge, ScoreBreakdown
-│   ├── PlanGate.tsx            # Plan-based feature gating
-│   └── ThemeSwitcher.tsx
-├── lib/                        # Business logic & utilities
-│   ├── auth.ts                 # Authentication helpers
-│   ├── inventory-analyzer.ts   # Core analysis engine
-│   ├── inventory-parser.ts     # XLSX/CSV parsing + multi-sheet merge
-│   ├── insights-generator.ts   # Executive brief generator
-│   ├── html-report-generator.ts# Exportable HTML report
-│   ├── demo-data.ts            # Built-in demo dataset
-│   ├── types.ts                # TypeScript interfaces
-│   └── utils.ts                # Shared utilities
-├── public/                     # Static assets
-│   └── sample-inventory-template.csv
-├── next.config.ts
-├── tsconfig.json
-├── vercel.json
-└── postcss.config.mjs
+|-- app/                        # Next.js App Router pages
+|   |-- api/analyze/            # Server-side file analysis API route
+|   |-- dashboard/              # All dashboard pages
+|   |   |-- abc-analysis/
+|   |   |-- financial-impact/
+|   |   |-- health-score/
+|   |   |-- insights/
+|   |   |-- kpi/[key]/
+|   |   |-- preferences/
+|   |   |-- reports/
+|   |   |-- risk/
+|   |   |-- risk-heatmap/
+|   |   |-- turnover/
+|   |   |-- validation/
+|   |   `-- layout.tsx          # Auth guard
+|   |-- login/                  # Authentication page
+|   |-- settings/               # Policy configuration
+|   |-- upload/                 # File upload and analysis
+|   |-- globals.css
+|   |-- layout.tsx              # Root layout
+|   `-- page.tsx                # Landing page
+|-- components/
+|   |-- dashboard/              # KPI cards, charts, sidebar, tables
+|   |-- demo/                   # Demo mode banner
+|   |-- landing/                # Hero, Features, Pricing, SocialProof
+|   |-- upload/                 # DropZone, ValidationProgress
+|   |-- validation/             # TrustBadge, ScoreBreakdown
+|   |-- PlanGate.tsx            # Plan-based feature gating
+|   `-- ThemeSwitcher.tsx
+|-- lib/                        # Business logic and utilities
+|   |-- auth.ts                 # Authentication helpers
+|   |-- inventory-analyzer.ts   # Core analysis engine
+|   |-- inventory-parser.ts     # XLSX/CSV parsing + multi-sheet merge
+|   |-- insights-generator.ts   # Executive brief generator
+|   |-- html-report-generator.ts# Exportable HTML report
+|   |-- demo-data.ts            # Built-in demo dataset
+|   |-- types.ts                # TypeScript interfaces
+|   `-- utils.ts                # Shared utilities
+|-- public/                     # Static assets
+|   `-- sample-inventory-template.csv
+|-- next.config.ts
+|-- tsconfig.json
+|-- vercel.json
+`-- postcss.config.mjs
 ```
 
 ---
@@ -105,7 +107,7 @@ supplysense-app/
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/supplysense-ai.git
+git clone https://github.com/supplysense/supplysense-app.git
 cd supplysense-ai
 
 # Install dependencies
@@ -172,14 +174,14 @@ None required. The application is fully client-side with no external API depende
 ### Option 1 - Vercel Dashboard (Recommended)
 
 1. Push this repository to GitHub
-2. Go to [vercel.com](https://vercel.com) → **Add New Project**
+2. Go to [vercel.com](https://vercel.com) -> **Add New Project**
 3. Import your GitHub repository
 4. Leave all settings at defaults - Vercel auto-detects Next.js
 5. Click **Deploy**
 
 No environment variables need to be configured.
 
-### Option 2 — Vercel CLI
+### Option 2 - Vercel CLI
 
 ```bash
 npm i -g vercel
@@ -201,12 +203,12 @@ vercel deploy --prod
 |---------|------|-----------------|-----------------|
 | Max SKUs | 500 | 5,000 | 50,000 |
 | Uploads / month | 1 | 5 | Unlimited |
-| Health Score | ✅ | ✅ | ✅ |
-| ABC Analysis | ✅ | ✅ | ✅ |
-| Risk Heatmap | ✅ | ✅ | ✅ |
-| Insights | ❌ | ✅ | ✅ |
-| Turnover Analysis | ❌ | ✅ | ✅ |
-| Financial Impact | ❌ | ✅ | ✅ |
+| Health Score | Yes | Yes | Yes |
+| ABC Analysis | Yes | Yes | Yes |
+| Risk Heatmap | Yes | Yes | Yes |
+| Insights | No | Yes | Yes |
+| Turnover Analysis | No | Yes | Yes |
+| Financial Impact | No | Yes | Yes |
 
 ---
 
@@ -229,4 +231,4 @@ All modern browsers - Chrome, Edge, Firefox, Safari. File parsing runs entirely 
 
 ## License
 
-Private - All rights reserved (c) 2025 SupplySense
+Private - All rights reserved (c) 2026 SupplySense
