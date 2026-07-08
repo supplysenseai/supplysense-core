@@ -16,10 +16,7 @@ export function DemoButton({ variant = "hero" }: DemoButtonProps) {
   const handleClick = async () => {
     if (loading) return;
     setLoading(true);
-    setLabel("Loading 200 SKUs...");
-    await new Promise(r => setTimeout(r, 180));
-    setLabel("Running inventory analysis...");
-    await new Promise(r => setTimeout(r, 180));
+    setLabel("Loading demo...");
     loadDemoIntoSession();
     router.push("/dashboard");
   };

@@ -134,6 +134,8 @@ function CtaSection() {
 }
 
 function Footer() {
+  const year = new Date().getFullYear();
+
   return (
     <footer className="border-t border-white/5 py-10 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
@@ -144,7 +146,7 @@ function Footer() {
           <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>SupplySense</span>
         </div>
         <p className="text-xs text-slate-600 text-center">
-          SupplySense Inventory Intelligence Suite · Commercial product foundation · 2025
+          SupplySense Inventory Intelligence Suite · Commercial product foundation · {year}
         </p>
         <div className="flex items-center gap-4 text-xs text-slate-600">
           <span>SOC 2 (in progress)</span>
