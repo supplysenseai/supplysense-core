@@ -41,25 +41,25 @@ export interface PlanConfig {
 
 export const PLAN_CONFIG: Record<Plan, PlanConfig> = {
   free: {
-    label: "Free",
+    label: "Local",
     maxSKUs: 500,
     uploadsPerMonth: 1,
-    lockedModules: ["financial-impact", "turnover", "insights", "risk-heatmap"],
+    lockedModules: [],
   },
   starter: {
-    label: "Starter",
+    label: "Local",
     maxSKUs: 5000,
     uploadsPerMonth: 5,
     lockedModules: [],
   },
   growth: {
-    label: "Growth",
+    label: "Local",
     maxSKUs: 50000,
     uploadsPerMonth: 999,
     lockedModules: [],
   },
   enterprise: {
-    label: "Enterprise",
+    label: "Local",
     maxSKUs: Infinity,
     uploadsPerMonth: Infinity,
     lockedModules: [],
@@ -67,5 +67,5 @@ export const PLAN_CONFIG: Record<Plan, PlanConfig> = {
 };
 
 export function isModuleLocked(plan: Plan, moduleKey: string): boolean {
-  return PLAN_CONFIG[plan].lockedModules.includes(moduleKey);
+  return false;
 }

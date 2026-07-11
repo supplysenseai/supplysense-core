@@ -25,7 +25,7 @@ import { MODE_LABELS, MODE_DESCRIPTIONS } from "@/lib/analysis-detector";
 import { computeCompleteness } from "@/lib/data-completeness";
 import type { DashboardMetrics } from "@/lib/types";
 import type { ActivePolicy } from "@/lib/policy";
-import { getAuth, clearAuth, PLAN_CONFIG } from "@/lib/auth";
+import { getAuth, clearAuth } from "@/lib/auth";
 
 // Inline demo loader button used in the no-data gate screen
 function NoDataDemoButton() {
@@ -531,14 +531,11 @@ export default function DashboardPage() {
                       <p className="text-[11px] text-slate-500 truncate">{authUser?.email}</p>
                       {authUser && (
                         <span className="mt-1.5 inline-block text-[10px] font-medium bg-brand-500/15 text-brand-400 px-2 py-0.5 rounded-full">
-                          {PLAN_CONFIG[authUser.plan as keyof typeof PLAN_CONFIG]?.label ?? authUser.plan} Plan
+                          Local access
                         </span>
                       )}
                     </div>
                     <div className="p-1">
-                      <Link href="/#pricing" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                        <Zap className="w-3.5 h-3.5" /> Upgrade Plan
-                      </Link>
                       <button
                         onClick={() => { clearAuth(); router.push("/login"); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"

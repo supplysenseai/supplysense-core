@@ -72,10 +72,10 @@ supplysense-app/
 |-- components/
 |   |-- dashboard/              # KPI cards, charts, sidebar, tables
 |   |-- demo/                   # Demo mode banner
-|   |-- landing/                # Hero, Features, Pricing, SocialProof
+|   |-- landing/                # Hero, Features, SocialProof
 |   |-- upload/                 # DropZone, ValidationProgress
 |   |-- validation/             # TrustBadge, ScoreBreakdown
-|   |-- PlanGate.tsx            # Plan-based feature gating
+|   |-- PlanGate.tsx            # Release pass-through wrapper
 |   `-- ThemeSwitcher.tsx
 |-- lib/                        # Business logic and utilities
 |   |-- auth.ts                 # Authentication helpers
@@ -128,14 +128,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 Click **"Try Demo"** on the landing page - no login required. A pre-built dataset loads automatically and showcases the core modules.
 
-### Login (for file uploads)
+### Local Access (for file uploads)
 
-| Username | Password | Plan |
-|----------|----------|------|
-| `tamkeen` | `matco123` | Growth |
-| `abc` | `abc` | Starter |
+| Username | Password |
+|----------|----------|
+| `tamkeen` | `matco123` |
+| `abc` | `abc` |
 
-> **Note:** Authentication is localStorage-based for this early product foundation. No backend or database is required.
+> **Note:** Authentication is localStorage-based for this Version 1.0 product foundation. No backend or database is required.
 
 ---
 
@@ -195,12 +195,7 @@ vercel deploy --prod
 - Immutable cache headers for static assets (1-year TTL)
 - API function timeout set to 10 seconds
 
----
-
-## Plan Tiers
-
-| Feature | Free | Starter ($10/mo) | Growth ($99/mo) |
-|---------|------|-----------------|-----------------|
+---------|------|-----------------|-----------------|
 | Max SKUs | 500 | 5,000 | 50,000 |
 | Uploads / month | 1 | 5 | Unlimited |
 | Health Score | Yes | Yes | Yes |

@@ -10,7 +10,6 @@ import { detectAnalysisMode } from "@/lib/analysis-detector";
 import { getAuth } from "@/lib/auth";
 
 type UploadState = "idle" | "processing" | "done" | "error";
-const STEP_TRANSITION_MS = 120;
 
 export default function UploadPage() {
   const router = useRouter();
@@ -33,11 +32,9 @@ export default function UploadPage() {
 
     // Step 0: Uploading
     setStep(0); setProgress(10);
-    await delay(STEP_TRANSITION_MS);
 
     // Step 1: Parsing columns
     setStep(1); setProgress(28);
-    await delay(STEP_TRANSITION_MS);
 
     // Dynamically import parser + analyzer (client-side)
     const { parseInventoryFile } = await import("@/lib/inventory-parser");
@@ -65,7 +62,6 @@ export default function UploadPage() {
 
     // Step 2: Validating data
     setStep(2); setProgress(50);
-    await delay(STEP_TRANSITION_MS);
 
     if (parseResult.errors.length > 0) {
       const errResult: UploadResult = {
@@ -85,7 +81,6 @@ export default function UploadPage() {
 
     // Step 3: Running inventory analysis
     setStep(3); setProgress(72);
-    await delay(STEP_TRANSITION_MS);
 
     const mode = detectAnalysisMode(parseResult.detected_fields);
     setAnalysisMode(mode);
@@ -96,10 +91,8 @@ export default function UploadPage() {
 
     // Step 4: Generating insights
     setStep(4); setProgress(90);
-    await delay(STEP_TRANSITION_MS);
 
     setProgress(100);
-    await delay(STEP_TRANSITION_MS);
 
     const finalResult: UploadResult = {
       success: true,
@@ -247,8 +240,4 @@ export default function UploadPage() {
       </main>
     </div>
   );
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

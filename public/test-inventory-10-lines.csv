@@ -1,0 +1,11 @@
+SKU,Product Name,Category,Stock Qty,Monthly Usage,Unit Cost,Unit Price,Lead Time Days,Supplier,Last Movement Date,Ageing Days
+SKU-001,Bearing 6205,Mechanical,18,120,12.5,18.75,14,Global Bearings,20/06/2026,18
+SKU-002,Fuse 16A,Electrical,40,300,1.2,2.1,10,ElectroSupply,28/06/2026,10
+SKU-003,Gasket Set A,Seals,260,18,18.9,32,21,SealMaster,05/11/2025,245
+SKU-004,Hydraulic Hose 2m,Hydraulics,75,0,42,68,28,FluidWorks,15/01/2025,540
+SKU-005,O-Ring 50mm,Seals,900,35,0.85,1.6,7,SealMaster,12/06/2026,26
+SKU-006,PLC Relay Module,Electrical,8,22,95,145,21,ControlParts,30/06/2026,8
+SKU-007,Conveyor Roller,Mechanical,120,12,28,48,30,MotionPro,01/03/2026,129
+SKU-008,Safety Glove Pair,PPE,1500,650,3.2,5.25,5,SafeWorks,25/06/2026,13
+SKU-009,Motor Coupling,Mechanical,55,9,64,102,18,DriveLine,20/07/2025,353
+SKU-010,Label Roll 1000pc,Packaging,420,210,4.75,8.5,6,PackRight,18/06/2026,20

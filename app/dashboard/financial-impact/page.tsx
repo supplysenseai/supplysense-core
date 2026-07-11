@@ -10,8 +10,6 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { PlanGate } from "@/components/PlanGate";
-import { getAuth, isModuleLocked } from "@/lib/auth";
 import { DemoBanner } from "@/components/demo/DemoBanner";
 import { formatCurrency } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/types";
@@ -122,16 +120,10 @@ function CurrencyTooltip({ active, payload, label }: CustomTooltipProps) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function FinancialImpactPage() {
-  const [planLocked, setPlanLocked]   = useState<boolean | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [metrics, setMetrics]         = useState<DashboardMetrics | null>(null);
   const [noData, setNoData]           = useState(false);
   const [companyName, setCompanyName] = useState("");
-
-  useEffect(() => {
-    const auth = getAuth();
-    setPlanLocked(isModuleLocked(auth?.plan ?? "free", "financial-impact"));
-  }, []);
 
   useEffect(() => {
     try {
@@ -154,9 +146,6 @@ export default function FinancialImpactPage() {
   const handleExport = useCallback(() => {
     if (metrics) exportCSV(metrics, companyName);
   }, [metrics, companyName]);
-
-  if (planLocked === null) return null;
-  if (planLocked) return <PlanGate moduleKey="financial-impact">{null}</PlanGate>;
 
   // ── No data state ────────────────────────────────────────────────────────
   if (noData) return (

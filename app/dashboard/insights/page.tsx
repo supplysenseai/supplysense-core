@@ -8,7 +8,6 @@ import {
   ShoppingCart, Ban, RotateCcw, Star,
 } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { PlanGate } from "@/components/PlanGate";
 import { DemoBanner } from "@/components/demo/DemoBanner";
 import { getDemoData } from "@/lib/demo-data";
 import { isDemoMode } from "@/lib/demo-loader";
@@ -17,7 +16,6 @@ import { openHtmlReport } from "@/lib/html-report-generator";
 import { formatCurrency, getHealthColor, getHealthLabel, cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/types";
 import type { ExecutiveSummary } from "@/lib/insights-generator";
-import { getAuth, isModuleLocked } from "@/lib/auth";
 
 type Audience = "ceo" | "supply_chain" | "procurement";
 
@@ -591,7 +589,6 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function InsightsPage() {
-  const [planLocked, setPlanLocked]     = useState<boolean | null>(null);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [metrics, setMetrics]           = useState<DashboardMetrics | null>(null);
   const [summary, setSummary]           = useState<ExecutiveSummary | null>(null);
@@ -602,11 +599,6 @@ export default function InsightsPage() {
   const [exporting, setExporting]       = useState(false);
   const [sectionsVisible, setSectionsVisible] = useState(false);
   const [activeAudience, setActiveAudience]   = useState<Audience>("ceo");
-
-  useEffect(() => {
-    const auth = getAuth();
-    setPlanLocked(isModuleLocked(auth?.plan ?? "free", "insights"));
-  }, []);
 
   useEffect(() => {
     try {
@@ -634,17 +626,10 @@ export default function InsightsPage() {
     } catch { const { metrics: dm } = getDemoData(); m = dm; }
     setMetrics(m);
 
-    const delay = isDemoMode() ? 160 : 220;
-    const t1 = setTimeout(() => {
-      setSummary(generateExecutiveSummary(m, fields));
-      setGenerating(false);
-      setTimeout(() => setSectionsVisible(true), 80);
-    }, delay);
-    return () => clearTimeout(t1);
+    setSummary(generateExecutiveSummary(m, fields));
+    setGenerating(false);
+    setSectionsVisible(true);
   }, []);
-
-  if (planLocked === null) return null;
-  if (planLocked) return <PlanGate moduleKey="insights">{null}</PlanGate>;
 
   if (!metrics || generating) {
     return (
@@ -664,8 +649,11 @@ export default function InsightsPage() {
             <p className="text-xs text-slate-500">Preparing role-specific summaries for {metrics?.total_skus ?? "—"} SKUs</p>
           </div>
           <div className="space-y-2 w-56">
-            {["Reading inventory metrics", "Identifying risk patterns", "Calculating financial impact", "Drafting role-specific briefings"].map((step, i) => (
-              <GeneratingStep key={step} label={step} delay={i * 90} />
+            {["Reading inventory metrics", "Identifying risk patterns", "Calculating financial impact", "Drafting role-specific briefings"].map((step) => (
+              <div key={step} className="flex items-center gap-2.5">
+                <RefreshCw className="w-3.5 h-3.5 text-[#818cf8] animate-spin flex-shrink-0" />
+                <span className="text-xs text-slate-500">{step}</span>
+              </div>
             ))}
           </div>
         </div>
@@ -772,20 +760,3 @@ export default function InsightsPage() {
 }
 
 // ── Loading step animation ────────────────────────────────────────────────────
-function GeneratingStep({ label, delay }: { label: string; delay: number }) {
-  const [visible, setVisible] = useState(false);
-  const [done, setDone]       = useState(false);
-  useEffect(() => {
-    const t1 = setTimeout(() => setVisible(true), delay);
-    const t2 = setTimeout(() => setDone(true), delay + 220);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [delay]);
-  return (
-    <div className={cn("flex items-center gap-2.5 transition-all duration-300", visible ? "opacity-100" : "opacity-0")}>
-      {done
-        ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-        : <RefreshCw className="w-3.5 h-3.5 text-[#818cf8] animate-spin flex-shrink-0" />}
-      <span className="text-xs text-slate-500">{label}</span>
-    </div>
-  );
-}

@@ -4,8 +4,6 @@ import Link from "next/link";
 import { ArrowLeft, RotateCcw, RefreshCw, Upload, TrendingUp, TrendingDown, Minus, ShieldCheck } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Cell } from "recharts";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { PlanGate } from "@/components/PlanGate";
-import { getAuth, isModuleLocked } from "@/lib/auth";
 import { KPIInfoTrigger } from "@/components/dashboard/KPIInfoModal";
 import { formatCurrency } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/types";
@@ -21,15 +19,9 @@ const BENCHMARKS = [
 ];
 
 export default function TurnoverPage() {
-  const [planLocked, setPlanLocked]   = useState<boolean | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [noData, setNoData] = useState(false);
-
-  useEffect(() => {
-    const auth = getAuth();
-    setPlanLocked(isModuleLocked(auth?.plan ?? "free", "turnover"));
-  }, []);
 
   useEffect(() => {
     try {
@@ -38,9 +30,6 @@ export default function TurnoverPage() {
       else setNoData(true);
     } catch { setNoData(true); }
   }, []);
-
-  if (planLocked === null) return null;
-  if (planLocked) return <PlanGate moduleKey="turnover">{null}</PlanGate>;
 
   if (noData) return (
     <div className="flex h-screen items-center justify-center bg-[#020617] ss-page">

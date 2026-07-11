@@ -29,7 +29,7 @@ interface ValidationProgressProps {
   detectedFields?: string[];
 }
 
-const REDIRECT_DELAY = 4; // seconds before auto-redirect to dashboard
+const REDIRECT_DELAY = 1; // seconds before auto-redirect to dashboard
 
 const MODE_COLORS: Record<AnalysisMode, { badge: string; icon: string }> = {
   health:   { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", icon: "text-emerald-400" },

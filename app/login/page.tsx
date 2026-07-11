@@ -2,34 +2,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Zap, Check } from "lucide-react";
+import { Eye, EyeOff, Zap } from "lucide-react";
 import { setAuth, getAuth, type Plan } from "@/lib/auth";
 
 type Tab = "signin" | "signup";
 
-const PLANS: { key: Plan; name: string; price: string; desc: string; features: string[] }[] = [
-  {
-    key: "free",
-    name: "Free",
-    price: "$0",
-    desc: "Try SupplySense with your first upload.",
-    features: ["1 upload / month", "Up to 500 SKUs", "Health Score, ABC & Risk modules"],
-  },
-  {
-    key: "starter",
-    name: "Starter",
-    price: "$10/mo",
-    desc: "Full access for growing operations.",
-    features: ["5 uploads / month", "Up to 5,000 SKUs", "All 8 analytics modules"],
-  },
-  {
-    key: "growth",
-    name: "Growth",
-    price: "$99/mo",
-    desc: "For supply chain teams running weekly analysis.",
-    features: ["Unlimited uploads", "Up to 50,000 SKUs", "All modules + priority support"],
-  },
-];
+const LOCAL_ACCESS_PLAN: Plan = "free";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,7 +15,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [plan, setPlan] = useState<Plan>("free");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,11 +31,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
     // Built-in demo accounts
     const DEMO_ACCOUNTS = [
-      { email: "abc",     password: "abc",     name: "ABC User",    plan: "starter" as const },
-      { email: "tamkeen", password: "matco123", name: "Tamkeen Ahmed", plan: "growth" as const },
+      { email: "abc",     password: "abc",     name: "ABC User",         plan: LOCAL_ACCESS_PLAN },
+      { email: "tamkeen", password: "matco123", name: "Tamkeen Ahmed",   plan: LOCAL_ACCESS_PLAN },
     ];
     // Check demo accounts first, then localStorage accounts
     const stored = (() => {
@@ -83,7 +59,6 @@ export default function LoginPage() {
     if (!email.trim()) { setError("Please enter a username."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
     // Save account to localStorage accounts list
     const stored = (() => {
       try { return JSON.parse(localStorage.getItem("supplysense_accounts") ?? "[]"); } catch { return []; }
@@ -93,9 +68,9 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    stored.push({ email, password, name, plan });
+    stored.push({ email, password, name, plan: LOCAL_ACCESS_PLAN });
     localStorage.setItem("supplysense_accounts", JSON.stringify(stored));
-    setAuth({ email, name, plan, token: mockToken(email) });
+    setAuth({ email, name, plan: LOCAL_ACCESS_PLAN, token: mockToken(email) });
     router.replace("/dashboard");
   }
 
@@ -175,14 +150,14 @@ export default function LoginPage() {
               <p className="text-xs text-center text-slate-500 pt-1">
                 No account?{" "}
                 <button type="button" onClick={() => setTab("signup")} className="text-brand-400 hover:text-brand-300">
-                  Create one free
+                  Create local access
                 </button>
               </p>
             </form>
           ) : (
             <form onSubmit={handleSignup} className="space-y-4">
               <h1 className="text-lg font-semibold text-white mb-1">Create your account</h1>
-              <p className="text-sm text-slate-400 mb-2">Get started in 30 seconds. No credit card required.</p>
+              <p className="text-sm text-slate-400 mb-2">Create a local app profile. No payment details required.</p>
 
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -222,39 +197,6 @@ export default function LoginPage() {
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                </div>
-              </div>
-
-              {/* Plan picker */}
-              <div>
-                <label className="block text-xs text-slate-400 mb-2">Choose your plan</label>
-                <div className="space-y-2">
-                  {PLANS.map((p) => (
-                    <button
-                      key={p.key}
-                      type="button"
-                      onClick={() => setPlan(p.key)}
-                      className={`w-full text-left rounded-xl border p-3 transition-all ${
-                        plan === p.key
-                          ? "border-brand-500 bg-brand-500/10"
-                          : "border-white/8 bg-white/3 hover:border-white/15"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold text-white">{p.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-brand-400">{p.price}</span>
-                          {plan === p.key && <Check className="w-3.5 h-3.5 text-brand-400" />}
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-slate-500 mb-1.5">{p.desc}</p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                        {p.features.map((f) => (
-                          <span key={f} className="text-[10px] text-slate-400">{f}</span>
-                        ))}
-                      </div>
-                    </button>
-                  ))}
                 </div>
               </div>
 

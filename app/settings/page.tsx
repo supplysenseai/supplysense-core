@@ -297,7 +297,7 @@ export default function SettingsPage() {
           setTimeout(() => {
             setToast(null);
             router.push("/dashboard");
-          }, 1200);
+          }, 300);
           return;
         } catch {
           // fall through to plain save toast
@@ -342,7 +342,7 @@ export default function SettingsPage() {
           setTimeout(() => {
             setToast(null);
             router.push("/dashboard");
-          }, 1200);
+          }, 300);
           return;
         } catch {
           // fall through

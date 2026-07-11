@@ -3,7 +3,6 @@ import { ArrowRight, Upload } from "lucide-react";
 import { Hero } from "@/components/landing/Hero";
 import { SocialProof } from "@/components/landing/SocialProof";
 import { Features } from "@/components/landing/Features";
-import { Pricing } from "@/components/landing/Pricing";
 import { DemoButton } from "@/components/landing/DemoButton";
 
 function Navbar() {
@@ -18,9 +17,8 @@ function Navbar() {
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm text-slate-400">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           <span className="text-slate-700">|</span>
-          <Link href="/login" className="hover:text-white transition-colors">Try it free</Link>
+          <Link href="/login" className="hover:text-white transition-colors">Open app</Link>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/login" className="hidden sm:block text-sm text-slate-400 hover:text-white transition-colors px-3 py-1.5">
@@ -168,7 +166,6 @@ export default function LandingPage() {
         <ProblemSection />
         <HowItWorks />
         <Features />
-        <Pricing />
         <CtaSection />
       </main>
       <Footer />
