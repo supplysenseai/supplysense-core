@@ -34,7 +34,7 @@ export interface KPIDefinition {
   tagline: string;
   definition: string;
   formula: FormulaStep[];
-  fields: { name: string; description: string; required: boolean }[];
+  fields: { name: string; label?: string; description: string; required: boolean }[];
   example: {
     context: string;
     steps: { label: string; value: string }[];
@@ -46,8 +46,38 @@ export interface KPIDefinition {
     warning: string;
     critical: string;
     tip: string;
+    labels?: {
+      good: string;
+      warning: string;
+      critical: string;
+      tip: string;
+    };
   };
   linkedKPIs?: KPIKey[];
+}
+
+export const TURNOVER_ASSURANCE_TEXT =
+  "Calculated from uploaded inventory data using disclosed annualisation and 365-day conventions. Item-level values and turnover estimates are shown for calculation transparency.";
+
+export function getKPIAssuranceText(key: KPIKey): string {
+  return key === "turnover_ratio"
+    ? TURNOVER_ASSURANCE_TEXT
+    : "Records from your uploaded dataset that contribute to this KPI. All figures are derived directly from the uploaded file.";
+}
+
+export function getKPIReconciliationStatus(key: KPIKey): string {
+  return ["recoverable_capital", "turnover_ratio"].includes(key)
+    ? "Reconciled with Assumptions"
+    : "Reconciled";
+}
+
+export function getKPIInterpretationLabels(def: KPIDefinition) {
+  return def.interpretation.labels ?? {
+    good: "Good",
+    warning: "Warning",
+    critical: "Critical",
+    tip: "Tip",
+  };
 }
 
 export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
@@ -77,10 +107,10 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
       note: "Annual carrying cost is estimated at 25% of this total = $2,925/yr.",
     },
     interpretation: {
-      good:     "Value is proportional to your revenue and turnover rate — stock turns quickly and capital works hard.",
+      good:     "Value is proportional to your annual consumption value and turnover rate — stock turns quickly and capital works hard.",
       warning:  "High value relative to monthly sales suggests overstocking or slow-moving items absorbing working capital.",
-      critical: "Inventory value growing while revenue stays flat is a cash-flow warning sign requiring immediate SKU review.",
-      tip:      "Compare Inventory Value against your monthly COGS. If the ratio exceeds 3 months, investigate dead and slow stock.",
+      critical: "Inventory value growing while annual consumption value stays flat is a cash-flow warning sign requiring immediate SKU review.",
+      tip:      "Compare inventory value against company targets, historical consumption and service requirements; review supporting SKU records before concluding the cause.",
     },
     linkedKPIs: ["dead_stock", "slow_moving", "turnover_ratio"],
   },
@@ -90,7 +120,7 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
     title: "Dead Stock",
     tagline: "Items with zero movement — cash trapped with no return",
     definition:
-      "Dead stock comprises SKUs that have recorded zero sales velocity in the last 30 days AND still hold units on hand. These items are generating carrying costs with no revenue offset and are the highest-priority candidates for liquidation, write-down, or redeployment.",
+      "Dead stock comprises SKUs that have recorded zero sales velocity in the last 30 days AND still hold units on hand. These items are generating carrying costs with no annual consumption value offset and are the highest-priority candidates for liquidation, write-down, or redeployment.",
     formula: [
       { label: "Condition",     expr: "Is Dead  =  (Monthly Usage = 0)  AND  (Units on Hand > 0)" },
       { label: "Dead value",    expr: "Dead Stock Value  =  Σ (Units on Hand × Unit Cost)  where Is Dead = true" },
@@ -123,41 +153,41 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
   slow_moving: {
     key: "slow_moving",
     title: "Slow Moving Inventory",
-    tagline: "Stock at risk of becoming dead — act before it's too late",
+    tagline: "Stock with coverage above the active slow-moving policy threshold",
     definition:
-      "Slow-moving SKUs are items with more than 6 months of stock on hand based on current velocity. They are not yet dead (some movement exists) but are consuming disproportionate carrying cost relative to their sales contribution. Early intervention avoids permanent dead-stock write-offs.",
+      "Slow-moving SKUs are active-demand items whose days of supply exceed the active slow-moving policy threshold. Dead-stock items are excluded so the same SKU is not double counted as both dead and slow moving.",
     formula: [
-      { label: "Monthly velocity",    expr: "Monthly Usage  =  Units Sold in 30 days" },
-      { label: "Months of stock",     expr: "Months of Stock  =  Units on Hand  ÷  Monthly Usage" },
-      { label: "Slow mover flag",     expr: "Is Slow Mover  =  (Months of Stock > 6)  AND  (Monthly Usage > 0)" },
-      { label: "Slow mover value",    expr: "Slow Mover Value  =  Σ (Units on Hand × Unit Cost)  where Is Slow = true" },
+      { label: "Monthly usage",       expr: "monthly_usage = units consumed, issued or sold during a typical 30-day period" },
+      { label: "Daily usage",         expr: "daily_usage = monthly_usage / 30" },
+      { label: "Days of supply",      expr: "days_of_supply = stock_qty / daily_usage" },
+      { label: "Slow mover flag",     expr: "Slow Moving = daily_usage > 0 AND days_of_supply > active slow_moving_days AND NOT dead_stock" },
+      { label: "Slow mover value",    expr: "Slow Mover Value = SUM(stock_qty x unit_cost) where Slow Moving = true" },
     ],
     fields: [
-      { name: "units_on_hand",  description: "Current quantity in stock",             required: true },
-      { name: "unit_cost",      description: "Cost price per unit",                   required: true },
-      { name: "units_sold_30d", description: "Units sold/consumed in the last 30 days", required: true },
+      { name: "units_on_hand",  description: "Current quantity in stock", required: true },
+      { name: "unit_cost",      description: "Cost price per unit", required: true },
+      { name: "units_sold_30d", description: "Units consumed, issued or sold during a typical 30-day period", required: true },
     ],
     example: {
-      context: "SKU: BOLT-M8 — 1,200 units on hand, $0.85 unit cost, 40 units sold last 30 days",
+      context: "SKU: BOLT-M8 - 1,200 units on hand, $0.85 unit cost, 40 units consumed, issued or sold during a typical 30-day period",
       steps: [
-        { label: "Monthly usage",          value: "40 units/month" },
-        { label: "Months of stock",        value: "1,200 ÷ 40 = 30 months (2.5 years!)" },
-        { label: "Slow mover threshold",   value: "> 6 months → flagged SLOW" },
-        { label: "Inventory value",        value: "1,200 × $0.85 = $1,020" },
-        { label: "Annual carry cost",      value: "$1,020 × 25% = $255/yr" },
+        { label: "Daily usage",          value: "40 / 30 = 1.33 units/day" },
+        { label: "Days of supply",       value: "1,200 / 1.33 = 900 days" },
+        { label: "Active threshold",     value: "Compared with active slow_moving_days policy" },
+        { label: "Dead-stock exclusion", value: "Only counted if NOT dead_stock" },
+        { label: "Inventory value",      value: "1,200 x $0.85 = $1,020" },
       ],
-      result: "30 months of stock — 24 excess months that should be reduced",
-      note: "Optimal stock would be 6 months × 40 units = 240 units. Excess: 960 units = $816 in over-investment.",
+      result: "Flagged only when days of supply exceeds the active slow-moving threshold and the item is not dead stock",
+      note: "The slow-moving threshold is a classification policy, not a reorder target.",
     },
     interpretation: {
-      good:     "Slow movers < 10% of inventory value. Ordering cadence is well-calibrated.",
-      warning:  "10–25% slow movers. Review purchase orders — over-ordering or demand drop. Explore promotional discounts.",
-      critical: "> 25% slow movers. Systematic over-procurement or major demand shift. Reforecast all top slow movers immediately.",
-      tip:      "Set a reorder point for slow movers that targets 2–3 months of stock rather than the default 6-month buffer.",
+      good:     "Slow-moving exposure is currently below the selected review threshold.",
+      warning:  "Moderate slow-moving exposure detected. Possible causes may include over-ordering, lower demand, forecast changes, minimum-order quantities or obsolete requirements.",
+      critical: "High slow-moving exposure detected. Possible causes may include over-ordering, lower demand, forecast changes, minimum-order quantities or obsolete requirements. Review affected items before taking action.",
+      tip:      "The slow-moving threshold is a classification policy, not a reorder target. Review demand, stock coverage and future requirements before changing replenishment settings.",
     },
     linkedKPIs: ["dead_stock", "inventory_value", "turnover_ratio"],
   },
-
   stockout_risk: {
     key: "stockout_risk",
     title: "Stockout Risk",
@@ -191,8 +221,8 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
     },
     interpretation: {
       good:     "CRITICAL count = 0. All SKUs have sufficient buffer above their lead time.",
-      warning:  "1–5 CRITICAL SKUs. Place emergency purchase orders immediately for those items.",
-      critical: "6+ CRITICAL SKUs or any A-class item at risk. Potential production stoppage or revenue loss.",
+      warning:  "1-5 CRITICAL SKUs. Review replenishment parameters, demand assumptions and recent purchasing decisions for those items.",
+      critical: "6+ CRITICAL SKUs or any A-class item at risk. Potential production stoppage or annual consumption value loss.",
       tip:      "Safety stock formula: SS = Z-score × StdDev × √Lead Time. For 95% service level, Z = 1.65.",
     },
     linkedKPIs: ["reorder_count", "health_score"],
@@ -203,16 +233,16 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
     title: "ABC Analysis",
     tagline: "Pareto-based classification — focus effort where it drives the most value",
     definition:
-      "ABC Analysis applies the Pareto principle to inventory. SKUs are ranked by total revenue contribution and divided into three classes: A-items (top 70% of revenue), B-items (next 20%), and C-items (bottom 10%). This drives differentiated inventory policies — tighter control for A-items, lean buffers for C-items.",
+      "ABC Analysis applies the Pareto principle to inventory. SKUs are ranked by annual consumption value and divided into three classes: A-items (top 70% of annual consumption value), B-items (next 20%), and C-items (bottom 10%). This drives differentiated inventory policies — tighter control for A-items, lean buffers for C-items.",
     formula: [
-      { label: "SKU revenue contribution", expr: "SKU Revenue  =  Units Sold 30d  ×  12  ×  Unit Price  (annualised)" },
-      { label: "Sort descending",          expr: "Rank SKUs by SKU Revenue from highest → lowest" },
-      { label: "Cumulative %",             expr: "Cumulative %  =  Running Sum of Revenue  ÷  Total Revenue  ×  100" },
+      { label: "SKU annual consumption value contribution", expr: "SKU Annual Consumption Value  =  Units Sold 30d  ×  12  ×  Unit Price  (annualised)" },
+      { label: "Sort descending",          expr: "Rank SKUs by SKU Annual Consumption Value from highest → lowest" },
+      { label: "Cumulative %",             expr: "Cumulative %  =  Running Sum of Annual Consumption Value  ÷  Total Annual Consumption Value  ×  100" },
       { label: "Assign class",             expr: "A = cumulative ≤ 70%   |   B = 70% < cumulative ≤ 90%   |   C = cumulative > 90%" },
     ],
     fields: [
       { name: "units_sold_30d", description: "Monthly sales velocity — proxy for annual demand", required: true },
-      { name: "unit_price",     description: "Selling price per unit for revenue calculation",   required: true },
+      { name: "unit_price",     description: "Selling price per unit for annual consumption value calculation",   required: true },
       { name: "unit_cost",      description: "Used as fallback if unit_price is absent",         required: false },
     ],
     example: {
@@ -223,13 +253,13 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
         { label: "SKU Gamma — $2,000/yr  (cum: 96%)",  value: "→ C-class" },
         { label: "SKU Delta — $600/yr   (cum: 100%)",  value: "→ C-class" },
       ],
-      result: "1 A-item drives 53% of revenue; 1 B-item adds 30%; 2 C-items share 17%",
+      result: "1 A-item drives 53% of annual consumption value; 1 B-item adds 30%; 2 C-items share 17%",
       note: "A-class: never stockout, safety stock 2×. B-class: monthly review. C-class: lean JIT ordering.",
     },
     interpretation: {
-      good:     "A-items represent 60–80% of revenue with ≤ 20% of SKUs — healthy Pareto split.",
-      warning:  "A-items < 50% of revenue or > 30% of SKUs — demand may be fragmented or pricing needs review.",
-      critical: "No clear concentration — all items generate similar revenue. ABC loses its value; re-examine product mix.",
+      good:     "A-items represent 60–80% of annual consumption value with ≤ 20% of SKUs — healthy Pareto split.",
+      warning:  "A-items < 50% of annual consumption value or > 30% of SKUs — demand may be fragmented or pricing needs review.",
+      critical: "No clear concentration — all items generate similar annual consumption value. ABC loses its value; re-examine product mix.",
       tip:      "Never let an A-class item reach stockout. Set minimum safety stock of 2× lead time for all A SKUs.",
     },
     linkedKPIs: ["inventory_value", "stockout_risk", "health_score"],
@@ -242,18 +272,18 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
     definition:
       "The Inventory Health Score is a weighted composite of four independent sub-scores, each measuring a critical dimension of inventory management quality. 100 = perfect health. The score is designed to surface the most important problem area at a glance and guide prioritised action.",
     formula: [
-      { label: "Dead Stock sub-score (30%)",  expr: "Dead Score  =  100 × (1 − Dead Stock Value ÷ Total Inventory Value)" },
-      { label: "Slow Mover sub-score (25%)",  expr: "Slow Score  =  100 × (1 − Slow Mover Value ÷ Total Inventory Value)" },
-      { label: "Stockout sub-score (30%)",    expr: "Stockout Score  =  100 × (1 − Stockout Risk Count ÷ Total SKUs)" },
-      { label: "ABC sub-score (15%)",         expr: "ABC Score  =  A-item Revenue %  (higher A-concentration = better)" },
-      { label: "Composite score",             expr: "Health Score  =  Dead×0.30 + Slow×0.25 + Stockout×0.30 + ABC×0.15" },
+      { label: "Dead Stock sub-score",       expr: "Dead Score = 100 - (dead_stock_pct x 2); weighted by active InventoryPolicy" },
+      { label: "Slow Mover sub-score",       expr: "Slow Score = 100 - (slow_mover_pct x 2); weighted by active InventoryPolicy" },
+      { label: "Stockout sub-score",         expr: "Stockout Score = 100 - (stockout_risk_pct x 2.5); weighted by active InventoryPolicy" },
+      { label: "ABC profile",                 expr: "Neutral/informational when its active weight is 0; normal Pareto concentration is not penalised" },
+      { label: "Composite score",             expr: "Health Score = sum(factor score x active InventoryPolicy weight); active weights must total 100%" },
     ],
     fields: [
       { name: "units_on_hand",    description: "Required for all sub-scores",              required: true },
       { name: "unit_cost",        description: "Required for value-based sub-scores",      required: true },
       { name: "units_sold_30d",   description: "Required for velocity and stockout",       required: true },
       { name: "lead_time_days",   description: "Required for stockout sub-score",          required: true },
-      { name: "unit_price",       description: "Required for ABC revenue classification",  required: false },
+      { name: "unit_cost",        description: "Cost basis for annual consumption value",       required: true },
     ],
     example: {
       context: "Portfolio with 200 SKUs, $500K inventory value",
@@ -261,8 +291,8 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
         { label: "Dead stock = 8% → Dead score",    value: "100 × (1 − 0.08) = 92" },
         { label: "Slow movers = 18% → Slow score",  value: "100 × (1 − 0.18) = 82" },
         { label: "12 SKUs at risk (6%) → Stk score", value: "100 × (1 − 0.06) = 94" },
-        { label: "A-items = 65% revenue → ABC score", value: "65" },
-        { label: "Composite",                        value: "92×0.30 + 82×0.25 + 94×0.30 + 65×0.15 = 85.9" },
+        { label: "ABC profile", value: "Informational only when active weight = 0" },
+        { label: "Composite",   value: "Use active InventoryPolicy weights; e.g. 84x0.30 + 78x0.25 + 85x0.45 = 83" },
       ],
       result: "Health Score: 86 / 100 — Good",
       note: "The slow mover sub-score (82) is the weakest link here — reducing slow movers would have the biggest impact.",
@@ -288,7 +318,8 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
       { label: "Dead stock penalty", expr: "Final Score  =  Ageing Score × (1 − dead_stock_pct × 0.5)" },
     ],
     fields: [
-      { name: "ageing_days",  description: "Days since the item entered the warehouse",   required: true },
+      { name: "ageing_days",  description: "Direct days since last movement when supplied", required: false },
+      { name: "last_movement_date", description: "Used to derive ageing days when direct ageing is not supplied", required: false },
       { name: "stock_qty",    description: "Quantity on hand for weighting by value",      required: true },
       { name: "unit_cost",    description: "Unit cost for value-weighted bucket scoring",  required: true },
     ],
@@ -316,75 +347,81 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
 
   recoverable_capital: {
     key: "recoverable_capital",
-    title: "Recoverable Capital",
-    tagline: "Cash you can unlock by liquidating dead and slow-moving stock",
+    title: "Estimated Recoverable Capital",
+    tagline: "Policy-based estimate of potentially recoverable value",
     definition:
-      "Recoverable Capital estimates the cash that could be freed by liquidating dead stock and reducing slow movers to optimal levels. It assumes a recovery rate based on item condition and market demand — dead stock at 30–50% of cost, slow movers at 60–80%. This is the actionable financial upside of an inventory optimisation programme.",
+      "Estimated Recoverable Capital is a policy-based estimate of value that may be recoverable from dead stock and slow-moving excess stock. It is subject to recovery-rate and target-coverage assumptions and should not be treated as guaranteed cash recovery.",
     formula: [
-      { label: "Dead stock recovery",     expr: "Dead Recovery  =  Dead Stock Value  ×  0.40  (40% liquidation rate)" },
-      { label: "Slow mover reduction",    expr: "Slow Recovery  =  Excess Slow Stock Value  ×  0.70  (70% recovery)" },
-      { label: "Recoverable capital",     expr: "Recoverable Capital  =  Dead Recovery + Slow Recovery" },
+      { label: "Non-performing inventory",       expr: "Non-Performing Inventory Value = Dead Stock Value + Slow-Moving Inventory Value" },
+      { label: "Estimated dead-stock recovery",  expr: "Dead Recovery = Dead Stock Value x active dead_stock_recovery_rate" },
+      { label: "Estimated slow-moving recovery", expr: "Slow Recovery = Slow-Moving Excess Value x active slow_moving_recovery_rate" },
+      { label: "Estimated recoverable capital", expr: "Estimated Recoverable Capital = Estimated Dead-Stock Recovery + Estimated Slow-Moving Excess Recovery" },
     ],
     fields: [
       { name: "units_on_hand",    description: "Stock quantities for excess calculation", required: true },
-      { name: "unit_cost",        description: "Cost basis for recovery rate calculation", required: true },
-      { name: "units_sold_30d",   description: "Velocity for excess stock calculation",   required: true },
+      { name: "unit_cost",        description: "Cost basis for recovery-rate calculation", required: true },
+      { name: "units_sold_30d",   description: "Units consumed, issued or sold during a typical 30-day period", required: true },
     ],
     example: {
-      context: "Dead stock: $20,000 | Slow mover excess: $35,000",
+      context: "Dead stock value and slow-moving excess value with active recovery-rate policy assumptions",
       steps: [
-        { label: "Dead stock recovery (40%)",    value: "$20,000 × 0.40 = $8,000" },
-        { label: "Slow mover recovery (70%)",    value: "$35,000 × 0.70 = $24,500" },
-        { label: "Total recoverable capital",    value: "$32,500" },
+        { label: "Non-performing inventory", value: "Dead Stock Value + Slow-Moving Inventory Value" },
+        { label: "Estimated dead-stock recovery", value: "Dead Stock Value x active recovery rate" },
+        { label: "Estimated slow-moving recovery", value: "Slow-Moving Excess Value x active recovery rate" },
       ],
-      result: "$32,500 could be freed — reducing working capital needs and improving cash flow",
-      note: "Actual recovery rate depends on product type, market conditions, and liquidation channel (eBay, returns, B-stock).",
+      result: "Estimated recovery is policy-based and subject to recovery-rate and excess-stock assumptions",
+      note: "Actual recovery depends on product condition, market demand, channel, supplier terms and execution.",
     },
     interpretation: {
-      good:     "Recoverable capital < 5% of total inventory value. Capital efficiency is high.",
-      warning:  "5–15% of total value recoverable. A focused 30-day liquidation push would meaningfully improve cash flow.",
-      critical: "> 15% of total value stuck in recoverable items. This represents a significant working capital inefficiency.",
-      tip:      "Run a structured liquidation sale, return-to-vendor negotiation, or B2B surplus sale for fastest capital recovery.",
+      good:     "Estimated recoverable capital is low relative to total inventory value.",
+      warning:  "Moderate estimated recoverable capital. Review affected items, recovery assumptions and replenishment settings.",
+      critical: "High estimated recoverable capital. This may indicate material non-performing inventory, subject to policy recovery assumptions.",
+      tip:      "Treat this as an estimate, not guaranteed cash. Validate recovery rates, excess-stock assumptions and item-level disposition options before acting.",
     },
     linkedKPIs: ["dead_stock", "slow_moving"],
   },
-
   turnover_ratio: {
     key: "turnover_ratio",
-    title: "Inventory Turnover Ratio",
-    tagline: "How many times your inventory is sold and replaced per year",
+    title: "Estimated Inventory Turnover",
+    tagline: "Snapshot estimate based on annualised consumption and current inventory value",
     definition:
-      "The inventory turnover ratio measures how efficiently inventory is being sold and replaced. A higher ratio means faster-moving stock and better capital utilisation. It is the primary efficiency benchmark for supply chain performance and the basis for Days of Inventory on Hand (DOH) calculations.",
+      "Estimated Inventory Turnover is a snapshot ratio based on annualised monthly usage and current inventory value. Interpret it against the company\'s own targets, historical trend and relevant industry context; fixed universal Good/Warning/Critical bands are not applied.",
     formula: [
-      { label: "Annual COGS (proxy)",  expr: "Annual COGS  =  Σ (Units Sold 30d × Unit Cost × 12)  for all SKUs" },
-      { label: "Turnover ratio",       expr: "Turnover Ratio  =  Annual COGS  ÷  Total Inventory Value" },
-      { label: "Days on hand",         expr: "Days of Inventory  =  365  ÷  Turnover Ratio" },
+      { label: "Annualised Consumption Cost", expr: "Annualised Consumption Cost = SUM(monthly_usage x 12 x unit_cost)" },
+      { label: "Current Inventory Value",     expr: "Current Inventory Value = SUM(stock_qty x unit_cost)" },
+      { label: "Estimated Inventory Turnover", expr: "Estimated Inventory Turnover = Annualised Consumption Cost / Current Inventory Value" },
+      { label: "Estimated Days of Inventory", expr: "Estimated Days of Inventory = 365 / Estimated Inventory Turnover" },
     ],
     fields: [
-      { name: "units_on_hand",    description: "Denominator — current inventory investment",   required: true },
-      { name: "unit_cost",        description: "For both COGS and inventory value calculation", required: true },
-      { name: "units_sold_30d",   description: "Monthly velocity for annualised COGS proxy",   required: true },
+      { name: "units_on_hand",    description: "Current stock quantity for inventory value", required: true },
+      { name: "unit_cost",        description: "Cost basis for consumption and inventory value", required: true },
+      { name: "units_sold_30d",   label: "Monthly Usage", description: "Units consumed, issued or sold during a typical 30-day period.", required: true },
     ],
     example: {
-      context: "Total inventory value $250,000 | Annual COGS $1,125,000",
+      context: "Current inventory snapshot with annualised consumption",
       steps: [
-        { label: "Annual COGS (monthly × 12)",  value: "$93,750 × 12 = $1,125,000" },
-        { label: "Total inventory value",        value: "$250,000" },
-        { label: "Turnover ratio",               value: "$1,125,000 ÷ $250,000 = 4.5×" },
-        { label: "Days of inventory",            value: "365 ÷ 4.5 = 81 days" },
+        { label: "Annualised Consumption Cost", value: "SUM(monthly_usage x 12 x unit_cost)" },
+        { label: "Current Inventory Value", value: "SUM(stock_qty x unit_cost)" },
+        { label: "Estimated Turnover", value: "Annualised Consumption Cost / Current Inventory Value" },
+        { label: "Estimated Days of Inventory", value: "365 / Estimated Turnover" },
       ],
-      result: "4.5× — exactly at US Manufacturing benchmark",
-      note: "Retail average is 8×; Electronics 5.5×. Compare your ratio to your industry benchmark on the Turnover page.",
+      result: "Estimated turnover should be interpreted against company targets, history and relevant context",
+      note: "Low turnover may indicate excess stock, slower demand, long replenishment cycles, strategic buffers or product-mix effects. Review supporting inventory records before concluding the cause.",
     },
     interpretation: {
-      good:     "≥ 6×: Strong. Inventory cycles quickly, capital works hard, storage costs are minimised.",
-      warning:  "3–6×: Average. In range for manufacturing but below retail norms. Room to optimise slow SKUs.",
-      critical: "< 3×: Weak. Inventory is turning very slowly — likely significant dead and slow-moving stock present.",
-      tip:      "Each 1× improvement in turnover on $500K inventory frees approximately $83K in working capital.",
+      good:     "Turnover is a snapshot estimate based on annualised consumption and current inventory value.",
+      warning:  "Compare turnover against company targets, historical trends and relevant industry context.",
+      critical: "Lower turnover may be associated with excess stock, slower demand, long replenishment cycles, strategic buffers or product-mix effects. Review supporting records before concluding the cause.",
+      tip:      "Improving turnover may reduce capital tied up in inventory, but the financial impact depends on demand, service requirements and the amount of inventory that can be safely reduced.",
+      labels: {
+        good: "Interpretation",
+        warning: "Context",
+        critical: "Possible Drivers",
+        tip: "Action",
+      },
     },
     linkedKPIs: ["inventory_value", "dead_stock", "slow_moving"],
   },
-
   reorder_count: {
     key: "reorder_count",
     title: "Reorder Count",
@@ -468,7 +505,8 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
       { label: "Value-weighted ageing days",  expr: "Avg Ageing Days  =  Σ (Ageing Days × Item Value)  ÷  Σ (Item Value)" },
     ],
     fields: [
-      { name: "ageing_days",  description: "Days in warehouse for each item",              required: true },
+      { name: "ageing_days",  description: "Direct days since last movement when supplied", required: false },
+      { name: "last_movement_date", description: "Used to derive ageing days when direct ageing is not supplied", required: false },
       { name: "stock_qty",    description: "Quantity on hand",                             required: true },
       { name: "unit_cost",    description: "Cost per unit for value-weighting",            required: true },
     ],
@@ -493,3 +531,10 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
     linkedKPIs: ["ageing_score", "blocked_capital"],
   },
 };
+
+
+
+
+
+
+

@@ -33,6 +33,7 @@ export type RiskScenario =
 
 export interface AnalyzedSKU extends InventoryRow {
   inventory_value: number;
+  annual_consumption_value?: number;
   stockout_risk_score: number;
   daily_velocity: number;
   days_stock_remaining: number;
@@ -46,7 +47,10 @@ export interface AnalyzedSKU extends InventoryRow {
   safety_stock: number;
   reorder_point_calc: number;
   days_since_last_sale: number;
-  urgency: "immediate" | "this_week" | "this_month" | null;
+  urgency: "immediate" | "this_week" | "this_month" | "planned" | null;
+  replenishment_status?: "STOCKED_OUT" | "CRITICAL" | "WATCH" | "HEALTHY";
+  dead_stock_method?: "movement_history" | "zero_usage_fallback";
+  slow_moving_excess_value?: number;
 }
 
 export interface HealthComponents {
@@ -91,7 +95,7 @@ export interface ReorderRecommendation {
   eoq: number;
   rop: number;
   days_until_stockout: number;
-  urgency: "immediate" | "this_week" | "this_month";
+  urgency: "immediate" | "this_week" | "this_month" | "planned";
   abc_class: ABCClass;
   unit_cost: number;
 }
@@ -109,6 +113,19 @@ export interface DashboardMetrics {
   stockout_risk_count: number;
   critical_stockout_count: number;
   recoverable_capital: number;
+  non_performing_inventory_value?: number;
+  estimated_dead_stock_recovery?: number;
+  estimated_slow_moving_recovery?: number;
+  estimated_days_inventory?: number;
+  annualised_consumption_cost?: number;
+  stocked_out_count?: number;
+  reorder_watch_count?: number;
+  reorder_urgency_counts?: {
+    immediate: number;
+    this_week: number;
+    this_month: number;
+    planned: number;
+  };
   turnover_ratio: number;
   reorder_count: number;
   total_skus: number;
@@ -153,6 +170,9 @@ export interface AgingItem {
 }
 
 export interface AgingMetrics {
+  has_ageing_data: boolean;
+  ageing_source?: "direct" | "last_movement_date" | "mixed" | "none";
+  invalid_movement_date_count?: number;
   total_items: number;
   total_value: number;
   buckets: AgingBucket[];
@@ -163,7 +183,7 @@ export interface AgingMetrics {
   blocked_capital: number;
   liquidation_opportunities: AgingItem[];
   avg_ageing_days: number;
-  ageing_health_score: number; // 0–100
+  ageing_health_score: number;
 }
 // ──────────────────────────────────────────────────────────────────────────────
 

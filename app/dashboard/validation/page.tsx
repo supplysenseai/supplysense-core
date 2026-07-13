@@ -9,7 +9,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TrustBadge } from "@/components/validation/TrustBadge";
 import { ScoreBreakdown } from "@/components/validation/ScoreBreakdown";
 import { formatCurrency, cn } from "@/lib/utils";
-import { KPI_DEFINITIONS, type KPIKey } from "@/lib/kpi-definitions";
+import { KPI_DEFINITIONS, getKPIReconciliationStatus, type KPIKey } from "@/lib/kpi-definitions";
 import {
   buildLiveCalculation,
   getDataLineage,
@@ -52,6 +52,10 @@ function KPIValidationPanel({
   const def = KPI_DEFINITIONS[kpiKey];
   const calc = buildLiveCalculation(kpiKey, metrics);
   const lineage = getDataLineage(kpiKey, detectedFields, activePolicy);
+  const missingAgeingData = ["ageing_score", "avg_ageing_days", "blocked_capital"].includes(kpiKey) && !metrics.aging_metrics?.has_ageing_data;
+  const statusLabel = missingAgeingData
+    ? "Review Required: movement-history or ageing data is required"
+    : getKPIReconciliationStatus(kpiKey);
 
   if (!def) return null;
 
@@ -77,8 +81,8 @@ function KPIValidationPanel({
       <div className="flex items-center gap-4 px-5 py-2.5 bg-white/2 border-b border-white/5 text-[10px] text-slate-500">
         <span><span className="text-slate-400 font-medium">{calc.totalRecords}</span> total records</span>
         <span><span className="text-slate-400 font-medium">{calc.includedRecords}</span> included in this KPI</span>
-        <span className="flex items-center gap-1 text-emerald-500">
-          <CheckCircle2 className="w-3 h-3" /> Verified
+        <span className={cn("flex items-center gap-1", missingAgeingData ? "text-amber-400" : "text-emerald-500")}>
+          {missingAgeingData ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />} {statusLabel}
         </span>
       </div>
 
@@ -179,6 +183,19 @@ function KPIValidationPanel({
                   </div>
                 </div>
               ))}
+              {kpiKey === "slow_moving" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-[#6366f1]/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[9px] font-bold text-[#818cf8]">{def.formula.length + 1}</span>
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-400">Active Slow-Moving Threshold</span>
+                  </div>
+                  <div className="ml-7 p-3 rounded-lg bg-[#020617] border border-white/8 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
+                    {metrics.active_policy?.policy.slow_moving_days ?? 180} days
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -204,7 +221,7 @@ function KPIValidationPanel({
                 {lineage.fields.map((f) => (
                   <div key={f.columnName} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/2 border border-white/5">
                     <code className="text-[10px] font-mono text-[#818cf8] bg-[#6366f1]/10 px-1.5 py-0.5 rounded flex-shrink-0">
-                      {f.columnName}
+                      {f.displayName ?? f.columnName}
                     </code>
                     <span className="text-xs text-slate-400 flex-1">{f.role}</span>
                     <span className={cn(
@@ -229,7 +246,7 @@ function KPIValidationPanel({
                     <div key={pf.field} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white/2 border border-white/5">
                       <span className="text-xs text-slate-400">{pf.field}</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-white tabular-nums">{pf.value}{String(pf.value).includes("%") ? "" : " days"}</span>
+                        <span className="text-xs font-semibold text-white tabular-nums">{pf.value}</span>
                         <span className={cn(
                           "text-[9px] font-medium px-1.5 py-0.5 rounded-full border",
                           pf.source === "file"   ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
@@ -332,7 +349,7 @@ export default function ValidationPage() {
               <p className="text-xs text-slate-400 leading-relaxed">
                 <span className="text-white font-semibold">All analytics are generated directly from your uploaded data</span> and can be independently verified through this Validation Mode.
                 Select any KPI below to see its live calculation, exact formula, source columns, and the specific records that contribute to each figure.
-                No estimates, benchmarks, or generated assumptions are used unless explicitly stated.
+                Estimates, annualisation, and policy assumptions are labelled on each KPI when they are used.
               </p>
             </div>
 
@@ -454,9 +471,9 @@ export default function ValidationPage() {
                 <div className="mt-4 rounded-xl border border-white/8 p-4 space-y-2.5" style={{ background: "#0f172a" }}>
                   <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Validation Status</p>
                   {[
-                    { label: "Calculations based on uploaded data only",   pass: true },
-                    { label: "No external data sources or estimates used", pass: true },
-                    { label: "Formula library fully documented",           pass: true },
+                    { label: "Displayed formulas reconcile to the shared analyzer", pass: true },
+                    { label: "Assumptions are labelled per KPI",                    pass: true },
+                    { label: "Formula library documents active policy values",      pass: true },
                     { label: "Active policy thresholds visible",           pass: !!activePolicy },
                     { label: "Per-record supporting data available",       pass: !!metrics },
                     { label: "Step-by-step calculations traceable",        pass: !!metrics },

@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { KPIInfoTrigger } from "@/components/dashboard/KPIInfoModal";
 import { getHealthColor, getHealthLabel } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/types";
+import { getHealthScoreContributions } from "@/lib/health-score";
 
 const STATUS_CONFIG = {
   Excellent: { icon: CheckCircle2, color: "#10b981", bg: "bg-emerald-500/10", border: "border-emerald-500/20", text: "text-emerald-400" },
@@ -14,13 +15,6 @@ const STATUS_CONFIG = {
   Fair:      { icon: AlertTriangle,color: "#f59e0b", bg: "bg-amber-500/10",   border: "border-amber-500/20",   text: "text-amber-400"   },
   Poor:      { icon: XCircle,      color: "#ef4444", bg: "bg-red-500/10",     border: "border-red-500/20",     text: "text-red-400"     },
 };
-
-const FACTOR_CONFIG = [
-  { key: "dead_stock_score",  pctKey: "dead_stock_pct",     label: "Dead Stock",    weight: 30, goodThreshold: 10,  desc: "% of SKUs with zero movement — lower is better." },
-  { key: "slow_mover_score",  pctKey: "slow_mover_pct",     label: "Slow Movers",   weight: 25, goodThreshold: 20,  desc: "% of SKUs moving below optimal velocity." },
-  { key: "stockout_score",    pctKey: "stockout_risk_pct",  label: "Stockout Risk", weight: 30, goodThreshold: 10,  desc: "% of SKUs at risk of running out of stock." },
-  { key: "abc_score",         pctKey: "a_item_revenue_pct", label: "ABC Quality",   weight: 15, goodThreshold: 999, desc: "Revenue concentration in A-class items — higher is better." },
-];
 
 function ScoreGauge({ score, color }: { score: number; color: string }) {
   const data = [{ value: score, fill: color }, { value: 100 - score, fill: "rgba(255,255,255,0.04)" }];
@@ -77,13 +71,7 @@ export default function HealthScorePage() {
   const label  = getHealthLabel(metrics.health_score);
   const cfg    = STATUS_CONFIG[label];
   const Icon   = cfg.icon;
-  const hc     = metrics.health_components;
-
-  const factors = FACTOR_CONFIG.map((f) => ({
-    ...f,
-    score: hc[f.key as keyof typeof hc] as number,
-    pct:   hc[f.pctKey as keyof typeof hc] as number,
-  }));
+  const factors = getHealthScoreContributions(metrics);
 
   return (
     <div className="flex h-screen bg-[#020617] ss-page overflow-hidden">
@@ -180,21 +168,20 @@ export default function HealthScorePage() {
                 </span>
               </div>
               {factors.map((f) => {
-                const fc = f.score >= 80 ? "#10b981" : f.score >= 60 ? "#3b82f6" : f.score >= 40 ? "#f59e0b" : "#ef4444";
-                const contribution = Math.round(f.score * f.weight / 100);
-                const isGoodDirection = f.label === "ABC Quality"; // higher = better
-                const targetPct = f.label === "Dead Stock" ? 5 : f.label === "Slow Movers" ? 10 : f.label === "Stockout Risk" ? 5 : 70;
+                const fc = f.isNeutral ? "#94a3b8" : f.score >= 80 ? "#10b981" : f.score >= 60 ? "#3b82f6" : f.score >= 40 ? "#f59e0b" : "#ef4444";
                 const tips: Record<string, string> = {
                   "Dead Stock": "Liquidate zero-velocity SKUs. Even 30% recovery releases working capital and lowers holding costs.",
                   "Slow Movers": "Run targeted promotions or halt replenishment orders to reduce excess stock without write-offs.",
-                  "Stockout Risk": "Raise purchase orders immediately for CRITICAL items. A-class stockouts cause the highest revenue loss.",
-                  "ABC Quality": "Ensure A-class items have maximum service levels and never stock out — they drive the majority of revenue.",
+                  "Stockout Risk": "Review replenishment parameters, demand assumptions and recent purchasing decisions for CRITICAL items.",
+                  "ABC Profile": "Treat ABC as segmentation context. A normal Pareto curve is not inherently unhealthy.",
+                  "ABC Quality": "Ensure A-class items have maximum service levels and never stock out; they drive the majority of value.",
                 };
                 const benchmarks: Record<string, string> = {
                   "Dead Stock": "Target < 5% of portfolio",
                   "Slow Movers": "Target < 10% of portfolio",
                   "Stockout Risk": "Target < 5% of portfolio",
-                  "ABC Quality": "Target > 65% revenue from A-items",
+                  "ABC Profile": "Informational only",
+                  "ABC Quality": "Target > 65% value from A-items",
                 };
                 return (
                   <div key={f.label} className="space-y-3 pb-5 border-b border-white/5 last:border-0 last:pb-0">
@@ -205,14 +192,14 @@ export default function HealthScorePage() {
                           <span className="text-sm font-semibold text-white">{f.label}</span>
                           <span className="text-[10px] text-slate-600 bg-white/5 px-1.5 py-0.5 rounded">Weight {f.weight}%</span>
                           <span className="text-[10px]" style={{ color: fc }}>
-                            {f.score >= 80 ? "Excellent" : f.score >= 60 ? "Good" : f.score >= 40 ? "Fair" : "Poor"}
+                            {f.isNeutral ? "Neutral" : f.score >= 80 ? "Excellent" : f.score >= 60 ? "Good" : f.score >= 40 ? "Fair" : "Poor"}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500">{f.desc}</p>
+                        <p className="text-[11px] text-slate-500">{f.detail}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="text-2xl font-bold tabular-nums" style={{ color: fc }}>{f.score}</div>
-                        <div className="text-[10px] text-slate-600">/100</div>
+                        <div className="text-2xl font-bold tabular-nums" style={{ color: fc }}>{f.isNeutral ? "Neutral" : f.score}</div>
+                        <div className="text-[10px] text-slate-600">{f.isNeutral ? "info" : "/100"}</div>
                       </div>
                     </div>
 
@@ -227,7 +214,7 @@ export default function HealthScorePage() {
                       <div className="bg-white/3 rounded-lg px-3 py-2">
                         <p className="text-[10px] text-slate-600 mb-0.5">Current</p>
                         <p className="text-xs font-semibold" style={{ color: fc }}>
-                          {f.pct}{isGoodDirection ? "%" : "%"} of SKUs
+                          {f.pctLabel}
                         </p>
                       </div>
                       <div className="bg-white/3 rounded-lg px-3 py-2">
@@ -236,12 +223,12 @@ export default function HealthScorePage() {
                       </div>
                       <div className="bg-white/3 rounded-lg px-3 py-2">
                         <p className="text-[10px] text-slate-600 mb-0.5">Contribution</p>
-                        <p className="text-xs font-semibold text-[#818cf8]">+{contribution} pts to score</p>
+                        <p className="text-xs font-semibold text-[#818cf8]">+{f.displayedContribution} pts to score</p>
                       </div>
                     </div>
 
                     {/* Improvement tip */}
-                    {f.score < 80 && (
+                    {!f.isNeutral && f.score < 80 && (
                       <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-white/2 border border-white/6">
                         <span className="text-[10px] font-semibold text-[#818cf8] flex-shrink-0 mt-0.5">Tip</span>
                         <p className="text-[11px] text-slate-500 leading-relaxed">{tips[f.label]}</p>
@@ -295,3 +282,8 @@ export default function HealthScorePage() {
     </div>
   );
 }
+
+
+
+
+

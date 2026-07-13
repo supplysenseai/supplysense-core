@@ -9,6 +9,7 @@ import { getHealthColor, getHealthLabel } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/types";
 import { openDrilldown } from "@/lib/drilldown";
 import { WhyDrawer } from "@/components/validation/WhyDrawer";
+import { getHealthScoreContributions } from "@/lib/health-score";
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -53,8 +54,9 @@ interface Factor {
   score: number;
   pct: number;
   pctLabel: string;
-  weight: string;
-  goodThreshold: number; // pct below this = good
+  weight: number;
+  contribution: number;
+  isNeutral: boolean;
 }
 
 // Segment stops on the score gauge (0-100 arc)
@@ -85,7 +87,7 @@ interface HealthScoreCardProps {
 }
 
 export function HealthScoreCard({ metrics }: HealthScoreCardProps) {
-  const { health_score, health_components, health_trend } = metrics;
+  const { health_score, health_trend } = metrics;
   const color  = getHealthColor(health_score);
   const status = getHealthLabel(health_score);
   const cfg    = STATUS_CONFIG[status];
@@ -109,44 +111,22 @@ export function HealthScoreCard({ metrics }: HealthScoreCardProps) {
     return () => { if (raf.current) cancelAnimationFrame(raf.current); };
   }, [health_score]);
 
-  const factors: Factor[] = [
-    {
-      label: "Dead Stock",
-      icon: Package,
-      score: health_components.dead_stock_score,
-      pct:   health_components.dead_stock_pct,
-      pctLabel: `${health_components.dead_stock_pct}% of SKUs`,
-      weight: "30%",
-      goodThreshold: 10,
-    },
-    {
-      label: "Slow Movers",
-      icon: RotateCcw,
-      score: health_components.slow_mover_score,
-      pct:   health_components.slow_mover_pct,
-      pctLabel: `${health_components.slow_mover_pct}% of SKUs`,
-      weight: "25%",
-      goodThreshold: 20,
-    },
-    {
-      label: "Stockout Risk",
-      icon: ShieldAlert,
-      score: health_components.stockout_score,
-      pct:   health_components.stockout_risk_pct,
-      pctLabel: `${health_components.stockout_risk_pct}% at risk`,
-      weight: "30%",
-      goodThreshold: 10,
-    },
-    {
-      label: "ABC Quality",
-      icon: BarChart3,
-      score: health_components.abc_score,
-      pct:   health_components.a_item_revenue_pct,
-      pctLabel: `A-items: ${health_components.a_item_revenue_pct}% rev`,
-      weight: "15%",
-      goodThreshold: 999, // always show as informational
-    },
-  ];
+  const iconByFactor = {
+    dead_stock: Package,
+    slow_moving: RotateCcw,
+    stockout_risk: ShieldAlert,
+    abc: BarChart3,
+  };
+  const factors: Factor[] = getHealthScoreContributions(metrics).map((row) => ({
+    label: row.label,
+    icon: iconByFactor[row.key],
+    score: row.score,
+    pct: row.pct,
+    pctLabel: row.pctLabel,
+    weight: row.weight,
+    contribution: row.displayedContribution,
+    isNeutral: row.isNeutral,
+  }));
 
   // Gauge arc path for needle position
   const needleAngle = scoreToAngle(health_score);
@@ -275,9 +255,9 @@ export function HealthScoreCard({ metrics }: HealthScoreCardProps) {
           <p className="text-[10px] text-[#818cf8]">click a row to drill through ↗</p>
         </div>
         {factors.map((f) => {
-          const factorColor = f.score >= 80 ? "#10b981" : f.score >= 60 ? "#3b82f6" : f.score >= 40 ? "#f59e0b" : "#ef4444";
+          const factorColor = f.isNeutral ? "#94a3b8" : f.score >= 80 ? "#10b981" : f.score >= 60 ? "#3b82f6" : f.score >= 40 ? "#f59e0b" : "#ef4444";
           const FIcon = f.icon;
-          const drillSegment = f.label as "Dead Stock" | "Slow Movers" | "Stockout Risk" | "ABC Quality";
+          const drillSegment = (f.isNeutral ? "ABC Quality" : f.label) as "Dead Stock" | "Slow Movers" | "Stockout Risk" | "ABC Quality";
           return (
             <div
               key={f.label}
@@ -289,9 +269,9 @@ export function HealthScoreCard({ metrics }: HealthScoreCardProps) {
                 <span className="text-[11px] text-slate-400 flex-1">{f.label}</span>
                 <span className="text-[10px] text-slate-600">{f.pctLabel}</span>
                 <span className="text-[11px] font-semibold tabular-nums ml-1" style={{ color: factorColor }}>
-                  {f.score}
+                  {f.isNeutral ? "Neutral" : f.score}
                 </span>
-                <span className="text-[10px] text-slate-600 w-6 text-right">{f.weight}</span>
+                <span className="text-[10px] text-slate-600 w-14 text-right">{f.weight}% | +{f.contribution}</span>
               </div>
               <div className="h-1.5 bg-white/6 rounded-full overflow-hidden">
                 <div

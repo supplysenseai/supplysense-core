@@ -9,14 +9,6 @@ import { formatCurrency } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/types";
 import { openDrilldown } from "@/lib/drilldown";
 
-// Industry benchmarks
-const BENCHMARKS = [
-  { industry: "US Manufacturing",    value: 4.5,  color: "#6366f1" },
-  { industry: "Wholesale / Distrib.", value: 6.2,  color: "#3b82f6" },
-  { industry: "Retail",              value: 8.0,  color: "#10b981" },
-  { industry: "Automotive Parts",    value: 3.8,  color: "#f59e0b" },
-  { industry: "Electronics",         value: 5.5,  color: "#0ea5e9" },
-];
 
 export default function TurnoverPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -48,15 +40,7 @@ export default function TurnoverPage() {
   );
 
   const tr = metrics.turnover_ratio;
-  const mfgBenchmark = 4.5;
-  const vsManufacturing = tr - mfgBenchmark;
-  const turnoverColor = tr >= 6 ? "#10b981" : tr >= 4 ? "#3b82f6" : tr >= 2 ? "#f59e0b" : "#ef4444";
-
-  // Benchmark chart data — your value + benchmarks
-  const benchmarkChartData = [
-    { name: "Your\nInventory", value: tr, isYours: true },
-    ...BENCHMARKS.map((b) => ({ name: b.industry, value: b.value, isYours: false, color: b.color })),
-  ].sort((a, b) => a.value - b.value);
+  const turnoverColor = "#94a3b8";
 
   // Cost breakdown data
   const carryingCost   = metrics.annual_carrying_cost;
@@ -92,13 +76,8 @@ export default function TurnoverPage() {
         : tr,
       color: "#f59e0b",
     },
-    {
-      label: "Match manufacturing benchmark",
-      action: `Reduce inventory by ${formatCurrency(Math.max(0, metrics.total_inventory_value - (tr > 0 ? (metrics.total_inventory_value * tr) / mfgBenchmark : 0)), true)}`,
-      saving: carryingCost * Math.max(0, (mfgBenchmark - tr) / mfgBenchmark),
-      newTurnover: Math.max(tr, mfgBenchmark),
-      color: "#6366f1",
-    },
+
+
   ];
 
   return (
@@ -148,7 +127,7 @@ export default function TurnoverPage() {
                   value: `${tr}×`,
                   sub: "per year",
                   color: turnoverColor,
-                  Icon: vsManufacturing > 0 ? TrendingUp : vsManufacturing < 0 ? TrendingDown : Minus,
+                  Icon: Minus,
                 },
                 {
                   label: "Days of Inventory",
@@ -165,11 +144,11 @@ export default function TurnoverPage() {
                   Icon: TrendingDown,
                 },
                 {
-                  label: "vs Mfg Benchmark",
-                  value: `${vsManufacturing >= 0 ? "+" : ""}${vsManufacturing.toFixed(1)}×`,
-                  sub: `Benchmark: ${mfgBenchmark}×`,
-                  color: vsManufacturing >= 0 ? "#10b981" : "#ef4444",
-                  Icon: vsManufacturing >= 0 ? TrendingUp : TrendingDown,
+                  label: "Interpretation Context",
+                  value: "Snapshot",
+                  sub: "Use company targets and trend",
+                  color: "#94a3b8",
+                  icon: Minus,
                 },
               ].map((stat) => (
                 <div key={stat.label} className="card-elevated p-4 text-center space-y-1">
@@ -179,51 +158,11 @@ export default function TurnoverPage() {
                 </div>
               ))}
             </div>
-
-            {/* DIO benchmark summary strip */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {[{ industry: "Your Inventory", dio: daysOfInventory, turnover: tr, yours: true }, ...BENCHMARKS.map(b => ({ industry: b.industry, dio: Math.round(365 / b.value), turnover: b.value, yours: false }))].map((b) => {
-                const better = b.yours ? false : daysOfInventory < b.dio;
-                const worse  = b.yours ? false : daysOfInventory > b.dio;
-                return (
-                  <div key={b.industry} className={`card p-3 text-center ${b.yours ? "border-[#6366f1]/30 bg-[#6366f1]/5" : ""}`}>
-                    <p className="text-[10px] text-slate-500 truncate mb-1">{b.industry}</p>
-                    <p className={`text-lg font-bold tabular-nums ${b.yours ? "text-[#818cf8]" : better ? "text-emerald-400" : worse ? "text-red-400" : "text-slate-400"}`}>
-                      {b.dio}d
-                    </p>
-                    <p className="text-[10px] text-slate-600">{b.turnover.toFixed(1)}× turnover</p>
-                    {!b.yours && (
-                      <p className={`text-[10px] font-semibold mt-1 ${better ? "text-emerald-500" : worse ? "text-red-500" : "text-slate-500"}`}>
-                        {better ? `↑ ${daysOfInventory - b.dio}d better` : worse ? `↓ ${daysOfInventory - b.dio > 0 ? "+" : ""}${daysOfInventory - b.dio}d slower` : "On par"}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Industry benchmark bar chart */}
-            <div className="card p-6">
-              <p className="text-sm font-semibold text-white mb-1">Industry Benchmark Comparison</p>
-              <p className="text-[11px] text-slate-500 mb-5">Your turnover vs key industry averages. Reference line = US Manufacturing (4.5×).</p>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={benchmarkChartData} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 4 }}>
-                    <XAxis type="number" domain={[0, 10]} tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}×`} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={100} />
-                    <Tooltip
-                      contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, fontSize: 12 }}
-                      formatter={(v) => [`${Number(v).toFixed(1)}×`, "Turnover"]}
-                    />
-                    <ReferenceLine x={mfgBenchmark} stroke="rgba(99,102,241,0.4)" strokeDasharray="4 3" />
-                    <Bar dataKey="value" radius={[0,6,6,0]} maxBarSize={18}>
-                      {benchmarkChartData.map((d) => (
-                        <Cell key={d.name} fill={d.isYours ? turnoverColor : (d as { color?: string }).color ?? "#475569"} fillOpacity={d.isYours ? 1 : 0.6} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+            <div className="card p-5">
+              <p className="text-sm font-semibold text-white mb-1">Turnover Context</p>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Turnover is a snapshot estimate based on annualised consumption and current inventory value. Compare turnover against company targets, historical trends, relevant industry context, product category, service model, seasonality and business strategy.
+              </p>
             </div>
 
             {/* Carrying cost breakdown */}
@@ -290,12 +229,12 @@ export default function TurnoverPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[11px] text-slate-500 leading-relaxed">
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-slate-300">Formula</p>
-                  <p>Turnover = Annual COGS ÷ Average Inventory Value</p>
-                  <p className="text-slate-600">COGS approximated from monthly usage × unit cost × 12</p>
+                  <p>Estimated Inventory Turnover = Annualised Consumption Cost / Current Inventory Value</p>
+                  <p className="text-slate-600">Annualised Consumption Cost = SUM(monthly_usage x 12 x unit_cost)</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-slate-300">Days of Inventory</p>
-                  <p>Days = 365 ÷ Turnover Ratio</p>
+                  <p>Estimated Days of Inventory = 365 / Estimated Inventory Turnover</p>
                   <p className="text-slate-600">Represents the average time an item sits before being consumed or sold</p>
                 </div>
                 <div className="space-y-1">
@@ -311,7 +250,7 @@ export default function TurnoverPage() {
               <div>
                 <p className="text-sm font-semibold text-white">Supporting Data</p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Items dragging turnover below the benchmark — dead and slow-moving stock locked in your portfolio.
+                  Records that help explain the turnover snapshot. Review dead stock, slow-moving inventory, demand and replenishment context before concluding the cause.
                 </p>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -385,3 +324,7 @@ export default function TurnoverPage() {
     </div>
   );
 }
+
+
+
+

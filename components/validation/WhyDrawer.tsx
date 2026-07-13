@@ -3,7 +3,7 @@ import { useEffect, useCallback } from "react";
 import { X, ShieldCheck, Users, Zap, TrendingUp, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getWhyExplanation } from "@/lib/validation-engine";
-import type { KPIKey } from "@/lib/kpi-definitions";
+import { getKPIAssuranceText, type KPIKey } from "@/lib/kpi-definitions";
 import type { DashboardMetrics } from "@/lib/types";
 
 interface WhyDrawerProps {
@@ -123,7 +123,7 @@ export function WhyDrawer({ kpiKey, metrics, onClose }: WhyDrawerProps) {
                 {exp.confidence}
               </span>
               <p className="text-[11px] text-slate-600 mt-1.5 leading-snug">
-                Based solely on uploaded file data — no estimates
+                {kpiKey === "turnover_ratio" ? getKPIAssuranceText(kpiKey) : "Based solely on uploaded file data — no estimates"}
               </p>
             </div>
           </div>

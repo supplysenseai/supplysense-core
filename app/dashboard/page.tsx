@@ -21,6 +21,7 @@ import { TrustBadge } from "@/components/validation/TrustBadge";
 import { ScoreBreakdown } from "@/components/validation/ScoreBreakdown";
 import { formatCurrency, getHealthColor, getHealthLabel } from "@/lib/utils";
 import { isDemoMode, hasSessionData, clearSession } from "@/lib/demo-loader";
+import { DEMO_ANALYSIS_DATE } from "@/lib/demo-data";
 import { MODE_LABELS, MODE_DESCRIPTIONS } from "@/lib/analysis-detector";
 import { computeCompleteness } from "@/lib/data-completeness";
 import type { DashboardMetrics } from "@/lib/types";
@@ -73,6 +74,7 @@ function ReorderList({ metrics }: { metrics: DashboardMetrics }) {
     immediate: { bg: "bg-red-500/15", text: "text-red-300", border: "border-red-500/20", label: "Now" },
     this_week: { bg: "bg-amber-500/15", text: "text-amber-300", border: "border-amber-500/20", label: "This week" },
     this_month: { bg: "bg-blue-500/15", text: "text-blue-300", border: "border-blue-500/20", label: "This month" },
+    planned: { bg: "bg-slate-500/15", text: "text-slate-300", border: "border-slate-500/20", label: "Planned" },
   };
 
   return (
@@ -142,7 +144,7 @@ export default function DashboardPage() {
 
   // Bump this any time the analyzer logic changes so stale sessionStorage
   // is automatically invalidated and the user is prompted to re-upload.
-  const METRICS_VERSION = "4";
+  const METRICS_VERSION = "6";
 
   useEffect(() => {
     const auth = getAuth();
@@ -244,17 +246,19 @@ export default function DashboardPage() {
   const healthIconColor  = metrics.health_score >= 80 ? "text-emerald-400" : metrics.health_score >= 60 ? "text-blue-400" : metrics.health_score >= 40 ? "text-amber-400" : "text-red-400";
   const healthValueColor = healthIconColor;
   const aging = metrics.aging_metrics;
+  const hasAgingData = Boolean(aging?.has_ageing_data);
+  const displayDate = new Date(isDemo ? DEMO_ANALYSIS_DATE : Date.now());
 
   // ── Aging-specific KPI cards (Mode B) ───────────────────────────────────
   const AGING_KPI_CARDS = [
     {
       label: "Ageing Health Score",
-      value: `${aging?.ageing_health_score ?? 0}/100`,
+      value: hasAgingData ? `${aging?.ageing_health_score ?? 0}/100` : "N/A",
       icon: Zap,
       iconBg: "bg-white/5",
-      iconColor: (aging?.ageing_health_score ?? 0) >= 80 ? "text-emerald-400" : (aging?.ageing_health_score ?? 0) >= 60 ? "text-blue-400" : (aging?.ageing_health_score ?? 0) >= 40 ? "text-amber-400" : "text-red-400",
-      valueColor: (aging?.ageing_health_score ?? 0) >= 80 ? "text-emerald-400" : (aging?.ageing_health_score ?? 0) >= 60 ? "text-blue-400" : (aging?.ageing_health_score ?? 0) >= 40 ? "text-amber-400" : "text-red-400",
-      sub: "Based on ageing distribution",
+      iconColor: hasAgingData ? ((aging?.ageing_health_score ?? 0) >= 80 ? "text-emerald-400" : (aging?.ageing_health_score ?? 0) >= 60 ? "text-blue-400" : (aging?.ageing_health_score ?? 0) >= 40 ? "text-amber-400" : "text-red-400") : "text-slate-500",
+      valueColor: hasAgingData ? ((aging?.ageing_health_score ?? 0) >= 80 ? "text-emerald-400" : (aging?.ageing_health_score ?? 0) >= 60 ? "text-blue-400" : (aging?.ageing_health_score ?? 0) >= 40 ? "text-amber-400" : "text-red-400") : "text-slate-500",
+      sub: hasAgingData ? "Based on ageing distribution" : "Movement history required",
       kpiKey: "ageing_score" as const,
     },
     {
@@ -278,13 +282,13 @@ export default function DashboardPage() {
       kpiKey: "dead_stock" as const,
     },
     {
-      label: "Blocked Capital",
+      label: "Non-Performing Inventory",
       value: formatCurrency(aging?.blocked_capital ?? 0, true),
       icon: DollarSign,
       iconBg: "bg-orange-500/10",
       iconColor: "text-orange-400",
       valueColor: "text-orange-400",
-      sub: "Dead + slow moving stock",
+      sub: "Dead stock + slow-moving value",
       kpiKey: "blocked_capital" as const,
     },
     {
@@ -368,7 +372,7 @@ export default function DashboardPage() {
       iconBg: "bg-red-500/10",
       iconColor: "text-red-400",
       valueColor: metrics.stockout_risk_count > 0 ? "text-red-400" : "text-emerald-400",
-      sub: `items running out within 30 days`,
+      sub: "Expected to run out before replenishment arrives",
       delta: metrics.stockout_risk_count > 0 ? `⚠ ${metrics.stockout_risk_count} urgent` : undefined,
       kpiKey: "stockout_risk" as const,
     },
@@ -383,13 +387,13 @@ export default function DashboardPage() {
       kpiKey: "slow_moving" as const,
     },
     {
-      label: "Recoverable Capital",
+      label: "Estimated Recoverable Capital",
       value: formatCurrency(metrics.recoverable_capital, true),
       icon: DollarSign,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-400",
       valueColor: "text-emerald-400",
-      sub: "Unlock via liquidation",
+      sub: "Policy-based recovery estimate",
       kpiKey: "recoverable_capital" as const,
     },
     {
@@ -399,7 +403,7 @@ export default function DashboardPage() {
       iconBg: "bg-blue-500/10",
       iconColor: "text-blue-400",
       valueColor: "text-blue-400",
-      sub: "4.5× US mfg benchmark",
+      sub: "Snapshot estimate based on annualised consumption",
       kpiKey: "turnover_ratio" as const,
     },
     {
@@ -437,7 +441,7 @@ export default function DashboardPage() {
               )}
               <span className="text-[11px] text-slate-500 truncate">
                 {isDemo ? "Demo dataset" : filename} · {metrics.total_skus} SKUs ·{" "}
-                {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+                {displayDate.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
               </span>
             </div>
 
@@ -637,7 +641,7 @@ export default function DashboardPage() {
                   Inventory overview
                 </h1>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {isDemo ? "Demo Company" : filename.replace(/\.\w+$/, "")} · {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {metrics.total_skus} SKUs
+                  {isDemo ? "Demo Company" : filename.replace(/\.\w+$/, "")} · {displayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {metrics.total_skus} SKUs
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
@@ -725,3 +729,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

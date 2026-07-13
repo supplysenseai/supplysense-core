@@ -158,10 +158,10 @@ export function buildDrilldown(
   if (ctx.chart === "abc_distribution" || ctx.chart === "abc_pareto") {
     const items = allSkus.filter((i) => i.abc_class === ctx.segment);
     const label = ctx.segment === "A"
-      ? `A-Class — Top revenue drivers (${metrics.abc_summary.a_revenue_pct}% of revenue)`
+      ? `A-Class — Top annual-consumption items (${metrics.abc_summary.a_revenue_pct}% of annual consumption value)`
       : ctx.segment === "B"
-      ? `B-Class — Mid-tier items (${metrics.abc_summary.b_revenue_pct}% of revenue)`
-      : `C-Class — Low revenue items (${metrics.abc_summary.c_revenue_pct}% of revenue)`;
+      ? `B-Class — Mid-tier items (${metrics.abc_summary.b_revenue_pct}% of annual consumption value)`
+      : `C-Class — Low annual-consumption items (${metrics.abc_summary.c_revenue_pct}% of annual consumption value)`;
     return {
       title: `Class ${ctx.segment} Items`,
       subtitle: label,
@@ -183,13 +183,13 @@ export function buildDrilldown(
       subtitle = `${items.length} SKUs with zero movement — ${metrics.health_components.dead_stock_pct}% of portfolio`;
     } else if (ctx.segment === "Slow Movers") {
       items = allSkus.filter((i) => i.scenario === "SLOW");
-      subtitle = `${items.length} SKUs with > 6 months of stock on hand`;
+      subtitle = `${items.length} SKUs above the active slow-moving threshold`;
     } else if (ctx.segment === "Stockout Risk") {
       items = allSkus.filter((i) => i.scenario === "CRITICAL" || i.scenario === "WATCH");
       subtitle = `${items.length} SKUs below their reorder point`;
     } else {
       items = allSkus.filter((i) => i.abc_class === "A");
-      subtitle = `${items.length} A-class SKUs driving ${metrics.health_components.a_item_revenue_pct}% of revenue`;
+      subtitle = `${items.length} A-class SKUs driving ${metrics.health_components.a_item_revenue_pct}% of annual consumption value`;
     }
     return {
       title: `Health Factor: ${ctx.segment}`,
@@ -304,3 +304,4 @@ export function openDrilldown(ctx: DrillContext, metrics: DashboardMetrics) {
     "width=1100,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no"
   );
 }
+

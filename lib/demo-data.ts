@@ -1,8 +1,24 @@
 import type { InventoryRow } from "./types";
-import { analyzeInventory } from "./analyzer";
+import type { InventoryItem } from "./inventory-parser";
+import { analyzeInventoryItems } from "./inventory-analyzer";
+import { resolvePolicy } from "./policy";
 
-const TODAY = new Date(); // always relative to actual today
+export const DEMO_ANALYSIS_DATE = "2026-06-30T12:00:00.000Z";
+const TODAY = new Date(DEMO_ANALYSIS_DATE);
 const daysAgo = (n: number) => new Date(TODAY.getTime() - n * 86_400_000);
+
+function seededUnit(seed: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function seededInt(seed: number, min: number, max: number): number {
+  return min + Math.floor(seededUnit(seed) * (max - min + 1));
+}
+
+function seededPrice(seed: number, min: number, max: number): number {
+  return parseFloat((min + seededUnit(seed) * (max - min)).toFixed(2));
+}
 
 // 200-SKU manufacturing demo dataset covering all 7 business scenarios:
 // 1. Critical stockouts   2. Dead stock    3. Slow movers
@@ -140,7 +156,7 @@ const RAW_ROWS: InventoryRow[] = [
     unit_price: price as number,
     units_sold_30d: s30 as number,
     units_sold_90d: s90 as number,
-    last_sale_date: daysAgo(Math.floor(Math.random() * 10) + 1),
+    last_sale_date: daysAgo((i % 10) + 1),
     lead_time_days: lt as number,
     supplier_name: supp as string,
   })),
@@ -148,33 +164,65 @@ const RAW_ROWS: InventoryRow[] = [
   // ── SCENARIO 6: CLASS C — LONG TAIL (87 SKUs) ────────────────────────────
   ...(Array.from({ length: 87 }, (_, i) => {
     const id = i + 1;
-    const cost = parseFloat((Math.random() * 30 + 1).toFixed(2));
+    const seed = 60000 + id;
+    const cost = seededPrice(seed, 1, 31);
     const price = parseFloat((cost * 2).toFixed(2));
-    const s30 = Math.floor(Math.random() * 10) + 1;
-    const s90 = s30 * 3 + Math.floor(Math.random() * 5);
+    const s30 = seededInt(seed + 1, 1, 10);
+    const s90 = s30 * 3 + seededInt(seed + 2, 0, 4);
     return {
       sku_id: `SKU-60${String(id).padStart(3, "0")}`,
       product_name: `Component Part ${String(id).padStart(3, "0")}`,
       category: ["Fasteners", "Consumables", "Finishing", "Hardware", "Adhesives"][i % 5],
-      units_on_hand: Math.floor(Math.random() * 200) + 20,
+      units_on_hand: seededInt(seed + 3, 20, 219),
       unit_cost: cost,
       unit_price: price,
       units_sold_30d: s30,
       units_sold_90d: s90,
-      last_sale_date: daysAgo(Math.floor(Math.random() * 15) + 1),
-      lead_time_days: Math.floor(Math.random() * 12) + 5,
+      last_sale_date: daysAgo(seededInt(seed + 4, 1, 15)),
+      lead_time_days: seededInt(seed + 5, 5, 16),
       supplier_name: ["FastenAll Inc", "ToolMaster Inc", "PaintDepot LLC", "HandTools Direct", "AdhesiveTech Co"][i % 5],
     };
   })),
 ];
 
-let _cachedResult: ReturnType<typeof analyzeInventory> | null = null;
+const DEMO_FIELDS = [
+  "item_code",
+  "item_name",
+  "category",
+  "supplier",
+  "stock_qty",
+  "monthly_usage",
+  "unit_cost",
+  "lead_time",
+  "last_movement_date",
+];
+
+function toInventoryItems(rows: InventoryRow[]): InventoryItem[] {
+  return rows.map((row) => ({
+    item_code: row.sku_id,
+    item_name: row.product_name,
+    category: row.category,
+    supplier: row.supplier_name ?? "",
+    stock_qty: row.units_on_hand,
+    monthly_usage: row.units_sold_30d,
+    unit_cost: row.unit_cost,
+    lead_time: row.lead_time_days / 30,
+    last_movement_date: row.last_sale_date ? row.last_sale_date.toISOString().slice(0, 10) : undefined,
+  }));
+}
+
+let _cachedResult: ReturnType<typeof analyzeInventoryItems> | null = null;
 
 export function getDemoData() {
   if (!_cachedResult) {
-    _cachedResult = analyzeInventory(RAW_ROWS);
+    _cachedResult = analyzeInventoryItems(toInventoryItems(RAW_ROWS), DEMO_FIELDS, resolvePolicy(), { analysisDate: DEMO_ANALYSIS_DATE });
   }
   return _cachedResult;
 }
 
+export function getDemoInventoryItems(): InventoryItem[] {
+  return toInventoryItems(RAW_ROWS);
+}
+
+export { DEMO_FIELDS };
 export { RAW_ROWS };

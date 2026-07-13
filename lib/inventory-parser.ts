@@ -176,6 +176,15 @@ const POLICY_ALIASES: Record<keyof InventoryPolicy, string[]> = {
   weight_stockout_risk: [
     "weight stockout risk", "stockout risk weight", "weight_stockout_risk",
   ],
+  dead_stock_recovery_rate: [
+    "dead stock recovery rate", "dead_stock_recovery_rate", "dead recovery %",
+  ],
+  slow_moving_recovery_rate: [
+    "slow moving recovery rate", "slow_moving_recovery_rate", "slow recovery %",
+  ],
+  target_coverage_months: [
+    "target coverage months", "target_coverage_months", "target stock months",
+  ],
 };
 
 /**
@@ -511,31 +520,33 @@ export async function parseInventoryFile(file: File): Promise<ParseResult> {
 
     if (presentCanonicals.has("last_movement_date")) {
       const rawDate = getRaw(row, "last_movement_date");
+      const applyParsedMovementDate = (parsed: Date) => {
+        if (Number.isNaN(parsed.getTime())) {
+          warnings.push({ code: "W11", row: rowNum, message: `Row ${rowNum}: Last Movement Date for "${item_code}" could not be parsed. Review required for ageing analysis.`, severity: "warning" });
+          flagged++;
+          return;
+        }
+        if (parsed.getTime() > Date.now()) {
+          warnings.push({ code: "W12", row: rowNum, message: `Row ${rowNum}: Last Movement Date for "${item_code}" is in the future. Review required for ageing analysis.`, severity: "warning" });
+          flagged++;
+          return;
+        }
+        last_movement_date = parsed.toISOString().split("T")[0];
+        if (ageing_days === undefined) {
+          const diffMs = Date.now() - parsed.getTime();
+          ageing_days = Math.floor(diffMs / 86_400_000);
+        }
+      };
+
       if (rawDate instanceof Date) {
-        last_movement_date = rawDate.toISOString().split("T")[0];
-        if (ageing_days === undefined) {
-          const diffMs = Date.now() - rawDate.getTime();
-          ageing_days = Math.max(0, Math.round(diffMs / 86_400_000));
-        }
+        applyParsedMovementDate(rawDate);
       } else if (typeof rawDate === "string" && rawDate.trim() !== "") {
-        last_movement_date = rawDate.trim();
-        if (ageing_days === undefined) {
-          const parsed = new Date(rawDate);
-          if (!isNaN(parsed.getTime())) {
-            const diffMs = Date.now() - parsed.getTime();
-            ageing_days = Math.max(0, Math.round(diffMs / 86_400_000));
-          }
-        }
+        applyParsedMovementDate(new Date(rawDate));
       } else if (typeof rawDate === "number" && rawDate > 1000) {
         // Excel serial date
         try {
           const d = XLSX.SSF.parse_date_code(rawDate);
-          const parsed = new Date(d.y, d.m - 1, d.d);
-          last_movement_date = parsed.toISOString().split("T")[0];
-          if (ageing_days === undefined) {
-            const diffMs = Date.now() - parsed.getTime();
-            ageing_days = Math.max(0, Math.round(diffMs / 86_400_000));
-          }
+          applyParsedMovementDate(new Date(d.y, d.m - 1, d.d));
         } catch { /* ignore bad date */ }
       }
     }

@@ -111,7 +111,7 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
   const overviewHeadlines: Record<string, string> = {
     Excellent: "Inventory operations are performing at a high standard across all key metrics.",
     Good:      "Inventory health is solid with targeted improvement opportunities identified.",
-    Fair:      "Inventory performance is below benchmark — structural issues require near-term resolution.",
+    Fair:      "Inventory performance is below the selected review standard — structural issues require near-term resolution.",
     Poor:      "Inventory health is critically impaired. Immediate executive intervention is warranted.",
   };
 
@@ -129,7 +129,7 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
     risks.push({
       severity: "critical",
       title: `${critical_stockout_count} SKU${critical_stockout_count > 1 ? "s" : ""} facing imminent stockout`,
-      detail: `${critical_stockout_count} item${critical_stockout_count > 1 ? "s are" : " is"} projected to reach zero stock before the next replenishment cycle completes. ${topStockout ? `"${topStockout.product_name}" (${topStockout.abc_class}-class) has the highest exposure at ${Math.floor(topStockout.days_stock_remaining)}d remaining — below its ${topStockout.lead_time_days}d lead time.` : ""} Revenue continuity and customer service levels are at risk.`,
+      detail: `${critical_stockout_count} item${critical_stockout_count > 1 ? "s are" : " is"} projected to reach zero stock before the next replenishment cycle completes. ${topStockout ? `"${topStockout.product_name}" (${topStockout.abc_class}-class) has the highest exposure at ${Math.floor(topStockout.days_stock_remaining)}d remaining — below its ${topStockout.lead_time_days}d lead time.` : ""} Fulfilment continuity may be at risk based on current usage and lead time.`,
       affected_skus: critical_stockout_count,
       financial_exposure: top_risk_items
         .filter(r => r.scenario === "CRITICAL")
@@ -142,7 +142,7 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
     risks.push({
       severity: "high",
       title: `${watchCount} additional SKU${watchCount > 1 ? "s" : ""} approaching reorder threshold`,
-      detail: `Beyond the critical tier, ${watchCount} SKU${watchCount > 1 ? "s are" : " is"} within 1.5× lead-time coverage. Without proactive purchasing action this week, these items will escalate to critical status. ${reorder_count > 0 ? `${reorder_count} purchase order${reorder_count > 1 ? "s" : ""} are currently overdue.` : ""}`,
+      detail: `Beyond the critical tier, ${watchCount} SKU${watchCount > 1 ? "s are" : " is"} within 1.5× lead-time coverage. Without proactive purchasing action this week, these items will escalate to critical status. ${reorder_count > 0 ? `${reorder_count} reorder action${reorder_count > 1 ? "s" : ""} are currently flagged by policy.` : ""}`,
       affected_skus: watchCount,
       financial_exposure: 0,
     });
@@ -153,7 +153,7 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
     risks.push({
       severity: dead_stock_value > total_inventory_value * 0.15 ? "high" : "medium",
       title: `${dead_stock_count} dead-stock SKU${dead_stock_count > 1 ? "s" : ""} consuming ${$(dead_stock_value)} in capital`,
-      detail: `${dead_stock_count} item${dead_stock_count > 1 ? "s have" : " has"} recorded zero consumption for over ${deadStockDays} days and ${dead_stock_count > 1 ? "are" : "is"} classified as dead stock. ${deadPct}% of the portfolio is affected, generating no revenue while incurring an estimated ${$(dead_stock_carrying_cost)} per year in holding costs. Without liquidation or write-off action, this figure compounds annually.`,
+      detail: `${dead_stock_count} item${dead_stock_count > 1 ? "s have" : " has"} recorded zero consumption for over ${deadStockDays} days and ${dead_stock_count > 1 ? "are" : "is"} classified as dead stock. ${deadPct}% of the portfolio is affected, showing no recorded usage while incurring an estimated ${$(dead_stock_carrying_cost)} per year in holding costs. Without liquidation or write-off action, this figure compounds annually.`,
       affected_skus: dead_stock_count,
       financial_exposure: dead_stock_value,
     });
@@ -174,7 +174,7 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
     risks.push({
       severity: "medium",
       title: "ABC distribution indicates sub-optimal stock prioritisation",
-      detail: `A-class items represent only ${abc_summary.a_revenue_pct}% of inventory value against an expected 70%+ in a well-balanced Pareto distribution. This suggests over-stocking of low-value SKUs relative to revenue drivers, diluting service levels where they matter most.`,
+      detail: `A-class items represent ${abc_summary.a_revenue_pct}% of annual consumption value. Review whether replenishment attention matches this consumption concentration.`,
       affected_skus: abc_summary.a_count,
       financial_exposure: 0,
     });
@@ -192,14 +192,14 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
   }
 
   // ── 3. Financial Impact ───────────────────────────────────────────────────────
-  const annualRevenueAtRisk = top_risk_items
+  const annualConsumptionExposure = top_risk_items
     .filter(r => r.scenario === "CRITICAL")
     .reduce((s, r) => s + r.units_sold_30d * r.unit_price * 12, 0);
 
   const financialBody = buildFinancialBody(
     total_inventory_value, annual_carrying_cost, dead_stock_value,
     slow_mover_value, recoverable_capital, turnover_ratio,
-    annualRevenueAtRisk, dead_stock_carrying_cost
+    annualConsumptionExposure, dead_stock_carrying_cost
   );
 
   const financialMetrics = [
@@ -207,10 +207,10 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
     { label: "Annual Carrying Cost",    value: $(annual_carrying_cost),   sub: "25% holding rate" },
     { label: "Dead Stock Exposure",     value: $(dead_stock_value),       sub: `${$(dead_stock_carrying_cost)}/yr cost`, highlight: dead_stock_value > total_inventory_value * 0.10 },
     { label: "Slow Mover Exposure",     value: $(slow_mover_value),       sub: `${slowPct}% of portfolio`, highlight: slow_mover_value > total_inventory_value * 0.15 },
-    { label: "Recoverable Capital",     value: $(recoverable_capital),    sub: "via liquidation/action", highlight: recoverable_capital > 0 },
-    { label: "Inventory Turnover",      value: `${turnover_ratio}×`,      sub: "4.5× US mfg benchmark" },
-    ...(annualRevenueAtRisk > 0
-      ? [{ label: "Revenue at Stockout Risk", value: $(annualRevenueAtRisk), sub: "annualised", highlight: true }]
+    { label: "Recoverable Capital",     value: $(recoverable_capital),    sub: "policy-based estimate", highlight: recoverable_capital > 0 },
+    { label: "Inventory Turnover",      value: `${turnover_ratio}×`,      sub: "snapshot estimate; context dependent" },
+    ...(annualConsumptionExposure > 0
+      ? [{ label: "Annual Consumption Exposure", value: $(annualConsumptionExposure), sub: "annualised", highlight: true }]
       : []),
   ];
 
@@ -296,9 +296,9 @@ function buildOverviewBody(
   const recoverableStr = $(recoverable);
   const totalStr = $(totalValue);
   const opening: Record<string, string> = {
-    Excellent: `This inventory portfolio has ${recoverableStr} in recoverable capital and scores ${score}/100 — a strong result reflecting well-optimised stock levels, minimal waste, and high service availability.`,
-    Good:      `Analysis identified ${recoverableStr} in recoverable capital across a ${totalStr} portfolio scoring ${score}/100. Operations are generally sound with specific areas requiring targeted attention.`,
-    Fair:      `This ${totalStr} portfolio has ${recoverableStr} in recoverable capital currently tied up in inefficiencies — a direct drag on cash flow and working capital. The ${score}/100 health score reflects material gaps across multiple dimensions.`,
+    Excellent: `This inventory portfolio has ${recoverableStr} in estimated recoverable capital and scores ${score}/100 — a strong result reflecting well-optimised stock levels, minimal waste, and high service availability.`,
+    Good:      `Analysis identified ${recoverableStr} in estimated recoverable capital across a ${totalStr} portfolio scoring ${score}/100. Operations are generally sound with specific areas requiring targeted attention.`,
+    Fair:      `This ${totalStr} portfolio has ${recoverableStr} in estimated recoverable capital currently tied up in inefficiencies — a direct drag on cash flow and working capital. The ${score}/100 health score reflects material gaps across multiple dimensions.`,
     Poor:      `Immediate action is required: ${recoverableStr} in capital is locked in dead stock and slow movers within a ${totalStr} portfolio scoring ${score}/100. This level of inefficiency represents a systemic risk to operational continuity and balance sheet health.`,
   };
 
@@ -317,7 +317,7 @@ function buildOverviewBody(
     lines.push(`No dead stock, slow movers, or stockout risk has been identified. The portfolio is operating cleanly within defined thresholds.`);
   }
 
-  lines.push(`ABC classification shows ${aCount} A-class items accounting for ${aRevPct}% of inventory value. The inventory turnover ratio of ${turnover}× ${turnover >= 4.5 ? "meets or exceeds" : "trails"} the 4.5× U.S. manufacturing benchmark.`);
+  lines.push(`ABC classification shows ${aCount} A-class items accounting for ${aRevPct}% of inventory value. Inventory turnover of ${turnover}x is a snapshot estimate to interpret against company targets, history and relevant industry context.`);
 
   if (recoverable > 0) {
     lines.push(`An estimated ${$(recoverable)} in capital is recoverable through liquidation of dead stock and reduction of slow-mover excess — a direct lever for working capital improvement.`);
@@ -329,7 +329,7 @@ function buildOverviewBody(
 function buildFinancialBody(
   totalValue: number, carrying: number, deadValue: number,
   slowValue: number, recoverable: number, turnover: number,
-  revenueAtRisk: number, deadCarrying: number
+  consumptionExposure: number, deadCarrying: number
 ): string {
   const lines: string[] = [];
 
@@ -342,18 +342,14 @@ function buildFinancialBody(
   }
 
   if (recoverable > 0) {
-    lines.push(`Through targeted liquidation and demand-driven reorder reductions, management has the opportunity to recover up to ${$(recoverable)} in working capital in the near term.`);
+    lines.push(`Through targeted liquidation and demand-driven reorder reductions, management has the opportunity to potentially recover ${$(recoverable)} in working capital in the near term.`);
   }
 
-  if (revenueAtRisk > 0) {
-    lines.push(`Critical stockout conditions present an estimated ${$(revenueAtRisk)} in annualised revenue exposure, assuming current sales velocity across affected SKUs.`);
+  if (consumptionExposure > 0) {
+    lines.push(`Critical stockout conditions present an estimated ${$(consumptionExposure)} in annualised consumption exposure, based on current usage across affected SKUs.`);
   }
 
-  if (turnover < 4.5) {
-    lines.push(`An inventory turnover ratio of ${turnover}× against the 4.5× sector benchmark indicates excess stock relative to throughput, elevating both carrying costs and obsolescence risk.`);
-  } else {
-    lines.push(`The ${turnover}× inventory turnover ratio is at or above the 4.5× sector benchmark, reflecting efficient stock-to-sales conversion.`);
-  }
+  lines.push(`Inventory turnover of ${turnover}x is a snapshot estimate based on annualised consumption and current inventory value. Interpret it against company targets, historical trend and relevant industry context.`);
 
   return lines.join(" ");
 }
@@ -370,11 +366,11 @@ function buildActions(
   if (criticalCount > 0) {
     actions.push({
       priority: priority++,
-      action: `Issue emergency purchase orders for ${criticalCount} critical-stockout SKU${criticalCount > 1 ? "s" : ""}`,
-      rationale: `${criticalCount} item${criticalCount > 1 ? "s" : ""} will reach zero stock before the next replenishment cycle. Every day of delay increases stockout probability and potential lost-revenue impact.`,
+      action: `Review replenishment parameters for ${criticalCount} critical-stockout SKU${criticalCount > 1 ? "s" : ""}`,
+      rationale: `${criticalCount} item${criticalCount > 1 ? "s" : ""} will reach zero stock before the next replenishment cycle. Every day of delay increases stockout probability and potential fulfilment impact.`,
       timeline: "Immediate",
       owner: "Procurement",
-      estimated_impact: "Prevents revenue loss and protects customer service levels",
+      estimated_impact: "Reduces stockout exposure based on current usage and lead time",
     });
   }
 
@@ -393,10 +389,10 @@ function buildActions(
     actions.push({
       priority: priority++,
       action: `Initiate liquidation or write-off process for ${deadCount} dead-stock SKU${deadCount > 1 ? "s" : ""}`,
-      rationale: `${$(deadValue)} in zero-velocity inventory is accruing holding costs with no revenue offset. Liquidation via clearance channels, returns-to-vendor, or write-off will free both physical space and working capital.`,
+      rationale: `${$(deadValue)} in zero-velocity inventory is accruing holding costs with no recorded usage offset. Liquidation via clearance channels, returns-to-vendor, or write-off will free both physical space and working capital.`,
       timeline: "This month",
       owner: "Finance",
-      estimated_impact: `Up to ${$(recoverable)} in recovered working capital`,
+      estimated_impact: `Estimated ${$(recoverable)} recoverable under policy assumptions`,
     });
   }
 
@@ -404,7 +400,7 @@ function buildActions(
     actions.push({
       priority: priority++,
       action: `Deploy targeted promotions or reorder suspensions for ${slowCount} slow-moving SKU${slowCount > 1 ? "s" : ""}`,
-      rationale: "Items with more than 6 months of stock on hand are tying up capital and risking expiry or obsolescence. Promotional pricing or halting replenishment orders reduces excess without requiring write-offs.",
+      rationale: "Items above the active slow-moving threshold may be tying up capital. Review demand, stock coverage and future requirements before changing replenishment settings.",
       timeline: "This month",
       owner: "Operations",
       estimated_impact: "Reduces slow-mover carrying costs and improves turnover ratio",
@@ -414,34 +410,11 @@ function buildActions(
   if (abc.a_revenue_pct < 65) {
     actions.push({
       priority: priority++,
-      action: "Rebalance stock allocation toward A-class revenue drivers",
-      rationale: `A-items currently represent ${abc.a_revenue_pct}% of inventory value — below the 65–70% Pareto ideal. Redirecting procurement budget from C-class items to A-class inventory improves service levels on revenue-critical products.`,
+      action: "Rebalance stock allocation toward A-class annual-consumption drivers",
+      rationale: `A-items currently represent ${abc.a_revenue_pct}% of inventory value — below the 65–70% Pareto ideal. Redirecting procurement budget from C-class items to A-class inventory improves service levels on high-consumption products.`,
       timeline: "Next quarter",
       owner: "Supply Chain",
       estimated_impact: "Improves fill rates on high-value SKUs and ABC health score",
-    });
-  }
-
-  if (turnover < 3.5) {
-    actions.push({
-      priority: priority++,
-      action: "Commission a full inventory rationalisation review",
-      rationale: `An inventory turnover ratio of ${turnover}× is significantly below the 4.5× manufacturing benchmark. A structured SKU rationalisation — eliminating low-velocity, low-margin lines — will reduce working capital requirements and improve overall portfolio efficiency.`,
-      timeline: "Next quarter",
-      owner: "CEO",
-      estimated_impact: "Structural improvement to turnover ratio and carrying cost base",
-    });
-  }
-
-  // Fallback
-  if (actions.length === 0) {
-    actions.push({
-      priority: 1,
-      action: "Maintain current inventory management practices",
-      rationale: "All key metrics are within healthy thresholds. Focus on sustaining A-item service levels and monitoring velocity trends.",
-      timeline: "This month",
-      owner: "Supply Chain",
-      estimated_impact: "Preserves current health score and operational efficiency",
     });
   }
 
@@ -456,7 +429,7 @@ function buildAudienceNotes(
     ceo: [
       `Inventory health is rated ${status} at ${score}/100.`,
       recoverable > 0
-        ? `There is ${$(recoverable)} in recoverable capital that can be unlocked through structured liquidation and reorder discipline — a direct balance sheet improvement.`
+        ? `There is ${$(recoverable)} in estimated recoverable capital that can be unlocked through structured liquidation and reorder discipline — a direct balance sheet improvement.`
         : "No immediate capital recovery opportunities exist at this time.",
       score < 60
         ? "The breadth of issues identified suggests a systemic process gap. A cross-functional inventory governance review is recommended."
@@ -468,9 +441,9 @@ function buildAudienceNotes(
         ? `${critical} SKU${critical > 1 ? "s require" : " requires"} emergency replenishment action to protect service levels.`
         : "No critical stockout conditions are active.",
       reorders > 0
-        ? `${reorders} purchase order${reorders > 1 ? "s" : ""} should be raised or reviewed this week.`
+        ? `${reorders} replenishment recommendation${reorders > 1 ? "s" : ""} should be reviewed this week.`
         : "",
-      `Inventory turnover is ${turnover}× versus the 4.5× sector benchmark — ${turnover >= 4.5 ? "within target" : "below target, indicating excess stock accumulation"}.`,
+      `Inventory turnover is ${turnover}x, a snapshot estimate to compare against company targets and trend.`,
       dead > 0
         ? `${dead} dead-stock SKU${dead > 1 ? "s are" : " is"} a priority for space and cost recovery.`
         : "",
@@ -478,15 +451,20 @@ function buildAudienceNotes(
 
     procurement: [
       critical > 0
-        ? `Raise emergency POs for ${critical} critical SKU${critical > 1 ? "s" : ""} immediately. Do not await the standard review cycle.`
+        ? `Review replenishment parameters and recent purchasing decisions for ${critical} critical SKU${critical > 1 ? "s" : ""}.`
         : "No emergency purchasing is required at this time.",
       reorders > 0
         ? `Review EOQ-based reorder quantities for ${reorders} items flagged in the reorder queue.`
         : "",
       dead > 0
-        ? "Suspend replenishment orders for dead-stock SKUs and coordinate returns-to-vendor where contractually available."
+        ? "Pause replenishment for dead-stock SKUs where appropriate and review disposition options."
         : "",
-      "Align future purchase orders to the ABC classification — prioritise service levels for A-class items above all others.",
+      "Align replenishment parameters to the ABC classification and prioritise service levels for A-class items.",
     ].filter(Boolean).join(" "),
   };
 }
+
+
+
+
+

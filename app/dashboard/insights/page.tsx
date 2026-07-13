@@ -98,8 +98,8 @@ function CEOBrief({ metrics, summary, visible }: { metrics: DashboardMetrics; su
   const urgentRisks = summary.key_risks.filter(r => r.severity === "critical" || r.severity === "high");
   const ceoActions = summary.recommended_actions.slice(0, 4);
 
-  // Annualised revenue at risk from critical stockouts
-  const revenueAtRisk = metrics.top_risk_items
+  // Annualised consumption exposure from critical stockouts
+  const consumptionExposure = metrics.top_risk_items
     .filter(r => r.scenario === "CRITICAL")
     .reduce((s, r) => s + r.units_sold_30d * r.unit_price * 12, 0);
 
@@ -141,12 +141,12 @@ function CEOBrief({ metrics, summary, visible }: { metrics: DashboardMetrics; su
             <Tile label="Capital at Risk" value={formatCurrency(metrics.dead_stock_value + metrics.slow_mover_value, true)}
               sub={`${metrics.dead_stock_count + metrics.slow_mover_count} problem SKUs`}
               color="text-amber-400" bg="bg-amber-500/6" border="border-amber-500/15" icon={AlertTriangle} />
-            <Tile label="Recoverable" value={formatCurrency(metrics.recoverable_capital, true)}
-              sub="Via liquidation/action"
+            <Tile label="Est. Recovery" value={formatCurrency(metrics.recoverable_capital, true)}
+              sub="Policy assumption"
               color="text-emerald-400" bg="bg-emerald-500/6" border="border-emerald-500/15" icon={TrendingUp} />
             <Tile label="Annual Carry Cost" value={formatCurrency(metrics.annual_carrying_cost, true)}
               sub="25% holding rate / yr"
-              color={metrics.turnover_ratio < 4.5 ? "text-orange-400" : "text-slate-300"} icon={RotateCcw} />
+              color="text-slate-300" icon={RotateCcw} />
           </div>
         </div>
 
@@ -158,7 +158,7 @@ function CEOBrief({ metrics, summary, visible }: { metrics: DashboardMetrics; su
               <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Portfolio Composition</p>
               <div className="space-y-1.5">
                 <RiskRow label="Critical stockout risk" count={metrics.critical_stockout_count}
-                  value={revenueAtRisk > 0 ? formatCurrency(revenueAtRisk, true) + "/yr" : undefined}
+                  value={consumptionExposure > 0 ? formatCurrency(consumptionExposure, true) + "/yr" : undefined}
                   action="Immediate PO" color="text-red-400" dot="bg-red-400" />
                 <RiskRow label="Dead stock (zero velocity)" count={metrics.dead_stock_count}
                   value={formatCurrency(metrics.dead_stock_value, true)}
@@ -189,26 +189,29 @@ function CEOBrief({ metrics, summary, visible }: { metrics: DashboardMetrics; su
                 {
                   label: "Inventory Turnover",
                   value: `${metrics.turnover_ratio.toFixed(1)}×`,
-                  bench: "4.5× benchmark",
-                  good: metrics.turnover_ratio >= 4.5,
+                  bench: "snapshot estimate",
+                  good: false,
+                  tone: "neutral",
                 },
                 {
-                  label: "A-Class Value Share",
+                  label: "A-Class Consumption Share",
                   value: `${metrics.abc_summary.a_revenue_pct}%`,
                   bench: "65–70% target",
                   good: metrics.abc_summary.a_revenue_pct >= 65,
+                  tone: metrics.abc_summary.a_revenue_pct >= 65 ? "good" : "critical",
                 },
                 {
                   label: "Problem SKU Rate",
                   value: `${Math.round(((metrics.dead_stock_count + metrics.slow_mover_count) / metrics.total_skus) * 100)}%`,
                   bench: "<10% threshold",
                   good: (metrics.dead_stock_count + metrics.slow_mover_count) / metrics.total_skus < 0.10,
+                  tone: (metrics.dead_stock_count + metrics.slow_mover_count) / metrics.total_skus < 0.10 ? "good" : "critical",
                 },
               ].map(r => (
-                <div key={r.label} className={`px-3 py-2 rounded-lg border ${r.good ? "bg-emerald-500/5 border-emerald-500/15" : "bg-red-500/5 border-red-500/15"}`}>
+                <div key={r.label} className={`px-3 py-2 rounded-lg border ${r.tone === "neutral" ? "bg-white/3 border-white/8" : r.good ? "bg-emerald-500/5 border-emerald-500/15" : "bg-red-500/5 border-red-500/15"}`}>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-slate-500">{r.label}</span>
-                    <span className={`text-xs font-bold ${r.good ? "text-emerald-400" : "text-red-400"}`}>{r.value}</span>
+                    <span className={`text-xs font-bold ${r.tone === "neutral" ? "text-slate-300" : r.good ? "text-emerald-400" : "text-red-400"}`}>{r.value}</span>
                   </div>
                   <div className="text-[9px] text-slate-600 mt-0.5">{r.bench}</div>
                 </div>
@@ -267,22 +270,22 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
           <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2.5">Stock Alert Summary</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <Tile label="Critical Stockout" value={String(metrics.critical_stockout_count)}
-              sub="Need emergency PO"
+              sub="Lead-time critical"
               color={metrics.critical_stockout_count > 0 ? "text-red-400" : "text-emerald-400"}
               bg={metrics.critical_stockout_count > 0 ? "bg-red-500/8" : "bg-emerald-500/6"}
               border={metrics.critical_stockout_count > 0 ? "border-red-500/20" : "border-emerald-500/15"}
               icon={AlertTriangle} />
             <Tile label="At Reorder Point" value={String(metrics.reorder_count)}
-              sub="PO required this week"
+              sub="Policy reorder action"
               color={metrics.reorder_count > 0 ? "text-amber-400" : "text-slate-300"}
               bg={metrics.reorder_count > 0 ? "bg-amber-500/8" : "bg-white/4"}
               border={metrics.reorder_count > 0 ? "border-amber-500/20" : "border-white/8"}
               icon={ShoppingCart} />
             <Tile label="Inventory Turnover" value={`${metrics.turnover_ratio.toFixed(1)}×`}
-              sub={metrics.turnover_ratio >= 4.5 ? "✓ Above 4.5× benchmark" : "↓ Below 4.5× benchmark"}
-              color={metrics.turnover_ratio >= 4.5 ? "text-emerald-400" : "text-orange-400"}
-              bg={metrics.turnover_ratio >= 4.5 ? "bg-emerald-500/6" : "bg-orange-500/6"}
-              border={metrics.turnover_ratio >= 4.5 ? "border-emerald-500/15" : "border-orange-500/15"}
+              sub="Snapshot estimate; compare to company targets"
+              color="text-slate-300"
+              bg="bg-white/3"
+              border="border-white/8"
               icon={TrendingUp} />
             <Tile label="Dead Stock SKUs" value={String(metrics.dead_stock_count)}
               sub={`${formatCurrency(metrics.dead_stock_value, true)} tied up`}
@@ -301,7 +304,7 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Inventory Status by Category</p>
               <div className="space-y-1">
                 {[
-                  { label: "Critical (days < 30, active demand)", count: metrics.risk_distribution.critical, value: formatCurrency(metrics.top_risk_items.filter(s => s.scenario === "CRITICAL").reduce((a, s) => a + s.inventory_value, 0), true), action: "Emergency PO", color: "text-red-400", dot: "bg-red-400" },
+                  { label: "Critical (stock may run out before replenishment arrives)", count: metrics.risk_distribution.critical, value: formatCurrency(metrics.top_risk_items.filter(s => s.scenario === "CRITICAL").reduce((a, s) => a + s.inventory_value, 0), true), action: "Review replenishment", color: "text-red-400", dot: "bg-red-400" },
                   { label: "Watch (approaching reorder threshold)", count: metrics.risk_distribution.watch,    value: formatCurrency(metrics.top_risk_items.filter(s => s.scenario === "WATCH").reduce((a, s) => a + s.inventory_value, 0), true), action: "Review now", color: "text-orange-400", dot: "bg-orange-400" },
                   { label: "Slow moving (excess accumulation)",    count: metrics.risk_distribution.elevated, value: formatCurrency(metrics.slow_mover_value, true), action: "Suspend orders", color: "text-amber-400", dot: "bg-amber-400" },
                   { label: "Dead stock (zero velocity)",           count: metrics.risk_distribution.dead,     value: formatCurrency(metrics.dead_stock_value, true), action: "Liquidate", color: "text-purple-400", dot: "bg-purple-400" },
@@ -314,7 +317,7 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">ABC Classification</p>
               <div className="space-y-2">
                 {[
-                  { cls: "A", label: "High-value revenue drivers", count: metrics.abc_summary.a_count, pct: metrics.abc_summary.a_revenue_pct, target: 65, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15", note: "Prioritise service levels" },
+                  { cls: "A", label: "High annual-consumption items", count: metrics.abc_summary.a_count, pct: metrics.abc_summary.a_revenue_pct, target: 65, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15", note: "Prioritise service levels" },
                   { cls: "B", label: "Mid-tier items", count: metrics.abc_summary.b_count, pct: metrics.abc_summary.b_revenue_pct, target: null, color: "text-blue-400", bg: "bg-blue-500/8", border: "border-blue-500/15", note: "Standard replenishment" },
                   { cls: "C", label: "Low-value / tail items", count: metrics.abc_summary.c_count, pct: metrics.abc_summary.c_revenue_pct, target: null, color: "text-slate-400", bg: "bg-white/3", border: "border-white/8", note: "Minimise stock holding" },
                 ].map(a => (
@@ -338,7 +341,7 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <div className="mt-2 px-3 py-2 rounded-lg bg-white/3 border border-white/6">
                 <p className="text-[9px] text-slate-500 uppercase tracking-wider mb-1">Working Capital</p>
                 <div className="flex justify-between text-[10px]">
-                  <span className="text-slate-400">Recoverable capital</span>
+                  <span className="text-slate-400">Est. Recovery capital</span>
                   <span className="text-emerald-400 font-bold">{formatCurrency(metrics.recoverable_capital, true)}</span>
                 </div>
                 <div className="flex justify-between text-[10px]">
@@ -402,7 +405,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
             {metrics.critical_stockout_count > 0 && (
               <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/25 text-[10px] font-semibold text-red-400">
                 <AlertTriangle className="w-2.5 h-2.5" />
-                {metrics.critical_stockout_count} Emergency PO{metrics.critical_stockout_count > 1 ? "s" : ""} Required
+                {metrics.critical_stockout_count} Replenishment Review Required
               </span>
             )}
           </div>
@@ -412,7 +415,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
         <div className="px-5 py-3 border-b border-white/5">
           <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2.5">Purchasing Queue Status</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <Tile label="Emergency POs" value={String(metrics.critical_stockout_count)}
+            <Tile label="Replenishment Review" value={String(metrics.critical_stockout_count)}
               sub="Action today"
               color={metrics.critical_stockout_count > 0 ? "text-red-400" : "text-emerald-400"}
               bg={metrics.critical_stockout_count > 0 ? "bg-red-500/10" : "bg-emerald-500/6"}
@@ -533,7 +536,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">ABC Purchasing Priority</p>
               <div className="space-y-1.5">
                 {[
-                  { cls: "A", rule: "Maintain 100% service level — never allow stockout", count: metrics.abc_summary.a_count, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15" },
+                  { cls: "A", rule: "Prioritise review cadence and avoid lead-time stockout", count: metrics.abc_summary.a_count, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15" },
                   { cls: "B", rule: "Standard EOQ-based replenishment cycle", count: metrics.abc_summary.b_count, color: "text-blue-400", bg: "bg-blue-500/6", border: "border-blue-500/10" },
                   { cls: "C", rule: "Minimise — batch orders, consider discontinuing tail items", count: metrics.abc_summary.c_count, color: "text-slate-400", bg: "bg-white/3", border: "border-white/6" },
                 ].map(a => (
@@ -552,7 +555,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Budget & Capital Impact</p>
               <div className="grid grid-cols-2 gap-2 mb-2">
                 {[
-                  { label: "Capital freed (liquidation)", value: formatCurrency(metrics.recoverable_capital, true), color: "text-emerald-400", icon: TrendingUp },
+                  { label: "Estimated recovery", value: formatCurrency(metrics.recoverable_capital, true), color: "text-emerald-400", icon: TrendingUp },
                   { label: "Dead stock holding cost/yr",  value: formatCurrency(metrics.dead_stock_carrying_cost, true), color: "text-red-400", icon: TrendingDown },
                   { label: "Total inventory portfolio",   value: formatCurrency(metrics.total_inventory_value, true), color: "text-white", icon: DollarSign },
                   { label: "Annual holding cost",         value: formatCurrency(metrics.annual_carrying_cost, true), color: "text-orange-400", icon: Zap },
@@ -760,3 +763,7 @@ export default function InsightsPage() {
 }
 
 // ── Loading step animation ────────────────────────────────────────────────────
+
+
+
+

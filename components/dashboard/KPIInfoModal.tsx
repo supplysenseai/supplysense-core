@@ -3,10 +3,11 @@ import { useState, useEffect, useCallback } from "react";
 import { X, BookOpen, Database, FlaskConical, TrendingUp, ShieldCheck, ChevronRight, HelpCircle, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
-import { KPI_DEFINITIONS, type KPIKey } from "@/lib/kpi-definitions";
+import { KPI_DEFINITIONS, getKPIAssuranceText, getKPIInterpretationLabels, type KPIKey } from "@/lib/kpi-definitions";
 import { buildLiveCalculation, getDataLineage } from "@/lib/validation-engine";
 import { WhyDrawer } from "@/components/validation/WhyDrawer";
 import type { DashboardMetrics } from "@/lib/types";
+import { getHealthFormula, getHealthScoreContributions } from "@/lib/health-score";
 
 // ─── Supporting data builder ──────────────────────────────────────────────────
 
@@ -74,9 +75,9 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
     case "abc_analysis": {
       const { abc_summary: abc, total_skus } = metrics;
       return [
-        { label: "A-Class items", value: `${abc.a_count} SKUs (${Math.round((abc.a_count / total_skus) * 100)}%)`, sub: `Drive ${abc.a_revenue_pct}% of total revenue`, accent: "text-emerald-400" },
-        { label: "B-Class items", value: `${abc.b_count} SKUs (${Math.round((abc.b_count / total_skus) * 100)}%)`, sub: `Drive ${abc.b_revenue_pct}% of total revenue`, accent: "text-blue-400" },
-        { label: "C-Class items", value: `${abc.c_count} SKUs (${Math.round((abc.c_count / total_skus) * 100)}%)`, sub: `Drive ${abc.c_revenue_pct}% of total revenue`, accent: "text-indigo-400" },
+        { label: "A-Class items", value: `${abc.a_count} SKUs (${Math.round((abc.a_count / total_skus) * 100)}%)`, sub: `Drive ${abc.a_revenue_pct}% of annual consumption value`, accent: "text-emerald-400" },
+        { label: "B-Class items", value: `${abc.b_count} SKUs (${Math.round((abc.b_count / total_skus) * 100)}%)`, sub: `Drive ${abc.b_revenue_pct}% of annual consumption value`, accent: "text-blue-400" },
+        { label: "C-Class items", value: `${abc.c_count} SKUs (${Math.round((abc.c_count / total_skus) * 100)}%)`, sub: `Drive ${abc.c_revenue_pct}% of annual consumption value`, accent: "text-indigo-400" },
         ...[...metrics.top_risk_items]
           .filter((i) => i.abc_class === "A")
           .sort((a, b) => b.inventory_value - a.inventory_value)
@@ -90,16 +91,18 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
       ];
     }
     case "health_score": {
-      const hc = metrics.health_components;
+      const factors = getHealthScoreContributions(metrics);
       return [
-        { label: "Dead Stock Score (weight 30%)",   value: `${Math.round(hc.dead_stock_score)}/100`,  sub: `Dead stock is ${hc.dead_stock_pct.toFixed(1)}% of portfolio value`,  accent: hc.dead_stock_score >= 80 ? "text-emerald-400" : hc.dead_stock_score >= 60 ? "text-amber-400" : "text-red-400" },
-        { label: "Slow Mover Score (weight 25%)",   value: `${Math.round(hc.slow_mover_score)}/100`,  sub: `Slow movers are ${hc.slow_mover_pct.toFixed(1)}% of portfolio value`, accent: hc.slow_mover_score >= 80 ? "text-emerald-400" : hc.slow_mover_score >= 60 ? "text-amber-400" : "text-red-400" },
-        { label: "Stockout Score (weight 30%)",     value: `${Math.round(hc.stockout_score)}/100`,    sub: `${hc.stockout_risk_pct.toFixed(1)}% of SKUs at stockout risk`,       accent: hc.stockout_score >= 80 ? "text-emerald-400" : hc.stockout_score >= 60 ? "text-amber-400" : "text-red-400" },
-        { label: "ABC Score (weight 15%)",          value: `${Math.round(hc.abc_score)}/100`,         sub: `A-items drive ${hc.a_item_revenue_pct.toFixed(1)}% of revenue`,      accent: hc.abc_score >= 70 ? "text-emerald-400" : hc.abc_score >= 50 ? "text-amber-400" : "text-red-400" },
+        ...factors.map((factor) => ({
+          label: `${factor.label} Score (weight ${factor.weight}%)`,
+          value: factor.isNeutral ? "Neutral" : `${factor.score}/100`,
+          sub: `${factor.detail}; contribution +${factor.displayedContribution} pts`,
+          accent: factor.isNeutral ? "text-slate-400" : factor.score >= 80 ? "text-emerald-400" : factor.score >= 60 ? "text-amber-400" : "text-red-400",
+        })),
         {
           label: "Composite Health Score",
           value: `${metrics.health_score}/100`,
-          sub: `= Dead×0.30 + Slow×0.25 + Stockout×0.30 + ABC×0.15`,
+          sub: `= ${getHealthFormula(metrics)}`,
           accent: metrics.health_score >= 80 ? "text-emerald-400" : metrics.health_score >= 60 ? "text-blue-400" : metrics.health_score >= 40 ? "text-amber-400" : "text-red-400",
         },
       ];
@@ -107,6 +110,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
     case "ageing_score": {
       const aging = metrics.aging_metrics;
       if (!aging) return [{ label: "No ageing data", value: "—", sub: "Upload an ageing report to see this breakdown" }];
+      if (!aging.has_ageing_data) return [{ label: "Ageing Health Score", value: "Not Available", sub: "Movement-history or ageing data is required", accent: "text-slate-400" }];
       return [
         ...aging.buckets.map((b) => ({
           label: b.label,
@@ -155,6 +159,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
     case "avg_ageing_days": {
       const aging = metrics.aging_metrics;
       if (!aging) return [{ label: "No ageing data", value: "—", sub: "Upload an ageing report" }];
+      if (!aging.has_ageing_data) return [{ label: "Ageing Health Score", value: "Not Available", sub: "Movement-history or ageing data is required", accent: "text-slate-400" }];
       return aging.liquidation_opportunities.slice(0, 8).map((item) => ({
         label: item.item_name,
         value: `${item.ageing_days}d old`,
@@ -194,6 +199,7 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
   const supportRows = buildSupportingData(kpiKey, metrics);
   const liveCalc = buildLiveCalculation(kpiKey, metrics);
   const lineage = getDataLineage(kpiKey, [], metrics.active_policy);
+  const interpretationLabels = getKPIInterpretationLabels(def);
 
   // Close on Escape
   const handleKey = useCallback((e: KeyboardEvent) => {
@@ -292,7 +298,7 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
                   {def.fields.map((f) => (
                     <div key={f.name} className="flex items-start gap-3 p-2.5 rounded-lg bg-white/3 border border-white/5">
                       <code className="text-[11px] font-mono text-[#818cf8] bg-[#6366f1]/10 px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5">
-                        {f.name}
+                        {f.label ?? f.name}
                       </code>
                       <span className="text-xs text-slate-400 flex-1">{f.description}</span>
                       <span className={cn(
@@ -340,14 +346,27 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
                   </div>
                 </div>
               ))}
+              {kpiKey === "slow_moving" && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-[#6366f1]/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-[#818cf8]">{def.formula.length + 1}</span>
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-400">Active Slow-Moving Threshold</span>
+                  </div>
+                  <div className="ml-7 p-3 rounded-lg bg-[#020617] border border-white/8 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
+                    {metrics.active_policy?.policy.slow_moving_days ?? 180} days
+                  </div>
+                </div>
+              )}
 
               {/* Interpretation guide */}
               <div className="mt-2 space-y-2">
                 <p className="text-xs font-semibold text-white pt-2 pb-1 border-t border-white/5">Business interpretation</p>
                 {[
-                  { status: "Good",     text: def.interpretation.good,     color: "text-emerald-400", bg: "bg-emerald-500/8 border-emerald-500/15" },
-                  { status: "Warning",  text: def.interpretation.warning,  color: "text-amber-400",   bg: "bg-amber-500/8 border-amber-500/15"   },
-                  { status: "Critical", text: def.interpretation.critical,  color: "text-red-400",     bg: "bg-red-500/8 border-red-500/15"       },
+                  { status: interpretationLabels.good,     text: def.interpretation.good,     color: "text-emerald-400", bg: "bg-emerald-500/8 border-emerald-500/15" },
+                  { status: interpretationLabels.warning,  text: def.interpretation.warning,  color: "text-amber-400",   bg: "bg-amber-500/8 border-amber-500/15"   },
+                  { status: interpretationLabels.critical, text: def.interpretation.critical,  color: "text-red-400",     bg: "bg-red-500/8 border-red-500/15"       },
                 ].map(({ status, text, color, bg }) => (
                   <div key={status} className={cn("flex items-start gap-2.5 p-2.5 rounded-lg border", bg)}>
                     <span className={cn("text-[10px] font-bold uppercase tracking-wide flex-shrink-0 mt-0.5", color)}>{status}</span>
@@ -355,7 +374,7 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
                   </div>
                 ))}
                 <div className="flex items-start gap-2.5 p-2.5 rounded-lg border bg-[#6366f1]/6 border-[#6366f1]/15">
-                  <span className="text-[10px] font-bold text-[#818cf8] uppercase tracking-wide flex-shrink-0 mt-0.5">Tip</span>
+                  <span className="text-[10px] font-bold text-[#818cf8] uppercase tracking-wide flex-shrink-0 mt-0.5">{interpretationLabels.tip}</span>
                   <p className="text-xs text-slate-400 leading-relaxed">{def.interpretation.tip}</p>
                 </div>
               </div>
@@ -450,7 +469,7 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
                 <div className="space-y-1.5">
                   {lineage.fields.map((f) => (
                     <div key={f.columnName} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/2 border border-white/5">
-                      <code className="text-[10px] font-mono text-[#818cf8] bg-[#6366f1]/10 px-1.5 py-0.5 rounded flex-shrink-0">{f.columnName}</code>
+                      <code className="text-[10px] font-mono text-[#818cf8] bg-[#6366f1]/10 px-1.5 py-0.5 rounded flex-shrink-0">{f.displayName ?? f.columnName}</code>
                       <span className="text-xs text-slate-400 flex-1">{f.role}</span>
                       <span className={cn("text-[9px] font-semibold px-1.5 py-0.5 rounded border flex-shrink-0",
                         f.required ? "text-red-400 bg-red-500/8 border-red-500/20" : "text-slate-600 bg-white/4 border-white/8"
@@ -499,7 +518,7 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
               ) : (
                 <>
                   <p className="text-xs text-slate-500">
-                    Records from your uploaded dataset contributing to this KPI. All figures are derived directly from the uploaded file — no estimates.
+                    {getKPIAssuranceText(kpiKey)}
                   </p>
                   <div className="divide-y divide-white/4 rounded-xl border border-white/6 overflow-hidden">
                     {supportRows.map((row, i) => (
@@ -568,3 +587,6 @@ export function KPIInfoTrigger({ kpiKey }: KPIInfoTriggerProps) {
     </button>
   );
 }
+
+
+

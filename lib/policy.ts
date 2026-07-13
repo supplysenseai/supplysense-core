@@ -15,9 +15,13 @@ export interface InventoryPolicy {
   abc_a_pct: number;               // cumulative % of value that defines A class (default 70)
   abc_b_pct: number;               // next % for B class; C = remainder (default 20)
   // Health score weights (should sum to 100)
-  weight_dead_stock: number;       // weight for dead stock factor (default 25)
+  weight_dead_stock: number;       // weight for dead stock factor (default 30)
   weight_slow_moving: number;      // weight for slow moving factor (default 25)
-  weight_stockout_risk: number;    // weight for stockout risk factor (default 50)
+  weight_stockout_risk: number;    // weight for stockout risk factor (default 45)
+  // Financial assumptions
+  dead_stock_recovery_rate: number; // estimated liquidation recovery rate (default 40%)
+  slow_moving_recovery_rate: number;// estimated slow-moving excess recovery rate (default 70%)
+  target_coverage_months: number;   // target coverage used to estimate slow-moving excess (default 6)
 }
 
 export type PolicySource = "file" | "user" | "system";
@@ -39,7 +43,10 @@ export const SYSTEM_DEFAULTS: InventoryPolicy = {
   abc_b_pct: 20,
   weight_dead_stock: 30,
   weight_slow_moving: 25,
-  weight_stockout_risk: 30,
+  weight_stockout_risk: 45,
+  dead_stock_recovery_rate: 40,
+  slow_moving_recovery_rate: 70,
+  target_coverage_months: 6,
 };
 
 const POLICY_FIELDS = Object.keys(SYSTEM_DEFAULTS) as (keyof InventoryPolicy)[];
@@ -99,7 +106,7 @@ export function loadUserPolicy(): Partial<InventoryPolicy> {
     const cleaned: Partial<InventoryPolicy> = {};
     for (const field of POLICY_FIELDS) {
       const val = parsed[field];
-      if (typeof val === "number" && isFinite(val) && val > 0) {
+      if (typeof val === "number" && isFinite(val) && val >= 0) {
         (cleaned as Record<string, number>)[field] = val;
       }
     }
@@ -120,7 +127,7 @@ export function saveUserPolicy(policy: Partial<InventoryPolicy>): void {
     const cleaned: Partial<InventoryPolicy> = {};
     for (const field of POLICY_FIELDS) {
       const val = policy[field];
-      if (typeof val === "number" && isFinite(val) && val > 0) {
+      if (typeof val === "number" && isFinite(val) && val >= 0) {
         (cleaned as Record<string, number>)[field] = val;
       }
     }

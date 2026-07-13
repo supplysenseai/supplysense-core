@@ -99,6 +99,40 @@ const WEIGHT_FIELDS: Array<{
   },
 ];
 
+const ASSUMPTION_FIELDS: Array<{
+  key: keyof InventoryPolicy;
+  label: string;
+  description: string;
+  unit: string;
+  min: number;
+  max: number;
+}> = [
+  {
+    key: "dead_stock_recovery_rate",
+    label: "Dead Stock Recovery Rate",
+    description: "Estimated liquidation recovery rate used for recoverable capital.",
+    unit: "%",
+    min: 0,
+    max: 100,
+  },
+  {
+    key: "slow_moving_recovery_rate",
+    label: "Slow Moving Recovery Rate",
+    description: "Estimated recovery rate applied only to slow-moving excess stock.",
+    unit: "%",
+    min: 0,
+    max: 100,
+  },
+  {
+    key: "target_coverage_months",
+    label: "Target Coverage",
+    description: "Target stock coverage used to estimate excess slow-moving inventory.",
+    unit: "mo",
+    min: 1,
+    max: 24,
+  },
+];
+
 // ── Reusable field input ───────────────────────────────────────────────────────
 
 function FieldInput({
@@ -272,9 +306,24 @@ export default function SettingsPage() {
 
     // Re-run analysis with new policy if raw items are available in sessionStorage
     if (typeof window !== "undefined") {
-      const rawItemsJson  = sessionStorage.getItem("supplysense_raw_items");
+      let rawItemsJson  = sessionStorage.getItem("supplysense_raw_items");
       const filePolicyJson = sessionStorage.getItem("supplysense_file_policy");
-      const fieldsJson    = sessionStorage.getItem("supplysense_fields");
+      let fieldsJson    = sessionStorage.getItem("supplysense_fields");
+
+      const isDemoSession = sessionStorage.getItem("supplysense_demo_mode") === "true";
+      let demoAnalysisDate: string | undefined;
+
+      if (isDemoSession) {
+        const { DEMO_ANALYSIS_DATE, DEMO_FIELDS, getDemoInventoryItems } = await import("@/lib/demo-data");
+        demoAnalysisDate = DEMO_ANALYSIS_DATE;
+        if (!rawItemsJson) {
+          rawItemsJson = JSON.stringify(getDemoInventoryItems());
+          fieldsJson = JSON.stringify(DEMO_FIELDS);
+          sessionStorage.setItem("supplysense_raw_items", rawItemsJson);
+          sessionStorage.setItem("supplysense_fields", fieldsJson);
+          sessionStorage.setItem("supplysense_file_policy", JSON.stringify({}));
+        }
+      }
 
       if (rawItemsJson && fieldsJson) {
         try {
@@ -284,14 +333,14 @@ export default function SettingsPage() {
           const filePolicy   = filePolicyJson ? JSON.parse(filePolicyJson) : {};
           const detectedFields = JSON.parse(fieldsJson) as string[];
           const activePolicy = resolvePolicy(filePolicy, partial);
-          const { metrics }  = analyzeInventoryItems(rawItems, detectedFields, activePolicy);
+          const { metrics }  = analyzeInventoryItems(rawItems, detectedFields, activePolicy, demoAnalysisDate ? { analysisDate: demoAnalysisDate } : {});
 
           const metricsJson1 = JSON.stringify(metrics);
           sessionStorage.setItem("supplysense_metrics",         metricsJson1);
           sessionStorage.setItem("supplysense_policy",          JSON.stringify(activePolicy));
-          sessionStorage.setItem("supplysense_metrics_version", "4");
+          sessionStorage.setItem("supplysense_metrics_version", "6");
           localStorage.setItem("supplysense_metrics",           metricsJson1);
-          localStorage.setItem("supplysense_metrics_version",   "4");
+          localStorage.setItem("supplysense_metrics_version",   "6");
 
           setToast("Settings saved — dashboard updated ✓");
           setTimeout(() => {
@@ -317,9 +366,24 @@ export default function SettingsPage() {
 
     // Re-run analysis with system defaults if raw items available
     if (typeof window !== "undefined") {
-      const rawItemsJson   = sessionStorage.getItem("supplysense_raw_items");
+      let rawItemsJson   = sessionStorage.getItem("supplysense_raw_items");
       const filePolicyJson = sessionStorage.getItem("supplysense_file_policy");
-      const fieldsJson     = sessionStorage.getItem("supplysense_fields");
+      let fieldsJson     = sessionStorage.getItem("supplysense_fields");
+
+      const isDemoSession = sessionStorage.getItem("supplysense_demo_mode") === "true";
+      let demoAnalysisDate: string | undefined;
+
+      if (isDemoSession) {
+        const { DEMO_ANALYSIS_DATE, DEMO_FIELDS, getDemoInventoryItems } = await import("@/lib/demo-data");
+        demoAnalysisDate = DEMO_ANALYSIS_DATE;
+        if (!rawItemsJson) {
+          rawItemsJson = JSON.stringify(getDemoInventoryItems());
+          fieldsJson = JSON.stringify(DEMO_FIELDS);
+          sessionStorage.setItem("supplysense_raw_items", rawItemsJson);
+          sessionStorage.setItem("supplysense_fields", fieldsJson);
+          sessionStorage.setItem("supplysense_file_policy", JSON.stringify({}));
+        }
+      }
 
       if (rawItemsJson && fieldsJson) {
         try {
@@ -329,14 +393,14 @@ export default function SettingsPage() {
           const filePolicy     = filePolicyJson ? JSON.parse(filePolicyJson) : {};
           const detectedFields = JSON.parse(fieldsJson) as string[];
           const activePolicy   = resolvePolicy(filePolicy, undefined);
-          const { metrics }    = analyzeInventoryItems(rawItems, detectedFields, activePolicy);
+          const { metrics }    = analyzeInventoryItems(rawItems, detectedFields, activePolicy, demoAnalysisDate ? { analysisDate: demoAnalysisDate } : {});
 
           const metricsJson2 = JSON.stringify(metrics);
           sessionStorage.setItem("supplysense_metrics",         metricsJson2);
           sessionStorage.setItem("supplysense_policy",          JSON.stringify(activePolicy));
-          sessionStorage.setItem("supplysense_metrics_version", "4");
+          sessionStorage.setItem("supplysense_metrics_version", "6");
           localStorage.setItem("supplysense_metrics",           metricsJson2);
-          localStorage.setItem("supplysense_metrics_version",   "4");
+          localStorage.setItem("supplysense_metrics_version",   "6");
 
           setToast("Reset to system defaults — dashboard updated ✓");
           setTimeout(() => {
@@ -424,7 +488,7 @@ export default function SettingsPage() {
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={!hasUnsaved || abcOverflow}
+                  disabled={!hasUnsaved || abcOverflow || weightSum > 100}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Save className="w-3.5 h-3.5" />
@@ -574,6 +638,42 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Section 4: Financial Assumptions */}
+            <div className="card p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-1">
+                <div>
+                  <h2 className="text-sm font-semibold text-white">Financial Assumptions</h2>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Policy assumptions used only for estimated recoverable capital.
+                  </p>
+                </div>
+                <button
+                  onClick={() => resetSection(ASSUMPTION_FIELDS.map((f) => f.key))}
+                  className="text-[11px] text-slate-500 hover:text-[#818cf8] transition-colors flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Reset section
+                </button>
+              </div>
+              <div className="mt-2">
+                {ASSUMPTION_FIELDS.map((field) => (
+                  <FieldInput
+                    key={field.key}
+                    label={field.label}
+                    description={field.description}
+                    value={values[field.key]}
+                    defaultValue={SYSTEM_DEFAULTS[field.key]}
+                    unit={field.unit}
+                    min={field.min}
+                    max={field.max}
+                    onChange={(v) => set(field.key, Math.min(field.max, Math.max(field.min, Math.round(v))))}
+                    onReset={() => resetField(field.key)}
+                    isModified={isModified(field.key)}
+                  />
+                ))}
+              </div>
+            </div>
+
             {/* Save bar */}
             {hasUnsaved && (
               <div className="sticky bottom-4 flex flex-col gap-3 px-4 py-3 rounded-xl bg-[#0f172a] border border-white/10 shadow-2xl sm:flex-row sm:items-center sm:justify-between">
@@ -587,7 +687,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={abcOverflow}
+                    disabled={abcOverflow || weightSum > 100}
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg text-xs text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Save className="w-3.5 h-3.5" />

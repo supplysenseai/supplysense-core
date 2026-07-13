@@ -28,7 +28,7 @@ export function ABCChart({ metrics }: ABCChartProps) {
     <div className="card p-5">
       <div className="mb-4">
         <p className="text-[11px] text-slate-500 font-medium mb-0.5">ABC classification</p>
-        <p className="text-[10px] text-slate-600">Pareto revenue analysis · {total_skus} SKUs · <span className="text-[#818cf8]">click to drill through</span></p>
+        <p className="text-[10px] text-slate-600">Pareto annual consumption analysis · {total_skus} SKUs · <span className="text-[#818cf8]">click to drill through</span></p>
       </div>
 
       <div className="flex items-center gap-6">
@@ -88,7 +88,7 @@ export function ABCChart({ metrics }: ABCChartProps) {
                 Class {cls}
               </span>
               <span className="text-xs text-white font-medium">{count}</span>
-              <span className="text-[11px] text-slate-600">· {pct}% revenue</span>
+              <span className="text-[11px] text-slate-600">· {pct}% annual consumption value</span>
             </div>
           ))}
         </div>
@@ -98,7 +98,7 @@ export function ABCChart({ metrics }: ABCChartProps) {
       <div className="mt-4 pt-4 border-t border-white/5">
         <p className="text-[11px] text-slate-500 leading-relaxed">
           <span className="text-white font-medium">{abc_summary.a_count} A-items</span> drive{" "}
-          <span className="text-indigo-300 font-medium">{abc_summary.a_revenue_pct}%</span> of revenue
+          <span className="text-indigo-300 font-medium">{abc_summary.a_revenue_pct}%</span> of annual consumption value
           ({((abc_summary.a_count / total_skus) * 100).toFixed(0)}% of SKUs).
           {aAtRisk > 0 && (
             <span className="text-red-400 font-medium"> {aAtRisk} A-item{aAtRisk > 1 ? "s" : ""} at elevated stockout risk.</span>

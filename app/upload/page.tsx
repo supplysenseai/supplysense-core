@@ -119,10 +119,10 @@ export default function UploadPage() {
         sessionStorage.setItem("supplysense_rows",           String(parseResult.rows_valid));
         sessionStorage.setItem("supplysense_fields",         JSON.stringify(parseResult.detected_fields));
         sessionStorage.setItem("supplysense_policy",         JSON.stringify(activePolicy));
-        sessionStorage.setItem("supplysense_metrics_version","4");
+        sessionStorage.setItem("supplysense_metrics_version","6");
         // Also persist to localStorage so new-tab pages (e.g. /dashboard/risk) can access data
         localStorage.setItem("supplysense_metrics",          metricsJson);
-        localStorage.setItem("supplysense_metrics_version",  "4");
+        localStorage.setItem("supplysense_metrics_version",  "6");
         // Store raw items + file policy so settings changes can re-run analysis
         // without requiring a file re-upload
         sessionStorage.setItem("supplysense_raw_items",      JSON.stringify(parseResult.items));

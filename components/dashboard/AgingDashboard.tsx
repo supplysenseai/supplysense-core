@@ -43,6 +43,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
+  const hasAgingData = aging.has_ageing_data;
   const chartData = aging.buckets.map((b) => ({
     label: b.label,
     count: b.count,
@@ -66,20 +67,20 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
         {[
           {
             label: "Avg Ageing Days",
-            value: `${aging.avg_ageing_days}d`,
+            value: hasAgingData ? `${aging.avg_ageing_days}d` : "N/A",
             icon: Clock,
             color: aging.avg_ageing_days <= 90 ? "text-emerald-400" : aging.avg_ageing_days <= 180 ? "text-amber-400" : "text-red-400",
             bg: "bg-blue-500/10",
-            sub: "Weighted by value",
+            sub: hasAgingData ? "Weighted by value" : "Movement history required",
             kpiKey: "avg_ageing_days",
           },
           {
-            label: "Blocked Capital",
+            label: metrics ? "Estimated Recoverable Capital" : "Non-Performing Inventory",
             value: formatCurrency(metrics ? metrics.recoverable_capital : aging.blocked_capital, true),
             icon: DollarSign,
             color: "text-orange-400",
             bg: "bg-orange-500/10",
-            sub: "Dead + slow moving",
+            sub: metrics ? "Policy-based recovery estimate" : "Dead stock + slow-moving value",
             kpiKey: "blocked_capital",
           },
         ].map((card) => (
@@ -179,11 +180,18 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
         {/* Ageing health score */}
         <div className="card p-4 flex flex-col">
           <h3 className="text-xs font-semibold text-white mb-1">Ageing Health</h3>
-          <p className="text-[10px] text-slate-500 mb-2">Value-weighted freshness score</p>
+          <p className="text-[10px] text-slate-500 mb-2">{hasAgingData ? "Value-weighted freshness score" : "Movement-history or ageing data required"}</p>
           <div className="flex-1 flex items-center justify-center">
-            <AgingHealthGauge score={aging.ageing_health_score} />
+            {hasAgingData ? (
+              <AgingHealthGauge score={aging.ageing_health_score} />
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-sm font-semibold text-slate-300">Not Available</p>
+                <p className="text-[10px] text-slate-500 mt-1">Insufficient ageing data</p>
+              </div>
+            )}
           </div>
-          <div className="space-y-1.5 mt-2">
+          {hasAgingData && <div className="space-y-1.5 mt-2">
             {aging.buckets.slice(0, 3).map((b) => (
               <div key={b.label} className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: b.color }} />
@@ -191,7 +199,7 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
                 <span className="text-[10px] font-medium" style={{ color: b.color }}>{b.pct_value}%</span>
               </div>
             ))}
-          </div>
+          </div>}
         </div>
       </div>
 

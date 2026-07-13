@@ -20,6 +20,7 @@ const SLOW_MAX_DAYS = 180;
 
 // Score weights per bucket (for ageing health score, 0–100)
 const BUCKET_SCORES = [100, 80, 40, 15, 0];
+const MS_PER_DAY = 86_400_000;
 
 function getBucketIndex(days: number): number {
   for (let i = 0; i < BUCKET_DEFS.length; i++) {
@@ -29,15 +30,41 @@ function getBucketIndex(days: number): number {
   return BUCKET_DEFS.length - 1;
 }
 
-export function analyzeAging(items: InventoryItem[]): AgingMetrics {
-  // Only items that have ageing data
-  const agingItems = items.filter(
-    (item) => item.ageing_days !== undefined && item.ageing_days >= 0
-  );
+export function analyzeAging(items: InventoryItem[], analysisDateMs = Date.now()): AgingMetrics {
+  const now = analysisDateMs;
+  let directCount = 0;
+  let derivedCount = 0;
+  let invalidMovementDateCount = 0;
+
+  const agingItems = items.flatMap((item) => {
+    if (item.ageing_days !== undefined && item.ageing_days >= 0) {
+      directCount++;
+      return [item];
+    }
+
+    if (!item.last_movement_date) return [];
+
+    const parsed = new Date(item.last_movement_date);
+    if (Number.isNaN(parsed.getTime()) || parsed.getTime() > now) {
+      invalidMovementDateCount++;
+      return [];
+    }
+
+    derivedCount++;
+    return [{
+      ...item,
+      ageing_days: Math.floor((now - parsed.getTime()) / MS_PER_DAY),
+    }];
+  });
 
   if (agingItems.length === 0) {
     return emptyAgingMetrics();
   }
+
+  const ageing_source =
+    directCount > 0 && derivedCount > 0 ? "mixed" :
+    directCount > 0 ? "direct" :
+    "last_movement_date";
 
   const totalValue = agingItems.reduce(
     (sum, item) => sum + item.stock_qty * item.unit_cost,
@@ -131,6 +158,9 @@ export function analyzeAging(items: InventoryItem[]): AgingMetrics {
   }
 
   return {
+    has_ageing_data: true,
+    ageing_source,
+    invalid_movement_date_count: invalidMovementDateCount,
     total_items: totalCount,
     total_value: totalValue,
     buckets,
@@ -147,6 +177,9 @@ export function analyzeAging(items: InventoryItem[]): AgingMetrics {
 
 export function emptyAgingMetrics(): AgingMetrics {
   return {
+    has_ageing_data: false,
+    ageing_source: "none",
+    invalid_movement_date_count: 0,
     total_items: 0,
     total_value: 0,
     buckets: BUCKET_DEFS.map((def) => ({
@@ -166,6 +199,6 @@ export function emptyAgingMetrics(): AgingMetrics {
     blocked_capital: 0,
     liquidation_opportunities: [],
     avg_ageing_days: 0,
-    ageing_health_score: 100,
+    ageing_health_score: 0,
   };
 }
