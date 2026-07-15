@@ -35,8 +35,9 @@ function buildTotalRow(key: KPIKey, metrics: DashboardMetrics): TotalRow | null 
     case "reorder_count":
       return { label: "Reorder Items (at/below reorder point)", value: `${metrics.reorder_count} items`, note: "= KPI card count" };
     case "recoverable_capital":
+      return { label: "Estimated Recoverable Capital", value: formatCurrency(metrics.recoverable_capital), note: "Policy-based estimate - not guaranteed recovery" };
     case "blocked_capital":
-      return { label: "Total Recoverable Capital", value: formatCurrency(metrics.recoverable_capital), note: `Dead ${ formatCurrency(metrics.dead_stock_value) } + Slow ${ formatCurrency(metrics.slow_mover_value) }` };
+      return { label: "Movement-Age Review Value", value: formatCurrency(metrics.aging_metrics?.blocked_capital ?? metrics.non_performing_inventory_value ?? 0), note: "Separate from Estimated Recoverable Capital" };
     case "turnover_ratio":
       return { label: "Portfolio Turnover Ratio", value: `${metrics.turnover_ratio.toFixed(1)}×`, note: "= KPI card value" };
     case "health_score":
@@ -148,24 +149,34 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
         ...aging.buckets.map((b) => ({
           label: b.label,
           value: `${b.count} items (${b.pct_value.toFixed(1)}% of value)`,
-          sub: `${formatCurrency(b.value)} · bucket weight: ${b.min_days <= 30 ? 100 : b.min_days <= 60 ? 80 : b.min_days <= 90 ? 60 : b.min_days <= 180 ? 30 : 0}`,
-          accent: b.min_days <= 30 ? "text-emerald-400" : b.min_days <= 60 ? "text-blue-400" : b.min_days <= 90 ? "text-amber-400" : "text-red-400",
+          sub: `${formatCurrency(b.value)} - bucket score ${b.score}; contribution ${b.pct_value}% x ${b.score}`,
+          accent: b.score >= 80 ? "text-emerald-400" : b.score >= 40 ? "text-amber-400" : "text-red-400",
         })),
         { label: "Ageing Health Score", value: `${aging.ageing_health_score}/100`, sub: "Weighted composite — higher = fresher inventory", accent: aging.ageing_health_score >= 80 ? "text-emerald-400" : "text-amber-400" },
       ];
     }
-    case "recoverable_capital":
-    case "blocked_capital": {
+    case "recoverable_capital": {
+      const affectedValue = metrics.non_performing_inventory_value ?? 0;
+      const recoveryRate = affectedValue > 0 ? (metrics.recoverable_capital / affectedValue) * 100 : 0;
+      const policy = metrics.active_policy?.policy;
       return [
-        ...metrics.top_dead_stock.map((item) => ({
-          label: item.product_name, value: formatCurrency(item.inventory_value),
-          sub: `${item.sku_id} · Dead stock`, accent: "text-purple-400",
-        })),
-        ...metrics.top_risk_items.filter((i) => i.scenario === "SLOW").map((item) => ({
-          label: item.product_name, value: formatCurrency(item.inventory_value),
-          sub: `${item.sku_id} · Slow mover`, accent: "text-amber-400",
-        })),
+        { label: "Affected Inventory Value", value: formatCurrency(affectedValue), sub: "Dead stock value plus slow-moving inventory value", accent: "text-orange-400" },
+        { label: "Estimated Recoverable Capital", value: formatCurrency(metrics.recoverable_capital), sub: "Policy-based estimate - not guaranteed recovery", accent: "text-emerald-400" },
+        { label: "Estimated Recovery Rate", value: `${recoveryRate.toFixed(1)}%`, sub: "Estimated recoverable capital / affected inventory value", accent: "text-blue-400" },
+        { label: "Dead Stock Recovery Policy", value: `${policy?.dead_stock_recovery_rate ?? 40}%`, sub: "Active policy rate applied by the analyzer", accent: "text-purple-400" },
+        { label: "Slow-Moving Recovery Policy", value: `${policy?.slow_moving_recovery_rate ?? 70}%`, sub: `Applied to slow-moving excess above ${policy?.target_coverage_months ?? 6} months of target coverage`, accent: "text-amber-400" },
       ];
+    }
+    case "blocked_capital": {
+      const aging = metrics.aging_metrics;
+      if (aging?.has_ageing_data) {
+        return [
+          { label: "Movement-Age Review Value", value: formatCurrency(aging.blocked_capital), sub: "Value of stock aged 91+ days from movement-history ageing buckets", accent: "text-orange-400" },
+          { label: "91-180 Days", value: formatCurrency(aging.slow_moving_value), sub: `${aging.slow_moving_count} movement-age review SKUs`, accent: "text-amber-400" },
+          { label: "181+ Days", value: formatCurrency(aging.dead_stock_value), sub: `${aging.dead_stock_count} movement-age review SKUs`, accent: "text-red-400" },
+        ];
+      }
+      return [{ label: "Blocked Capital", value: formatCurrency(metrics.non_performing_inventory_value ?? 0), sub: "Broader inventory-health metric, separate from ageing", accent: "text-orange-400" }];
     }
     case "turnover_ratio": {
       return [...metrics.all_skus]
@@ -181,12 +192,21 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
     case "avg_ageing_days": {
       const aging = metrics.aging_metrics;
       if (!aging) return [{ label: "No ageing data", value: "—", sub: "Upload an ageing report" }];
-      return aging.liquidation_opportunities.map((item) => ({
-        label: item.item_name,
-        value: `${item.ageing_days}d old`,
-        sub: `${item.item_code} · ${formatCurrency(item.inventory_value)} · ${item.bucket_label}`,
-        accent: item.ageing_days > 180 ? "text-red-400" : item.ageing_days > 90 ? "text-amber-400" : "text-blue-400",
-      }));
+      if (!aging.has_ageing_data) return [{ label: "Average Ageing Days", value: "Not Available", sub: "Movement-history or ageing data is required", accent: "text-slate-400" }];
+      return [
+        {
+          label: `Showing ${aging.liquidation_opportunities.length} oldest of ${aging.total_items} contributing SKUs`,
+          value: `${aging.avg_ageing_days_raw.toFixed(2)}d raw`,
+          sub: `Rounded display: ${aging.avg_ageing_days}d. Average uses all valid ageing rows, not only this sample.`,
+          accent: "text-blue-400",
+        },
+        ...aging.liquidation_opportunities.map((item) => ({
+          label: item.item_name,
+          value: `${item.ageing_days}d old`,
+          sub: `${item.item_code} - ${formatCurrency(item.inventory_value)} - ${item.bucket_label}`,
+          accent: item.ageing_days > 180 ? "text-red-400" : item.ageing_days > 90 ? "text-amber-400" : "text-blue-400",
+        })),
+      ];
     }
     default:
       return [];

@@ -142,7 +142,7 @@ function CEOBrief({ metrics, summary, visible }: { metrics: DashboardMetrics; su
               sub={`${metrics.dead_stock_count + metrics.slow_mover_count} problem SKUs`}
               color="text-amber-400" bg="bg-amber-500/6" border="border-amber-500/15" icon={AlertTriangle} />
             <Tile label="Est. Recovery" value={formatCurrency(metrics.recoverable_capital, true)}
-              sub="Policy assumption"
+              sub="Policy-based estimate"
               color="text-emerald-400" bg="bg-emerald-500/6" border="border-emerald-500/15" icon={TrendingUp} />
             <Tile label="Annual Carry Cost" value={formatCurrency(metrics.annual_carrying_cost, true)}
               sub="25% holding rate / yr"
@@ -159,13 +159,13 @@ function CEOBrief({ metrics, summary, visible }: { metrics: DashboardMetrics; su
               <div className="space-y-1.5">
                 <RiskRow label="Critical stockout risk" count={metrics.critical_stockout_count}
                   value={consumptionExposure > 0 ? formatCurrency(consumptionExposure, true) + "/yr" : undefined}
-                  action="Immediate PO" color="text-red-400" dot="bg-red-400" />
+                  action="Replenishment review" color="text-red-400" dot="bg-red-400" />
                 <RiskRow label="Dead stock (zero velocity)" count={metrics.dead_stock_count}
                   value={formatCurrency(metrics.dead_stock_value, true)}
-                  action="Liquidate" color="text-purple-400" dot="bg-purple-400" />
+                  action="Review disposition" color="text-purple-400" dot="bg-purple-400" />
                 <RiskRow label="Slow moving (excess stock)" count={metrics.slow_mover_count}
                   value={formatCurrency(metrics.slow_mover_value, true)}
-                  action="Promote/Suspend" color="text-amber-400" dot="bg-amber-400" />
+                  action="Review excess" color="text-amber-400" dot="bg-amber-400" />
                 <RiskRow label="Healthy / performing" count={metrics.risk_distribution.low}
                   action="Maintain" color="text-emerald-400" dot="bg-emerald-400" />
               </div>
@@ -305,9 +305,9 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <div className="space-y-1">
                 {[
                   { label: "Critical (stock may run out before replenishment arrives)", count: metrics.risk_distribution.critical, value: formatCurrency(metrics.top_risk_items.filter(s => s.scenario === "CRITICAL").reduce((a, s) => a + s.inventory_value, 0), true), action: "Review replenishment", color: "text-red-400", dot: "bg-red-400" },
-                  { label: "Watch (approaching reorder threshold)", count: metrics.risk_distribution.watch,    value: formatCurrency(metrics.top_risk_items.filter(s => s.scenario === "WATCH").reduce((a, s) => a + s.inventory_value, 0), true), action: "Review now", color: "text-orange-400", dot: "bg-orange-400" },
-                  { label: "Slow moving (excess accumulation)",    count: metrics.risk_distribution.elevated, value: formatCurrency(metrics.slow_mover_value, true), action: "Suspend orders", color: "text-amber-400", dot: "bg-amber-400" },
-                  { label: "Dead stock (zero velocity)",           count: metrics.risk_distribution.dead,     value: formatCurrency(metrics.dead_stock_value, true), action: "Liquidate", color: "text-purple-400", dot: "bg-purple-400" },
+                  { label: "Watch (approaching reorder threshold)", count: metrics.risk_distribution.watch,    value: formatCurrency(metrics.top_risk_items.filter(s => s.scenario === "WATCH").reduce((a, s) => a + s.inventory_value, 0), true), action: "Review schedule", color: "text-orange-400", dot: "bg-orange-400" },
+                  { label: "Slow moving (excess accumulation)",    count: metrics.risk_distribution.elevated, value: formatCurrency(metrics.slow_mover_value, true), action: "Review / reduce replenishment", color: "text-amber-400", dot: "bg-amber-400" },
+                  { label: "Dead stock (zero velocity)",           count: metrics.risk_distribution.dead,     value: formatCurrency(metrics.dead_stock_value, true), action: metrics.risk_distribution.dead > 0 ? "Review disposition" : "No action required", color: "text-purple-400", dot: "bg-purple-400" },
                   { label: "Healthy (normal operations)",          count: metrics.risk_distribution.low,      value: undefined, action: "Maintain", color: "text-emerald-400", dot: "bg-emerald-400" },
                 ].map(r => <RiskRow key={r.label} {...r} />)}
               </div>
@@ -317,9 +317,9 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">ABC Classification</p>
               <div className="space-y-2">
                 {[
-                  { cls: "A", label: "High annual-consumption items", count: metrics.abc_summary.a_count, pct: metrics.abc_summary.a_revenue_pct, target: 65, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15", note: "Prioritise service levels" },
+                  { cls: "A", label: "High annual-consumption items", count: metrics.abc_summary.a_count, pct: metrics.abc_summary.a_revenue_pct, target: 65, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15", note: "Review service exposure" },
                   { cls: "B", label: "Mid-tier items", count: metrics.abc_summary.b_count, pct: metrics.abc_summary.b_revenue_pct, target: null, color: "text-blue-400", bg: "bg-blue-500/8", border: "border-blue-500/15", note: "Standard replenishment" },
-                  { cls: "C", label: "Low-value / tail items", count: metrics.abc_summary.c_count, pct: metrics.abc_summary.c_revenue_pct, target: null, color: "text-slate-400", bg: "bg-white/3", border: "border-white/8", note: "Minimise stock holding" },
+                  { cls: "C", label: "Low-value / tail items", count: metrics.abc_summary.c_count, pct: metrics.abc_summary.c_revenue_pct, target: null, color: "text-slate-400", bg: "bg-white/3", border: "border-white/8", note: "Review ordering policy" },
                 ].map(a => (
                   <div key={a.cls} className={`rounded-lg border px-3 py-2 ${a.bg} ${a.border}`}>
                     <div className="flex items-center justify-between mb-0.5">
@@ -341,7 +341,7 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <div className="mt-2 px-3 py-2 rounded-lg bg-white/3 border border-white/6">
                 <p className="text-[9px] text-slate-500 uppercase tracking-wider mb-1">Working Capital</p>
                 <div className="flex justify-between text-[10px]">
-                  <span className="text-slate-400">Est. Recovery capital</span>
+                  <span className="text-slate-400">Estimated recoverable capital</span>
                   <span className="text-emerald-400 font-bold">{formatCurrency(metrics.recoverable_capital, true)}</span>
                 </div>
                 <div className="flex justify-between text-[10px]">
@@ -379,9 +379,14 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
 // PROCUREMENT BRIEF — Purchasing action one-pager
 // ══════════════════════════════════════════════════════════════════
 function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMetrics; summary: ExecutiveSummary; visible: boolean }) {
-  const criticalItems = metrics.top_risk_items.filter(s => s.scenario === "CRITICAL").slice(0, 5);
-  const watchItems    = metrics.top_risk_items.filter(s => s.scenario === "WATCH").slice(0, 4);
+  const [showAllCritical, setShowAllCritical] = useState(false);
+  const [showAllWatch, setShowAllWatch] = useState(false);
+
+  const criticalItems = metrics.top_risk_items.filter(s => s.scenario === "CRITICAL");
+  const watchItems    = metrics.top_risk_items.filter(s => s.scenario === "WATCH");
   const deadItems     = metrics.top_dead_stock.slice(0, 4);
+  const visibleCriticalItems = showAllCritical ? criticalItems : criticalItems.slice(0, 5);
+  const visibleWatchItems = showAllWatch ? watchItems : watchItems.slice(0, 4);
 
   const procActions = summary.recommended_actions.filter(a =>
     a.owner === "Procurement" || a.owner === "Finance"
@@ -427,7 +432,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
               bg={metrics.reorder_count > 0 ? "bg-amber-500/8" : "bg-white/4"}
               border={metrics.reorder_count > 0 ? "border-amber-500/20" : "border-white/8"}
               icon={Package} />
-            <Tile label="Suspend Orders" value={String(metrics.dead_stock_count)}
+            <Tile label="Dead-Stock Review" value={String(metrics.dead_stock_count)}
               sub={`${formatCurrency(metrics.dead_stock_value, true)} dead value`}
               color="text-purple-400" bg="bg-purple-500/6" border="border-purple-500/15"
               icon={Ban} />
@@ -438,23 +443,23 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
           </div>
         </div>
 
-        {/* Three columns: Critical | Watch | Suspend */}
+        {/* Three columns: Critical | Watch | Dead stock */}
         <div className="px-5 py-3 border-b border-white/5">
           <div className="grid grid-cols-3 gap-3">
 
-            {/* Column 1: Emergency orders */}
+            {/* Column 1: Replenishment review */}
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-                <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider">Raise PO Immediately</p>
+                <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wider">Immediate Replenishment Review</p>
               </div>
               {criticalItems.length === 0 ? (
                 <div className="text-[10px] text-slate-600 italic px-2 py-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-                  No critical items — no emergency orders required
+                  No critical items - no immediate replenishment review required
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {criticalItems.map(item => (
+                  {visibleCriticalItems.map(item => (
                     <div key={item.sku_id} className="px-2.5 py-2 rounded-lg bg-red-500/6 border border-red-500/15">
                       <p className="text-[11px] font-semibold text-white truncate mb-0.5">{item.product_name}</p>
                       <div className="flex items-center justify-between gap-1">
@@ -464,10 +469,19 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                         <span className="text-[9px] text-slate-500">{item.abc_class}-class · LT {item.lead_time_days}d</span>
                       </div>
                       {item.reorder_qty_eoq > 0 && (
-                        <p className="text-[9px] text-amber-400 mt-0.5">Order {item.reorder_qty_eoq.toLocaleString()} units (EOQ)</p>
+                        <p className="text-[9px] text-amber-400 mt-0.5">Calculated EOQ: {item.reorder_qty_eoq.toLocaleString()} units - verify before ordering</p>
                       )}
                     </div>
                   ))}
+                  {criticalItems.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCritical(v => !v)}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-300 hover:bg-red-500/15 transition-colors"
+                    >
+                      {showAllCritical ? "Show fewer" : `Show all ${criticalItems.length} items`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -484,7 +498,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  {watchItems.map(item => (
+                  {visibleWatchItems.map(item => (
                     <div key={item.sku_id} className="px-2.5 py-2 rounded-lg bg-amber-500/6 border border-amber-500/15">
                       <p className="text-[11px] font-semibold text-white truncate mb-0.5">{item.product_name}</p>
                       <div className="flex items-center justify-between gap-1">
@@ -496,19 +510,28 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                       <p className="text-[9px] text-slate-500 mt-0.5">Verify reorder schedule</p>
                     </div>
                   ))}
+                  {watchItems.length > 4 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllWatch(v => !v)}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] font-semibold text-amber-300 hover:bg-amber-500/15 transition-colors"
+                    >
+                      {showAllWatch ? "Show fewer" : `Show all ${watchItems.length} items`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Column 3: Suspend / freeze */}
+            {/* Column 3: Dead-stock review */}
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-purple-400 flex-shrink-0" />
-                <p className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider">Suspend Orders</p>
+                <p className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider">Dead-Stock Replenishment Review</p>
               </div>
               {deadItems.length === 0 ? (
                 <div className="text-[10px] text-slate-600 italic px-2 py-3 rounded-lg bg-white/3 border border-white/6">
-                  No dead stock — no suspensions required
+                  No dead-stock replenishment review required
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -519,7 +542,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                         <span className="text-[9px] text-purple-400 font-medium">{formatCurrency(item.inventory_value, true)}</span>
                         <span className="text-[9px] text-slate-500">0 velocity</span>
                       </div>
-                      <p className="text-[9px] text-slate-500 mt-0.5">Halt replenishment · coordinate RTV</p>
+                      <p className="text-[9px] text-slate-500 mt-0.5">Review disposition options</p>
                     </div>
                   ))}
                 </div>
@@ -538,7 +561,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                 {[
                   { cls: "A", rule: "Prioritise review cadence and avoid lead-time stockout", count: metrics.abc_summary.a_count, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15" },
                   { cls: "B", rule: "Standard EOQ-based replenishment cycle", count: metrics.abc_summary.b_count, color: "text-blue-400", bg: "bg-blue-500/6", border: "border-blue-500/10" },
-                  { cls: "C", rule: "Minimise — batch orders, consider discontinuing tail items", count: metrics.abc_summary.c_count, color: "text-slate-400", bg: "bg-white/3", border: "border-white/6" },
+                  { cls: "C", rule: "Review ordering frequency, consolidation, and stocking policy.", count: metrics.abc_summary.c_count, color: "text-slate-400", bg: "bg-white/3", border: "border-white/6" },
                 ].map(a => (
                   <div key={a.cls} className={`px-3 py-2 rounded-lg border ${a.bg} ${a.border}`}>
                     <div className="flex items-center gap-2 mb-0.5">
@@ -575,7 +598,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
 
         {/* Procurement actions */}
         <div className="px-5 py-3">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2.5">Procurement Actions Required</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2.5">Procurement Review Actions</p>
           <div className="space-y-2">
             {allActions.map((a, i) => (
               <ActionRow key={i} n={i + 1}

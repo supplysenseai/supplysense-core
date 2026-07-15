@@ -40,9 +40,9 @@ function calcMetrics(
   slowRedPct  = SLOW_REDUCTION_PCT,
   slowRecRate = SLOW_RECOVERY_RATE,
 ) {
-  const deadRecovery     = m.dead_stock_value * deadLiqRate;
-  const slowRecovery     = m.slow_mover_value * slowRedPct * slowRecRate;
-  const recoverableCapital = deadRecovery + slowRecovery;
+  const deadRecovery = m.dead_stock_value * deadLiqRate;
+  const slowRecovery = m.slow_mover_value * slowRedPct * slowRecRate;
+  const scenarioRecoveryEstimate = deadRecovery + slowRecovery;
 
   const reducibleInventory = m.dead_stock_value + (m.slow_mover_value * slowRedPct);
   const annualSavings      = reducibleInventory * CARRYING_RATE;
@@ -58,7 +58,7 @@ function calcMetrics(
     ? (reductionValue / m.total_inventory_value) * 100
     : 0;
 
-  return { recoverableCapital, annualSavings, wcImprovementPct, reductionValue, reductionPct };
+  return { scenarioRecoveryEstimate, annualSavings, wcImprovementPct, reductionValue, reductionPct };
 }
 
 function exportCSV(m: DashboardMetrics, companyName = "") {
@@ -66,13 +66,13 @@ function exportCSV(m: DashboardMetrics, companyName = "") {
   const orgSlug = companyName ? companyName.replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-") + "-" : "";
   const rows: string[][] = [
     companyName ? [`Company: ${companyName}`, `Generated: ${dateStr}`, "", "", ""] : [],
-    ["Scenario", "Recoverable Capital", "Annual Savings", "WC Improvement %", "Inventory Reduction"],
+    ["Scenario", "Scenario Recovery Estimate", "Annual Savings", "WC Improvement %", "Inventory Reduction"],
   ].filter(r => r.length > 0);
   SCENARIOS.forEach((sc) => {
     const r = calcMetrics(m, sc.deadLiqRate, sc.slowRedPct, sc.slowRecRate);
     rows.push([
       sc.label,
-      r.recoverableCapital.toFixed(2),
+      r.scenarioRecoveryEstimate.toFixed(2),
       r.annualSavings.toFixed(2),
       r.wcImprovementPct.toFixed(2) + "%",
       r.reductionValue.toFixed(2),
@@ -170,7 +170,9 @@ export default function FinancialImpactPage() {
 
   // ── Calculations ─────────────────────────────────────────────────────────
   const base = calcMetrics(metrics);
-  const { recoverableCapital, annualSavings, wcImprovementPct, reductionValue, reductionPct } = base;
+  const { annualSavings, wcImprovementPct, reductionValue, reductionPct } = base;
+  const recoverableCapital = metrics.recoverable_capital;
+  const deadRecoveryRate = (metrics.active_policy?.policy.dead_stock_recovery_rate ?? 40) / 100;
   const totalOpportunity = recoverableCapital + annualSavings * 3;
 
   // 3-year projection
@@ -201,15 +203,15 @@ export default function FinancialImpactPage() {
       rank: 1,
       title: "Liquidate Dead Stock",
       desc: `Recover cash from ${metrics.dead_stock_count} non-moving SKUs through liquidation channels.`,
-      saving: metrics.dead_stock_value * DEAD_LIQUIDATION_RATE,
+      saving: metrics.estimated_dead_stock_recovery ?? 0,
       timeline: "0–90 days",
       effort: "Low" as const,
     },
     {
       rank: 2,
       title: "Reduce Slow-Moving Inventory",
-      desc: `Sell down ${metrics.slow_mover_count} slow movers by 50% via promotions or clearance pricing.`,
-      saving: metrics.slow_mover_value * SLOW_REDUCTION_PCT * SLOW_RECOVERY_RATE,
+      desc: `Reduce excess across ${metrics.slow_mover_count} slow movers using the active policy-based recovery estimate.`,
+      saving: metrics.estimated_slow_moving_recovery ?? 0,
       timeline: "90–180 days",
       effort: "Medium" as const,
     },
@@ -231,9 +233,9 @@ export default function FinancialImpactPage() {
 
   const kpiCards = [
     {
-      label:    "Recoverable Capital",
+      label:    "Estimated Recoverable Capital",
       value:    formatCurrency(recoverableCapital),
-      sub:      "One-time cash recovery",
+      sub:      "Policy-based estimate, not guaranteed recovery",
       icon:     DollarSign,
       color:    "text-emerald-400",
       iconBg:   "bg-emerald-500/10",
@@ -270,9 +272,9 @@ export default function FinancialImpactPage() {
 
   const assumptionRows = [
     { name: "Carrying Rate",          rate: "25%",  basis: "COGS % of inventory value", standard: "20–30%" },
-    { name: "Dead Stock Recovery",    rate: "30%",  basis: "Liquidation market value",   standard: "20–40%" },
-    { name: "Slow Mover Reduction",   rate: "50%",  basis: "Target sell-down volume",    standard: "25–75%" },
-    { name: "Slow Mover Recovery",    rate: "65%",  basis: "Clearance pricing factor",   standard: "55–75%" },
+    { name: "Approved Dead Stock Recovery", rate: `${metrics.active_policy?.policy.dead_stock_recovery_rate ?? 40}%`, basis: "Active policy used by the canonical analyzer", standard: "Policy" },
+    { name: "Approved Slow-Moving Recovery", rate: `${metrics.active_policy?.policy.slow_moving_recovery_rate ?? 70}%`, basis: "Active policy applied to slow-moving excess value", standard: "Policy" },
+    { name: "Approved Target Coverage", rate: `${metrics.active_policy?.policy.target_coverage_months ?? 6} mo`, basis: "Active policy target used to estimate excess value", standard: "Policy" },
     { name: "WACC",                   rate: "12%",  basis: "Weighted avg cost of capital","standard": "8–15%" },
   ];
 
@@ -344,28 +346,25 @@ export default function FinancialImpactPage() {
             </div>
 
             {/* ── Hero card ────────────────────────────────────────────────── */}
-            {/* Note: metrics.recoverable_capital = dead_stock_value + slow_mover_value (full locked capital,
-                matches the dashboard KPI card). recoverableCapital here = discounted cash you can actually
-                recover (30% liquidation rate for dead, 50%×65% for slow movers). */}
             <div className="card p-6 bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0f172a] border border-violet-500/20">
-              {/* Two-column: locked capital (matches dashboard) vs estimated recovery */}
+              {/* Two-column: canonical KPI vs separate scenario estimate */}
               <div className="flex flex-col sm:flex-row gap-6 mb-4 pb-4 border-b border-white/8">
                 <div className="flex-1">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Capital Locked in Non-Performing Stock</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Estimated Recoverable Capital</p>
                   <p className="text-3xl font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
                     {formatCurrency(metrics.recoverable_capital)}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Matches Dashboard &ldquo;Recoverable Capital&rdquo; KPI · {metrics.dead_stock_count + metrics.slow_mover_count} SKUs
+                    Matches dashboard KPI · policy-based estimate, not guaranteed recovery
                   </p>
                 </div>
                 <div className="flex-1 sm:border-l sm:border-white/8 sm:pl-6">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Estimated Cash Recovery (Base Case)</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Scenario Recovery Estimate (Base Case)</p>
                   <p className="text-3xl font-bold text-emerald-400" style={{ fontFamily: "Syne, sans-serif" }}>
                     {formatCurrency(recoverableCapital)}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    After liquidation discounts · Dead 30% · Slow 50%×65%
+                    Separate scenario using the assumptions table below; not the approved KPI
                   </p>
                 </div>
               </div>
@@ -373,7 +372,7 @@ export default function FinancialImpactPage() {
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                   <DollarSign className="w-3 h-3" />
-                  Cash Recovery {formatCurrency(recoverableCapital, true)}
+                  Estimated Recovery {formatCurrency(recoverableCapital, true)}
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400">
                   <PiggyBank className="w-3 h-3" />
@@ -418,7 +417,7 @@ export default function FinancialImpactPage() {
                     <thead>
                       <tr className="border-b border-white/5">
                         <th className="text-left py-2 pr-3 text-[10px] text-slate-500 font-medium">Scenario</th>
-                        <th className="text-right py-2 px-2 text-[10px] text-slate-500 font-medium">Capital</th>
+                        <th className="text-right py-2 px-2 text-[10px] text-slate-500 font-medium">Scenario Recovery</th>
                         <th className="text-right py-2 px-2 text-[10px] text-slate-500 font-medium">Savings/yr</th>
                         <th className="text-right py-2 pl-2 text-[10px] text-slate-500 font-medium">WC%</th>
                       </tr>
@@ -440,7 +439,7 @@ export default function FinancialImpactPage() {
                             </span>
                           </td>
                           <td className={`py-2.5 px-2 text-right tabular-nums ${sc.isBase ? "text-emerald-400 font-semibold" : "text-slate-400"}`}>
-                            {formatCurrency(sc.recoverableCapital, true)}
+                            {formatCurrency(sc.scenarioRecoveryEstimate, true)}
                           </td>
                           <td className={`py-2.5 px-2 text-right tabular-nums ${sc.isBase ? "text-blue-400 font-semibold" : "text-slate-400"}`}>
                             {formatCurrency(sc.annualSavings, true)}
@@ -604,7 +603,7 @@ export default function FinancialImpactPage() {
                     <div>
                       <p className="text-xs font-semibold text-white">Dead Stock</p>
                       <p className="text-[10px] text-slate-500 mt-0.5">
-                        {metrics.dead_stock_count} SKUs · {formatCurrency(metrics.dead_stock_value, true)} value · {formatCurrency(metrics.dead_stock_value * DEAD_LIQUIDATION_RATE, true)} recoverable
+                        {metrics.dead_stock_count} SKUs · {formatCurrency(metrics.dead_stock_value, true)} value · {formatCurrency(metrics.estimated_dead_stock_recovery ?? 0, true)} estimated recovery
                       </p>
                     </div>
                     <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
@@ -616,7 +615,7 @@ export default function FinancialImpactPage() {
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-white/5">
-                            {["SKU", "Product", "ABC", "Value", "Recovery (30%)"].map(h => (
+                            {["SKU", "Product", "ABC", "Value", "Est. Recovery (policy)"].map(h => (
                               <th key={h} className="px-4 py-2 text-left text-[10px] text-slate-600 font-medium uppercase tracking-wider whitespace-nowrap">{h}</th>
                             ))}
                           </tr>
@@ -630,7 +629,7 @@ export default function FinancialImpactPage() {
                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400">{item.abc_class}</span>
                               </td>
                               <td className="px-4 py-2 text-white font-medium tabular-nums">{formatCurrency(item.inventory_value, true)}</td>
-                              <td className="px-4 py-2 text-emerald-400 tabular-nums">{formatCurrency(item.inventory_value * DEAD_LIQUIDATION_RATE, true)}</td>
+                              <td className="px-4 py-2 text-emerald-400 tabular-nums">{formatCurrency(item.inventory_value * deadRecoveryRate, true)}</td>
                             </tr>
                           ))}
                         </tbody>

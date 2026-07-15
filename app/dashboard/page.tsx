@@ -556,7 +556,7 @@ export default function DashboardPage() {
 
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1280px] mx-auto px-4 py-5 sm:py-6 space-y-5 sm:space-y-6">
+          <div className="max-w-[1280px] mx-auto px-4 pt-5 pb-28 sm:pt-6 sm:pb-32 space-y-5 sm:space-y-6">
 
             {/* Analysis mode banner */}
             {mode !== "health" && (

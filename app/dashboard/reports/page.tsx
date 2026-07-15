@@ -48,7 +48,7 @@ function exportPODraft(metrics: DashboardMetrics) {
 function exportStockoutReport(metrics: DashboardMetrics) {
   const header = "SKU,Product Name,Category,Stock Qty,Daily Velocity,Days Remaining,Risk Score,Scenario,ABC Class,Unit Cost,Inventory Value";
   const rows = metrics.top_risk_items
-    .filter((i) => i.scenario === "CRITICAL" || i.scenario === "WATCH")
+    .filter((i) => i.scenario === "CRITICAL")
     .map((i) =>
       [
         i.sku_id,
@@ -74,7 +74,7 @@ function exportDeadStockReport(metrics: DashboardMetrics) {
   const header = "SKU,Product Name,Category,Stock Qty,Unit Cost,Inventory Value,Days Since Last Sale,Scenario,ABC Class,Annual Carrying Cost";
   const items = metrics.top_dead_stock.length > 0
     ? metrics.top_dead_stock
-    : metrics.top_risk_items.filter((i) => i.scenario === "DEAD" || i.scenario === "SLOW");
+    : metrics.all_skus.filter((i) => i.scenario === "DEAD");
   const rows = items.map((i) =>
     [
       i.sku_id,
@@ -97,6 +97,11 @@ function exportDeadStockReport(metrics: DashboardMetrics) {
 
 function exportInventorySummary(metrics: DashboardMetrics) {
   const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const aging = metrics.aging_metrics;
+  const agingValue = aging?.has_ageing_data ? `${Math.round(aging.avg_ageing_days)} days` : "Not available";
+  const agingHealth = aging?.has_ageing_data ? `${aging.ageing_health_score}/100` : "Not available";
+  const bucketCount = (label: string) =>
+    aging?.has_ageing_data ? String(aging.buckets.find((b) => b.label === label)?.count ?? 0) : "Not available";
   const lines = [
     "SupplySense Inventory Summary Report",
     `Generated: ${date}`,
@@ -112,15 +117,22 @@ function exportInventorySummary(metrics: DashboardMetrics) {
     `Slow Mover SKU Count,${metrics.slow_mover_count}`,
     `Stockout Risk SKUs,${metrics.stockout_risk_count}`,
     `Critical Stockout SKUs,${metrics.critical_stockout_count}`,
-    `Recoverable Capital,$${metrics.recoverable_capital.toFixed(2)}`,
-    `Inventory Turnover Ratio,${metrics.turnover_ratio}x`,
+    `Estimated Recoverable Capital,$${metrics.recoverable_capital.toFixed(2)}`,
+    `Estimated Inventory Turnover,${metrics.turnover_ratio}x`,
     `Reorder Actions Needed,${metrics.reorder_count}`,
+    `Average Ageing,${agingValue}`,
+    `Ageing Health Score,${agingHealth}`,
+    `Ageing 0-30 Days,${bucketCount("0-30 Days")}`,
+    `Ageing 31-90 Days,${bucketCount("31-90 Days")}`,
+    `Ageing 91-180 Days,${bucketCount("91-180 Days")}`,
+    `Ageing 181-365 Days,${bucketCount("181-365 Days")}`,
+    `Ageing 365+ Days,${bucketCount("365+ Days")}`,
     "",
     "ABC Classification",
     `A-Class SKUs,${metrics.abc_summary.a_count}`,
     `B-Class SKUs,${metrics.abc_summary.b_count}`,
     `C-Class SKUs,${metrics.abc_summary.c_count}`,
-    `A-Class Revenue Share,${metrics.abc_summary.a_revenue_pct}%`,
+    `A-Class Annual Consumption Value Share,${metrics.abc_summary.a_revenue_pct}%`,
     "",
     "Risk Distribution",
     `Critical,${metrics.risk_distribution.critical}`,
@@ -258,8 +270,8 @@ export default function ReportsPage() {
   }
 
   const hasReorders = metrics.reorder_recommendations.length > 0;
-  const hasRiskItems = metrics.top_risk_items.filter((i) => i.scenario === "CRITICAL" || i.scenario === "WATCH").length > 0;
-  const hasDeadStock = (metrics.top_dead_stock?.length ?? 0) > 0 || metrics.top_risk_items.filter((i) => i.scenario === "DEAD" || i.scenario === "SLOW").length > 0;
+  const hasRiskItems = metrics.top_risk_items.filter((i) => i.scenario === "CRITICAL").length > 0;
+  const hasDeadStock = metrics.dead_stock_count > 0;
   const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   return (
@@ -332,8 +344,8 @@ export default function ReportsPage() {
                 iconBg="bg-red-500/10"
                 iconColor="text-red-400"
                 title="Stockout Risk Report"
-                description="All items classified as Critical or Watch, ranked by days until stockout. Includes stock levels, daily velocity, risk scores, and ABC classification."
-                meta={`${metrics.top_risk_items.filter((i) => i.scenario === "CRITICAL" || i.scenario === "WATCH").length} at-risk items · CSV`}
+                description="Items classified as Critical, matching the dashboard Stockout Risk KPI. Includes stock levels, daily velocity, risk scores, and ABC classification."
+                meta={`${metrics.stockout_risk_count} critical items · CSV`}
                 badge={metrics.critical_stockout_count > 0 ? { label: `${metrics.critical_stockout_count} critical`, color: "bg-red-500/15 text-red-400" } : undefined}
                 disabled={!hasRiskItems}
                 onDownload={() => exportStockoutReport(metrics!)}
@@ -344,7 +356,7 @@ export default function ReportsPage() {
                 iconBg="bg-purple-500/10"
                 iconColor="text-purple-400"
                 title="Dead Stock Report"
-                description="Items with zero or near-zero movement classified as Dead or Slow. Includes inventory value, carrying cost, and days since last sale for liquidation prioritisation."
+                description="Items classified as Dead Stock only. Slow Moving inventory remains a separate population and is not included in this export."
                 meta={`${metrics.dead_stock_count} dead stock items · CSV`}
                 badge={{ label: formatCurrency(metrics.dead_stock_value, true) + " locked", color: "bg-purple-500/15 text-purple-400" }}
                 disabled={!hasDeadStock}
@@ -356,7 +368,7 @@ export default function ReportsPage() {
                 iconBg="bg-emerald-500/10"
                 iconColor="text-emerald-400"
                 title="Inventory Summary"
-                description="Full KPI summary including health score, ABC distribution, risk breakdown, carrying costs, and recoverable capital. Ideal for executive briefings and board decks."
+                description="Full KPI summary including health score, ABC annual consumption value distribution, ageing, risk breakdown, carrying costs, and estimated recoverable capital."
                 meta="All KPIs · CSV"
                 onDownload={() => exportInventorySummary(metrics!)}
               />

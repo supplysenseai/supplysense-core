@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Clock, AlertTriangle, DollarSign, Info } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -43,7 +44,12 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
+  const [showAllReviewItems, setShowAllReviewItems] = useState(false);
   const hasAgingData = aging.has_ageing_data;
+  const reviewCount = aging.liquidation_opportunities.length;
+  const visibleReviewItems = showAllReviewItems
+    ? aging.liquidation_opportunities
+    : aging.liquidation_opportunities.slice(0, 10);
   const chartData = aging.buckets.map((b) => ({
     label: b.label,
     count: b.count,
@@ -80,8 +86,8 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
             icon: DollarSign,
             color: "text-orange-400",
             bg: "bg-orange-500/10",
-            sub: metrics ? "Policy-based recovery estimate" : "Dead stock + slow-moving value",
-            kpiKey: "blocked_capital",
+            sub: metrics ? "Policy-based estimate - not guaranteed recovery" : "Ageing review value",
+            kpiKey: "recoverable_capital",
           },
         ].map((card) => (
           <div key={card.label} className="card p-4 relative group">
@@ -192,27 +198,27 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
             )}
           </div>
           {hasAgingData && <div className="space-y-1.5 mt-2">
-            {aging.buckets.slice(0, 3).map((b) => (
+            {aging.buckets.map((b) => (
               <div key={b.label} className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: b.color }} />
                 <span className="text-[10px] text-slate-400 flex-1 truncate">{b.label}</span>
-                <span className="text-[10px] font-medium" style={{ color: b.color }}>{b.pct_value}%</span>
+                <span className="text-[10px] font-medium tabular-nums" style={{ color: b.color }}>{b.pct_value}% x {b.score}</span>
               </div>
             ))}
           </div>}
         </div>
       </div>
 
-      {/* Liquidation opportunities */}
+      {/* Ageing review opportunities */}
       {aging.liquidation_opportunities.length > 0 && (
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
             <div>
-              <h3 className="text-sm font-semibold text-white">Liquidation Opportunities</h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Items 91+ days old, sorted by age × value</p>
+              <h3 className="text-sm font-semibold text-white">Ageing Review Opportunities</h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">Items aged more than 180 days, sorted by oldest movement first</p>
             </div>
             <span className="badge bg-orange-500/10 text-orange-400 border border-orange-500/20">
-              {aging.liquidation_opportunities.length} items
+              {reviewCount} items
             </span>
           </div>
 
@@ -228,7 +234,7 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/4">
-                {aging.liquidation_opportunities.slice(0, 10).map((item) => {
+                {visibleReviewItems.map((item) => {
                   const urgencyColor =
                     item.ageing_days >= 366 ? "text-red-400" :
                     item.ageing_days >= 181 ? "text-orange-400" :
@@ -259,9 +265,13 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
 
           {aging.liquidation_opportunities.length > 10 && (
             <div className="px-5 py-3 border-t border-white/5 text-center">
-              <span className="text-[11px] text-slate-500">
-                +{aging.liquidation_opportunities.length - 10} more items not shown
-              </span>
+              <button
+                type="button"
+                onClick={() => setShowAllReviewItems((current) => !current)}
+                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium text-orange-300 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 hover:text-orange-200 transition-colors"
+              >
+                {showAllReviewItems ? "Show fewer" : `Show all ${reviewCount} items`}
+              </button>
             </div>
           )}
         </div>

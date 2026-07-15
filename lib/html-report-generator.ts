@@ -7,6 +7,7 @@
 
 import type { DashboardMetrics } from "./types";
 import type { ExecutiveSummary } from "./insights-generator";
+import { getHealthScoreContributions } from "./health-score";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -94,8 +95,8 @@ export function generateHtmlReport(
   const slowTotal     = slowItems.reduce((s, r) => s + r.inventory_value, 0);
 
   // ── Financial calcs ────────────────────────────────────────────────────────
-  const deadRecovery  = metrics.dead_stock_value * 0.30;
-  const slowRecovery  = metrics.slow_mover_value * 0.50 * 0.65;
+  const deadRecovery  = metrics.estimated_dead_stock_recovery ?? 0;
+  const slowRecovery  = metrics.estimated_slow_moving_recovery ?? 0;
   const annualSavings = (metrics.dead_stock_value + metrics.slow_mover_value * 0.50) * CARRYING_RATE;
   const y1 = metrics.recoverable_capital + annualSavings;
   const y2 = y1 + annualSavings;
@@ -114,12 +115,8 @@ export function generateHtmlReport(
   ];
 
   // ── Health score components ────────────────────────────────────────────────
-  const hc = metrics.health_components;
   const ap = metrics.active_policy;
-  const wD  = ap?.policy.weight_dead_stock    ?? 30;
-  const wS  = ap?.policy.weight_slow_moving   ?? 25;
-  const wSO = ap?.policy.weight_stockout_risk ?? 30;
-  const wA  = Math.max(0, 100 - wD - wS - wSO);
+  const healthContributions = getHealthScoreContributions(metrics);
 
   // ─────────────────────────────────────────────────────────────────────────
   // HTML SECTIONS
@@ -160,14 +157,23 @@ export function generateHtmlReport(
     </tr>`;
 
   // ── B. Health Score Components ────────────────────────────────────────────
-  const hcRows = [
-    { name: "Dead Stock Factor",    weight: wD,  score: hc.dead_stock_score,  raw: `${hc.dead_stock_pct}% dead SKUs`,     color: "#9333ea" },
-    { name: "Slow Moving Factor",   weight: wS,  score: hc.slow_mover_score,  raw: `${hc.slow_mover_pct}% slow SKUs`,     color: "#d97706" },
-    { name: "Stockout Risk Factor", weight: wSO, score: hc.stockout_score,    raw: `${hc.stockout_risk_pct}% at risk`,    color: "#dc2626" },
-    { name: "ABC Balance Factor",   weight: wA,  score: hc.abc_score,         raw: `${hc.a_item_revenue_pct}% A-item rev`,color: "#059669" },
-  ];
+  const factorColors: Record<string, string> = {
+    dead_stock: "#9333ea",
+    slow_moving: "#d97706",
+    stockout_risk: "#dc2626",
+    abc: "#059669",
+  };
+  const hcRows = healthContributions.map((factor) => ({
+    name: `${factor.label} Factor`,
+    weight: factor.weight,
+    score: factor.score,
+    raw: factor.key === "abc"
+      ? `${factor.pct}% Annual Consumption Value Share`
+      : factor.detail,
+    color: factorColors[factor.key],
+    contribution: factor.displayedContribution,
+  }));
   const hcHtml = hcRows.map(r => {
-    const contribution = Math.round(r.score * r.weight / 100);
     return `
     <tr style="border-bottom:1px solid #f3f4f6;">
       <td style="padding:8px 12px;">
@@ -183,7 +189,7 @@ export function generateHtmlReport(
         </div>
       </td>
       <td style="padding:8px 12px;font-size:12px;font-weight:700;text-align:center;color:${r.score >= 70 ? "#059669" : r.score >= 50 ? "#d97706" : "#dc2626"};">${r.score}/100</td>
-      <td style="padding:8px 12px;font-size:12px;font-weight:700;text-align:right;color:#6366f1;">+${contribution} pts</td>
+      <td style="padding:8px 12px;font-size:12px;font-weight:700;text-align:right;color:#6366f1;">+${r.contribution} pts</td>
       <td style="padding:8px 12px;font-size:11px;color:#6b7280;">${esc(r.raw)}</td>
     </tr>`;
   }).join("") + `
@@ -320,11 +326,39 @@ export function generateHtmlReport(
             <div style="height:100%;background:${a.color};width:${Math.max(2, a.rev)}%;border-radius:4px;"></div>
           </div>
           <span style="font-size:12px;font-weight:700;color:${a.color};">${a.rev}%</span>
-          <span style="font-size:11px;color:#6b7280;">of value</span>
+          <span style="font-size:11px;color:#6b7280;">Annual Consumption Value Share</span>
         </div>
       </td>
       <td style="padding:10px 14px;font-size:11px;color:#6b7280;">${esc(a.guideline)}</td>
     </tr>`).join("");
+
+  const aging = metrics.aging_metrics;
+  const agingAvailable = !!aging?.has_ageing_data;
+  const agingBucketCount = (label: string) =>
+    agingAvailable ? String(aging.buckets.find((b) => b.label === label)?.count ?? 0) : "Not available";
+  const agingHtml = agingAvailable ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      ${[
+        { label: "Average Ageing", value: `${Math.round(aging.avg_ageing_days)} days`, color: "#6366f1" },
+        { label: "Ageing Health Score", value: `${aging.ageing_health_score}/100`, color: "#059669" },
+      ].map(c=>`<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;">
+        <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 4px;">${esc(c.label)}</p>
+        <p style="font-size:16px;font-weight:800;color:${c.color};margin:0;">${esc(c.value)}</p>
+      </div>`).join("")}
+    </div>
+    <table>
+      <thead>
+        <tr><th>Ageing Bucket</th><th style="text-align:right;">SKU Count</th></tr>
+      </thead>
+      <tbody>
+        ${["0-30 Days", "31-90 Days", "91-180 Days", "181-365 Days", "365+ Days"].map(label => `
+          <tr style="border-bottom:1px solid #f3f4f6;">
+            <td style="padding:8px 12px;font-size:12px;color:#374151;font-weight:500;">${esc(label)}</td>
+            <td style="padding:8px 12px;font-size:12px;color:#111827;font-weight:700;text-align:right;">${agingBucketCount(label)}</td>
+          </tr>`).join("")}
+      </tbody>
+    </table>` : `
+    <p style="font-size:12px;color:#6b7280;margin:0;line-height:1.6;">Ageing metrics are not available for this dataset. No zero-value ageing result is assumed.</p>`;
 
   // ── H. Key Risks ──────────────────────────────────────────────────────────
   const risksHtml = summary.key_risks.map(r => `
@@ -361,11 +395,11 @@ export function generateHtmlReport(
     { label: "Total Inventory Value",        value: fmt(metrics.total_inventory_value),         color: "#111827", sub: `${metrics.total_skus} SKUs` },
     { label: "Dead Stock Value",             value: fmt(metrics.dead_stock_value),              color: "#9333ea", sub: `${metrics.dead_stock_count} SKUs · zero velocity` },
     { label: "Slow Mover Value",             value: fmt(metrics.slow_mover_value),              color: "#d97706", sub: `${metrics.slow_mover_count} SKUs · excess stock` },
-    { label: "Recoverable Capital",          value: fmt(metrics.recoverable_capital),           color: "#059669", sub: "Via liquidation & reorder freeze" },
+    { label: "Estimated Recoverable Capital", value: fmt(metrics.recoverable_capital),          color: "#059669", sub: "Policy-based estimate, not guaranteed recovery" },
     { label: "Annual Carrying Cost",         value: fmt(metrics.annual_carrying_cost) + "/yr",  color: "#ea580c", sub: "25% holding rate" },
     { label: "Dead Stock Holding Cost",      value: fmt(metrics.dead_stock_carrying_cost)+"/yr",color: "#dc2626", sub: "Unproductive capital" },
-    { label: "Inventory Turnover",           value: `${num(metrics.turnover_ratio)}×`,          color: metrics.turnover_ratio >= 4.5 ? "#059669" : "#ea580c", sub: "4.5× benchmark" },
-    { label: "A-Class Revenue Share",        value: `${abc.a_revenue_pct}%`,                   color: abc.a_revenue_pct >= 65 ? "#059669" : "#d97706", sub: "65–70% target" },
+    { label: "Estimated Inventory Turnover", value: `${num(metrics.turnover_ratio)}×`,          color: "#6366f1", sub: "Annualised consumption cost / current inventory value" },
+    { label: "A-Class Annual Consumption Value Share", value: `${abc.a_revenue_pct}%`,          color: "#059669", sub: "Based on annual consumption value" },
   ];
   const finCardsHtml = finCards.map(c => `
     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;">
@@ -420,9 +454,9 @@ export function generateHtmlReport(
 
   const assumptions = [
     { name: "Annual Carrying Rate",     rate: "25%",  basis: "COGS % of inventory value",   std: "20–30%" },
-    { name: "Dead Stock Recovery",      rate: "30%",  basis: "Liquidation market value",     std: "20–40%" },
-    { name: "Slow Mover Reduction",     rate: "50%",  basis: "Target sell-down volume",      std: "25–75%" },
-    { name: "Slow Mover Recovery Rate", rate: "65%",  basis: "Clearance pricing factor",     std: "55–75%" },
+    { name: "Dead Stock Recovery",      rate: `${ap?.policy.dead_stock_recovery_rate ?? 40}%`, basis: "Active policy estimate applied by analyzer", std: "Policy" },
+    { name: "Slow-Moving Recovery Rate", rate: `${ap?.policy.slow_moving_recovery_rate ?? 70}%`, basis: "Active policy estimate applied to slow-moving excess value", std: "Policy" },
+    { name: "Slow-Moving Target Coverage", rate: `${ap?.policy.target_coverage_months ?? 6} mo`, basis: "Active policy target used to estimate excess value", std: "Policy" },
     { name: "WACC",                     rate: "12%",  basis: "Weighted avg cost of capital", std: "8–15%" },
   ];
   const assumHtml = assumptions.map(a => `
@@ -541,8 +575,8 @@ export function generateHtmlReport(
     ${[
       { label:"Total Inventory Value",   value:fmt(metrics.total_inventory_value),    sub:`${metrics.total_skus} SKUs on hand`,                      color:"#111827" },
       { label:"Capital at Risk",         value:fmt(metrics.dead_stock_value+metrics.slow_mover_value,true), sub:`${metrics.dead_stock_count+metrics.slow_mover_count} problem SKUs`, color:"#d97706" },
-      { label:"Recoverable Capital",     value:fmt(metrics.recoverable_capital,true),  sub:"Via liquidation & action",                               color:"#059669" },
-      { label:"Inventory Turnover",      value:`${num(metrics.turnover_ratio)}×`,      sub:metrics.turnover_ratio>=4.5?"✓ Above 4.5× benchmark":"↓ Below 4.5× benchmark", color:metrics.turnover_ratio>=4.5?"#059669":"#ea580c" },
+      { label:"Estimated Recoverable Capital", value:fmt(metrics.recoverable_capital,true), sub:"Policy-based estimate, not guaranteed recovery",       color:"#059669" },
+      { label:"Estimated Inventory Turnover", value:`${num(metrics.turnover_ratio)}×`, sub:"Snapshot estimate from annualised consumption cost / current inventory value", color:"#6366f1" },
     ].map(c=>`<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;">
       <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 6px;">${esc(c.label)}</p>
       <p style="font-size:20px;font-weight:800;color:${c.color};margin:0 0 3px;font-variant-numeric:tabular-nums;">${esc(c.value)}</p>
@@ -617,7 +651,7 @@ export function generateHtmlReport(
         <th style="text-align:right;">Days Remaining</th>
         <th style="text-align:right;">Lead Time</th>
         <th style="text-align:right;">EOQ Order Qty</th>
-        <th style="text-align:right;">Revenue at Risk</th>
+        <th style="text-align:right;">Annual Consumption Value</th>
       </tr>
     </thead>
     <tbody>${criticalHtml}</tbody>
@@ -658,7 +692,7 @@ export function generateHtmlReport(
     ${[
       {label:"Dead Stock Value",    value:fmt(metrics.dead_stock_value),         color:"#9333ea"},
       {label:"Annual Holding Cost", value:fmt(metrics.dead_stock_carrying_cost)+"/yr", color:"#dc2626"},
-      {label:"Recovery Potential",  value:fmt(deadRecovery,true)+" (30%)",       color:"#059669"},
+      {label:"Estimated Dead-Stock Recovery",  value:fmt(deadRecovery,true),       color:"#059669"},
     ].map(c=>`<div style="background:#f9f7ff;border:1px solid #e9d5ff;border-radius:10px;padding:12px 14px;">
       <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 4px;">${esc(c.label)}</p>
       <p style="font-size:16px;font-weight:800;color:${c.color};margin:0;">${esc(c.value)}</p>
@@ -696,7 +730,7 @@ export function generateHtmlReport(
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
     ${[
       {label:"Slow Mover Value",    value:fmt(metrics.slow_mover_value),         color:"#d97706"},
-      {label:"Recovery Potential",  value:fmt(slowRecovery,true)+" (50% selldown)", color:"#059669"},
+      {label:"Estimated Slow-Moving Recovery",  value:fmt(slowRecovery,true), color:"#059669"},
       {label:"Threshold Applied",   value:`${ap?.policy.slow_moving_days ?? 180} days`, color:"#6366f1"},
     ].map(c=>`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;">
       <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 4px;">${esc(c.label)}</p>
@@ -729,7 +763,7 @@ export function generateHtmlReport(
     <div class="section-dot" style="background:#059669;"></div>
     <span class="section-title">6. ABC Classification & Purchasing Priority</span>
     <span class="section-badge" style="background:#d1fae5;color:#065f46;border-color:#a7f3d0;">
-      A: ${abc.a_revenue_pct}% &bull; B: ${abc.b_revenue_pct}% &bull; C: ${abc.c_revenue_pct}% of inventory value
+      A: ${abc.a_revenue_pct}% &bull; B: ${abc.b_revenue_pct}% &bull; C: ${abc.c_revenue_pct}% Annual Consumption Value Share
     </span>
   </div>
   <table>
@@ -737,7 +771,7 @@ export function generateHtmlReport(
       <tr>
         <th style="width:60px;">Class</th>
         <th style="text-align:right;width:100px;">SKU Count</th>
-        <th style="width:200px;">Value Share</th>
+        <th style="width:240px;">Annual Consumption Value Share</th>
         <th>Purchasing Guideline</th>
       </tr>
     </thead>
@@ -754,16 +788,30 @@ export function generateHtmlReport(
   </div>` : ""}
 </div>
 
+<div class="section">
+  <div class="section-header">
+    <div class="section-dot" style="background:#6366f1;"></div>
+    <span class="section-title">7. Ageing KPI Summary</span>
+    <span class="section-badge" style="background:#ede9fe;color:#4338ca;border-color:#c4b5fd;">
+      ${agingAvailable ? "Movement-history based" : "Not available"}
+    </span>
+  </div>
+  ${agingHtml}
+</div>
+
 <!-- ══════════════════════════════════════════════════════
      SECTION 7 — FINANCIAL IMPACT
 ════════════════════════════════════════════════════════ -->
 <div class="section page-break">
   <div class="section-header">
     <div class="section-dot" style="background:#059669;"></div>
-    <span class="section-title">7. Financial Impact &amp; Recovery Opportunity</span>
+    <span class="section-title">8. Financial Impact &amp; Recovery Opportunity</span>
     <span class="section-badge" style="background:#d1fae5;color:#065f46;border-color:#a7f3d0;">3-yr opportunity: ${fmt(y3, true)}</span>
   </div>
   <div class="kpi-grid" style="margin-bottom:20px;">${finCardsHtml}</div>
+  <p style="font-size:11px;color:#6b7280;margin:-8px 0 14px;line-height:1.6;">
+    Estimated Recoverable Capital is policy-based and is not guaranteed recovery. Estimated Inventory Turnover is a snapshot estimate based on annualised consumption cost divided by current inventory value; compare it against company targets, historical trends, and relevant industry context.
+  </p>
   <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:20px 24px;">
     <p style="font-size:11px;font-weight:700;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">3-Year Cumulative Benefit Projection</p>
     <p style="font-size:10px;color:#9ca3af;margin-bottom:16px;">Based on capital release + annual carrying cost savings at 25% holding rate</p>

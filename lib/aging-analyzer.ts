@@ -87,6 +87,7 @@ export function analyzeAging(items: InventoryItem[], analysisDateMs = Date.now()
       color: def.color,
       min_days: def.min,
       max_days: def.max,
+      score: BUCKET_SCORES[idx],
       count: matching.length,
       value,
       pct_count: totalCount > 0 ? Math.round((matching.length / totalCount) * 100) : 0,
@@ -109,7 +110,7 @@ export function analyzeAging(items: InventoryItem[], analysisDateMs = Date.now()
 
   // ── Liquidation opportunities — top items by value, age ≥ 91 days ────────
   const liquidationPool = agingItems
-    .filter((i) => i.ageing_days! >= SLOW_MIN_DAYS)
+    .filter((i) => i.ageing_days! > SLOW_MAX_DAYS)
     .sort((a, b) => {
       // Primary: oldest first; secondary: highest value first
       const ageDiff = b.ageing_days! - a.ageing_days!;
@@ -145,16 +146,17 @@ export function analyzeAging(items: InventoryItem[], analysisDateMs = Date.now()
 
   // ── Average ageing days (weighted by value if cost data available) ────────
   const hasValue = agingItems.some((i) => i.unit_cost > 0);
+  let avg_ageing_days_raw: number;
   let avg_ageing_days: number;
   if (hasValue) {
     const sumValueDays = agingItems.reduce(
       (sum, i) => sum + i.ageing_days! * i.stock_qty * i.unit_cost, 0
     );
-    avg_ageing_days = totalValue > 0 ? Math.round(sumValueDays / totalValue) : 0;
+    avg_ageing_days_raw = totalValue > 0 ? sumValueDays / totalValue : 0;
+    avg_ageing_days = Math.round(avg_ageing_days_raw);
   } else {
-    avg_ageing_days = Math.round(
-      agingItems.reduce((sum, i) => sum + i.ageing_days!, 0) / agingItems.length
-    );
+    avg_ageing_days_raw = agingItems.reduce((sum, i) => sum + i.ageing_days!, 0) / agingItems.length;
+    avg_ageing_days = Math.round(avg_ageing_days_raw);
   }
 
   return {
@@ -170,6 +172,7 @@ export function analyzeAging(items: InventoryItem[], analysisDateMs = Date.now()
     slow_moving_value,
     blocked_capital: dead_stock_value + slow_moving_value,
     liquidation_opportunities,
+    avg_ageing_days_raw,
     avg_ageing_days,
     ageing_health_score,
   };
@@ -182,11 +185,12 @@ export function emptyAgingMetrics(): AgingMetrics {
     invalid_movement_date_count: 0,
     total_items: 0,
     total_value: 0,
-    buckets: BUCKET_DEFS.map((def) => ({
+    buckets: BUCKET_DEFS.map((def, idx) => ({
       label: def.label,
       color: def.color,
       min_days: def.min,
       max_days: def.max,
+      score: BUCKET_SCORES[idx],
       count: 0,
       value: 0,
       pct_count: 0,
@@ -198,6 +202,7 @@ export function emptyAgingMetrics(): AgingMetrics {
     slow_moving_value: 0,
     blocked_capital: 0,
     liquidation_opportunities: [],
+    avg_ageing_days_raw: 0,
     avg_ageing_days: 0,
     ageing_health_score: 0,
   };

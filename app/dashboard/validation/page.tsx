@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShieldCheck, BookOpen, FlaskConical, Database, ChevronRight,
-  Menu, Download, CheckCircle2, AlertTriangle, Info, Layers,
+  Menu, CheckCircle2, AlertTriangle, Info, Layers,
 } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TrustBadge } from "@/components/validation/TrustBadge";
@@ -13,7 +13,6 @@ import { KPI_DEFINITIONS, getKPIReconciliationStatus, type KPIKey } from "@/lib/
 import {
   buildLiveCalculation,
   getDataLineage,
-  buildValidationExport,
 } from "@/lib/validation-engine";
 import type { DashboardMetrics } from "@/lib/types";
 import type { ActivePolicy } from "@/lib/policy";
@@ -297,18 +296,6 @@ export default function ValidationPage() {
     } catch { /* ignore */ }
   }, []);
 
-  function handleExport() {
-    if (!metrics) return;
-    const content = buildValidationExport(metrics, filename, detectedFields);
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `SupplySense-Validation-Report-${new Date().toISOString().split("T")[0]}.txt`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a); URL.revokeObjectURL(url);
-  }
-
   return (
     <div className="flex h-screen bg-[#020617] overflow-hidden">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -326,14 +313,6 @@ export default function ValidationPage() {
               <span className="text-xs font-semibold text-white">Validation Mode</span>
               <span className="text-xs text-slate-500 ml-1">— Audit, verify, and trace every calculation</span>
             </div>
-            <button
-              onClick={handleExport}
-              disabled={!metrics}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 border border-white/8 hover:border-white/16 hover:text-white transition-colors disabled:opacity-40"
-            >
-              <Download className="w-3 h-3" />
-              Export Validation Report
-            </button>
           </div>
         </header>
 

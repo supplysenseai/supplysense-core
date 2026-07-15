@@ -151,6 +151,7 @@ export interface AgingBucket {
   color: string;
   min_days: number;
   max_days: number | null; // null = no upper limit
+  score: number;
   count: number;
   value: number;
   pct_count: number;
@@ -182,6 +183,7 @@ export interface AgingMetrics {
   slow_moving_value: number;
   blocked_capital: number;
   liquidation_opportunities: AgingItem[];
+  avg_ageing_days_raw: number;
   avg_ageing_days: number;
   ageing_health_score: number;
 }

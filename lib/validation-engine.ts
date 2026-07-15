@@ -1,12 +1,11 @@
-/**
- * Validation Engine — Phase 13: Explainable Analytics & Trust Framework
+﻿/**
+ * Validation Engine â€” Phase 13: Explainable Analytics & Trust Framework
  *
  * Provides:
- *  - buildLiveCalculation() — step-by-step real-data computations for each KPI
- *  - getWhyExplanation()    — plain-English "why am I seeing this?" per KPI
- *  - getDataLineage()       — source columns + policy info per KPI
- *  - buildScoreBreakdown()  — health-score decomposition from 100 down
- *  - buildValidationExport() — full audit payload for download
+ *  - buildLiveCalculation() â€” step-by-step real-data computations for each KPI
+ *  - getWhyExplanation()    â€” plain-English "why am I seeing this?" per KPI
+ *  - getDataLineage()       â€” source columns + policy info per KPI
+ *  - buildScoreBreakdown()  â€” health-score decomposition from 100 down
  */
 
 import { formatCurrency } from "@/lib/utils";
@@ -15,7 +14,10 @@ import type { KPIKey } from "@/lib/kpi-definitions";
 import type { ActivePolicy } from "@/lib/policy";
 import { getHealthFormula, getHealthScoreContributions } from "@/lib/health-score";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+const validationHealthLabel = (label: string) =>
+  label === "Stockout Risk" ? "Replenishment Exposure" : label;
+
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface LiveCalcStep {
   label: string;
@@ -35,7 +37,7 @@ export interface LiveCalculation {
 
 export interface WhyExplanation {
   headline: string;       // 1-line bold headline
-  body: string;           // 2–3 sentence plain-English explanation
+  body: string;           // 2â€“3 sentence plain-English explanation
   impact: string;         // business impact
   action: string;         // recommended action
   confidence: "High" | "Medium" | "Low";
@@ -76,7 +78,7 @@ export interface ScoreBreakdown {
   formula: string;
 }
 
-// ── Live Calculation Builder ──────────────────────────────────────────────────
+// â”€â”€ Live Calculation Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function buildLiveCalculation(
   key: KPIKey,
@@ -130,14 +132,14 @@ export function buildLiveCalculation(
       const steps: LiveCalcStep[] = [
         {
           label: fallbackActive ? "Potential Dead Stock fallback" : "Movement-history method",
-          expr: `daily_velocity = 0 AND days_since_last_sale ≥ ${thresholdDays} days`,
+          expr: `daily_velocity = 0 AND days_since_last_sale â‰¥ ${thresholdDays} days`,
           value: "",
           detail: `Threshold: ${thresholdDays} days (${thresholdDays >= 365 ? "system default" : "policy override"})`,
         },
         { isHeader: true, label: "Sample dead stock items", value: "" },
         ...sample.map((s) => ({
           label: `${s.product_name} (${s.sku_id})`,
-          expr: `${s.units_on_hand} units × ${formatCurrency(s.unit_cost)}`,
+          expr: `${s.units_on_hand} units Ã— ${formatCurrency(s.unit_cost)}`,
           value: formatCurrency(s.inventory_value),
           detail: `No movement for ${s.days_since_last_sale} days`,
         })),
@@ -145,7 +147,7 @@ export function buildLiveCalculation(
         { label: "Dead stock SKUs", value: String(metrics.dead_stock_count), expr: "COUNT(is_dead_stock = true)" },
         {
           label: "Total dead stock value",
-          expr: "Σ (Units × Unit Cost) for dead items",
+          expr: "Î£ (Units Ã— Unit Cost) for dead items",
           value: formatCurrency(metrics.dead_stock_value),
           isFinal: true,
         },
@@ -191,14 +193,14 @@ export function buildLiveCalculation(
         { isHeader: true, label: "Sample slow-moving items", value: "" },
         ...sample.map((s) => ({
           label: `${s.product_name} (${s.sku_id})`,
-          expr: `${s.units_on_hand} units, ${isFinite(s.days_stock_remaining) ? Math.round(s.days_stock_remaining) + "d supply" : "∞ supply"}`,
+          expr: `${s.units_on_hand} units, ${isFinite(s.days_stock_remaining) ? Math.round(s.days_stock_remaining) + "d supply" : "âˆž supply"}`,
           value: formatCurrency(s.inventory_value),
         })),
         { isHeader: true, label: "Totals", value: "" },
         { label: "Slow-moving SKUs", value: String(metrics.slow_mover_count), expr: "COUNT(daily_usage > 0 AND days_of_supply > active slow_moving_days AND NOT dead_stock)" },
         {
           label: "Total slow-moving value",
-          expr: "Σ (Units × Unit Cost) for slow movers",
+          expr: "Î£ (Units Ã— Unit Cost) for slow movers",
           value: formatCurrency(metrics.slow_mover_value),
           isFinal: true,
         },
@@ -214,46 +216,65 @@ export function buildLiveCalculation(
     case "stockout_risk": {
       const policy = metrics.active_policy?.policy;
       const safetyDays = policy?.safety_stock_days ?? 15;
-      const atRisk = metrics.all_skus
-        ? metrics.all_skus.filter(
-            (s) => !s.is_dead_stock && s.daily_velocity > 0 && s.units_on_hand <= s.reorder_point_calc
-          )
-        : metrics.top_risk_items.filter((s) => s.scenario === "CRITICAL" || s.scenario === "WATCH");
-      const sample = atRisk.slice(0, 5);
+      const allSkus = metrics.all_skus ?? metrics.top_risk_items;
+      const critical = allSkus.filter(
+        (s) =>
+          !s.is_dead_stock &&
+          s.daily_velocity > 0 &&
+          (s.replenishment_status === "STOCKED_OUT" || s.days_stock_remaining < s.lead_time_days)
+      );
+      const atOrBelowRop = allSkus.filter(
+        (s) => !s.is_dead_stock && s.daily_velocity > 0 && s.reorder_point_calc > 0 && s.units_on_hand <= s.reorder_point_calc
+      );
+      const watch = atOrBelowRop.filter(
+        (s) => !(s.replenishment_status === "STOCKED_OUT" || s.days_stock_remaining < s.lead_time_days)
+      );
+      const sample = [...critical, ...watch].slice(0, 5);
       const steps: LiveCalcStep[] = [
         {
           label: "Reorder Point formula",
-          expr: "ROP = (daily_velocity × lead_time_days) + safety_stock\nsafety_stock = daily_velocity × " + safetyDays + " days",
+          expr: "ROP = (daily_velocity Ã— lead_time_days) + safety_stock\nsafety_stock = daily_velocity Ã— " + safetyDays + " days",
           value: "",
         },
         {
-          label: "At-risk classification",
-          expr: "stock_qty ≤ ROP  AND  daily_velocity > 0  AND  NOT dead_stock",
+          label: "CRITICAL Stockout Risk rule",
+          expr: "STOCKED_OUT OR days_of_stock < lead_time_days",
+          value: "",
+          detail: "Risk score rises as stock coverage falls below lead time; ABC class is not part of the score.",
+        },
+        {
+          label: "WATCH rule",
+          expr: "At or below ROP after excluding CRITICAL and dead-stock records",
           value: "",
         },
         { isHeader: true, label: "Sample at-risk items", value: "" },
         ...sample.map((s) => ({
           label: `${s.product_name} (${s.sku_id})`,
-          expr: `${s.units_on_hand} on hand ≤ ROP ${Math.round(s.reorder_point_calc)}, ${isFinite(s.days_stock_remaining) ? Math.round(s.days_stock_remaining) + "d stock" : "—"}`,
-          value: s.units_on_hand <= (s.reorder_point_calc * 0.5) ? "⚠ Critical" : "Watch",
+          value: s.replenishment_status === "STOCKED_OUT" || s.days_stock_remaining < s.lead_time_days ? "CRITICAL" : "WATCH",
+          expr: `${s.units_on_hand} on hand â‰¤ ROP ${Math.round(s.reorder_point_calc)}, ${isFinite(s.days_stock_remaining) ? Math.round(s.days_stock_remaining) + "d stock" : "â€”"}`,
           detail: `Lead time: ${s.lead_time_days}d, velocity: ${s.daily_velocity.toFixed(2)} units/day`,
         })),
         { isHeader: true, label: "Summary", value: "" },
         {
-          label: "SKUs at stockout risk",
-          expr: "COUNT(stock_qty ≤ ROP)",
+          label: "CRITICAL Stockout Risk",
+          expr: "COUNT(STOCKED_OUT OR days_of_stock < lead_time_days)",
           value: String(metrics.stockout_risk_count),
           isFinal: true,
         },
         {
-          label: "Critical (< 50% of ROP)",
-          value: String(metrics.critical_stockout_count),
+          label: "WATCH",
+          value: String(metrics.reorder_watch_count ?? watch.length),
+          detail: "At or below ROP after excluding CRITICAL and dead-stock records",
+        },
+        {
+          label: "At or Below ROP / Reorder Population",
+          value: String(metrics.reorder_count || atOrBelowRop.length),
         },
       ];
       return {
         totalRecords: metrics.total_skus,
         includedRecords: metrics.stockout_risk_count,
-        summary: `${metrics.stockout_risk_count} SKUs have stock at or below reorder point`,
+        summary: `${metrics.stockout_risk_count} CRITICAL SKUs; ${metrics.reorder_watch_count ?? watch.length} WATCH SKUs; ${metrics.reorder_count || atOrBelowRop.length} total at or below ROP`,
         steps,
       };
     }
@@ -263,10 +284,10 @@ export function buildLiveCalculation(
       const steps: LiveCalcStep[] = [
         { isHeader: true, label: "Factor scores and active policy weights", value: "" },
         ...factors.map((factor) => ({
-          label: factor.label,
+          label: validationHealthLabel(factor.label),
           expr: `${factor.score} x ${(factor.weight / 100).toFixed(2)} = ${factor.exactContribution.toFixed(2)}`,
           value: `+${factor.displayedContribution} pts`,
-          detail: factor.detail,
+          detail: factor.key === "stockout_risk" ? "Broader at/below-ROP population used by the approved Health Score factor" : factor.detail,
         })),
         { isHeader: true, label: "Composite formula", value: "" },
         {
@@ -335,15 +356,30 @@ export function buildLiveCalculation(
       const steps: LiveCalcStep[] = [
         {
           label: "Estimated turnover formula",
-          expr: "Annualised Consumption Cost = SUM(monthly_usage * 12 * unit_cost)\\nCurrent Inventory Value = SUM(stock_qty * unit_cost)\\nEstimated Inventory Turnover = Annualised Consumption Cost / Current Inventory Value\\nEstimated Days of Inventory = 365 / Estimated Inventory Turnover",
+          expr: "Annualised Consumption Cost = SUM(monthly_usage * 12 * unit_cost)\nCurrent Inventory Value = SUM(stock_qty * unit_cost)\nEstimated Inventory Turnover = Annualised Consumption Cost / Current Inventory Value\nEstimated Days of Inventory = 365 / Estimated Inventory Turnover",
           value: "",
+        },
+        {
+          label: "Annualised Consumption Cost",
+          expr: "SUM(monthly_usage * 12 * unit_cost)",
+          value: formatCurrency(metrics.annualised_consumption_cost ?? metrics.total_inventory_value * metrics.turnover_ratio),
+        },
+        {
+          label: "Current Inventory Value",
+          expr: "SUM(stock_qty * unit_cost)",
+          value: formatCurrency(metrics.total_inventory_value),
         },
         {
           label: "Estimated Inventory Turnover",
           expr: `Annualised Consumption Cost / Current Inventory Value`,
           value: `${metrics.turnover_ratio.toFixed(2)}×`,
-          isFinal: true,
           detail: "Snapshot estimate. Interpret against company targets, historical trend and relevant industry context.",
+        },
+        {
+          label: "Estimated Days of Inventory",
+          expr: "365 / Estimated Inventory Turnover",
+          value: `${(metrics.estimated_days_inventory ?? (metrics.turnover_ratio > 0 ? 365 / metrics.turnover_ratio : 0)).toFixed(1)} days`,
+          isFinal: true,
         },
         
       ];
@@ -356,34 +392,60 @@ export function buildLiveCalculation(
     }
 
     case "recoverable_capital": {
+      const policy = metrics.active_policy?.policy;
+      const deadRate = policy?.dead_stock_recovery_rate ?? 40;
+      const slowRate = policy?.slow_moving_recovery_rate ?? 70;
+      const targetCoverage = policy?.target_coverage_months ?? 6;
+      const deadRecovery = metrics.estimated_dead_stock_recovery ?? metrics.dead_stock_value * (deadRate / 100);
+      const slowRecovery = metrics.estimated_slow_moving_recovery ?? metrics.recoverable_capital - deadRecovery;
+      const slowExcessValue = slowRate > 0 ? slowRecovery / (slowRate / 100) : 0;
       const steps: LiveCalcStep[] = [
         {
-          label: "Recoverable capital components",
-          expr: "Non-performing value = Dead Stock Value + Slow Moving Value; Estimated Recovery = Dead Recovery + Slow Excess Recovery",
+          label: "Policy formulas",
+          expr: "Target Stock = monthly_usage * active target_coverage_months\nSlow-Moving Excess Quantity = MAX(stock_qty - target stock, 0)\nSlow-Moving Excess Value = slow-moving excess quantity * unit_cost",
           value: "",
         },
         {
-          label: "Dead stock component",
+          label: "Dead Stock Value",
           expr: `${metrics.dead_stock_count} dead stock SKUs`,
           value: formatCurrency(metrics.dead_stock_value),
         },
         {
-          label: "Slow-moving component",
+          label: "Estimated Dead Recovery",
+          expr: `Dead Stock Value * ${deadRate}%`,
+          value: formatCurrency(deadRecovery),
+        },
+        {
+          label: "Slow-Moving Inventory Value",
           expr: `${metrics.slow_mover_count} slow-moving SKUs`,
           value: formatCurrency(metrics.slow_mover_value),
         },
         {
-          label: "Estimated recoverable capital",
-          expr: `${formatCurrency(metrics.dead_stock_value)} + ${formatCurrency(metrics.slow_mover_value)}`,
+          label: "Target Coverage",
+          value: `${targetCoverage} months`,
+        },
+        {
+          label: "Slow-Moving Excess Value",
+          expr: "SUM(MAX(stock_qty - target stock, 0) * unit_cost)",
+          value: formatCurrency(slowExcessValue),
+        },
+        {
+          label: "Estimated Slow-Moving Recovery",
+          expr: `Slow-Moving Excess Value * ${slowRate}%`,
+          value: formatCurrency(slowRecovery),
+        },
+        {
+          label: "Estimated Recoverable Capital",
+          expr: `${formatCurrency(deadRecovery)} + ${formatCurrency(slowRecovery)}`,
           value: formatCurrency(metrics.recoverable_capital),
           isFinal: true,
-          detail: `= ${((metrics.recoverable_capital / metrics.total_inventory_value) * 100).toFixed(1)}% of total inventory value`,
+          detail: "Policy-based estimate; not guaranteed cash recovery.",
         },
       ];
       return {
         totalRecords: metrics.total_skus,
         includedRecords: metrics.dead_stock_count + metrics.slow_mover_count,
-        summary: `Capital tied up in non-performing stock`,
+        summary: `Potentially recoverable value from inventory under recovery review`,
         steps,
       };
     }
@@ -395,13 +457,13 @@ export function buildLiveCalculation(
       const steps: LiveCalcStep[] = [
         {
           label: "Reorder triggered when",
-          expr: "stock_qty ≤ ROP  AND  daily_velocity > 0  AND  lead_time_days > 0",
+          expr: "NOT dead_stock AND daily_velocity > 0 AND ROP > 0 AND stock_qty <= ROP",
           value: "",
         },
         { isHeader: true, label: "By urgency", value: "" },
-        { label: "Immediate (stockout imminent)", value: String(immediate), detail: "< 7 days remaining" },
-        { label: "This week", value: String(thisWeek), detail: "7–14 days remaining" },
-        { label: "This month", value: String(recs.length - immediate - thisWeek), detail: "14–30 days remaining" },
+        { label: "Immediate", value: String(immediate), detail: "STOCKED_OUT or CRITICAL classification" },
+        { label: "This week", value: String(thisWeek), detail: "WATCH classification" },
+        { label: "Planned", value: String(recs.length - immediate - thisWeek), detail: "Fallback classification for remaining recommendations" },
         {
           label: "Total reorder recommendations",
           value: String(metrics.reorder_count),
@@ -427,7 +489,7 @@ export function buildLiveCalculation(
   }
 }
 
-// ── Plain-English "Why am I seeing this?" ────────────────────────────────────
+// â”€â”€ Plain-English "Why am I seeing this?" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function getWhyExplanation(
   key: KPIKey,
@@ -442,11 +504,12 @@ export function getWhyExplanation(
       const weakest = factors
         .filter((factor) => factor.weight > 0 && !factor.isNeutral)
         .sort((a, b) => a.score - b.score)[0];
+      const weakestLabel = weakest ? validationHealthLabel(weakest.label) : "";
       return {
         headline: `Health Score is ${metrics.health_score}/100 using active policy weights`,
-        body: `The score is the weighted sum of the displayed factor scores and active InventoryPolicy weights. ${weakest ? `${weakest.label} is the weakest active contributor at ${weakest.score}/100 and ${weakest.weight}% weight.` : "No active weighted factor is currently under pressure."} ABC profile is informational when its active weight is 0, so normal Pareto concentration is not penalised.`,
+        body: `The score is the weighted sum of the displayed factor scores and active InventoryPolicy weights. ${weakest ? `${weakestLabel} is the weakest active contributor at ${weakest.score}/100 and ${weakest.weight}% weight.` : "No active weighted factor is currently under pressure."} The Replenishment Exposure factor uses the broader at/below-ROP population; ABC profile is informational when its active weight is 0.`,
         impact: `The displayed weighted contributions sum to ${metrics.health_score}, so there are no hidden overrides or undocumented adjustments.`,
-        action: weakest ? `Focus first on ${weakest.label.toLowerCase()} because it has the lowest active component score.` : "Monitor the active factors and keep policy weights reviewed.",
+        action: weakest ? `Focus first on ${weakestLabel.toLowerCase()} because it has the lowest active component score.` : "Monitor the active factors and keep policy weights reviewed.",
         confidence: "High",
         audience: ["CEO", "Finance Manager", "Supply Chain Manager", "Procurement"],
       };
@@ -455,9 +518,9 @@ export function getWhyExplanation(
       const abc = metrics.abc_summary;
       return {
         headline: `${abc.a_count} A-class items drive ${abc.a_revenue_pct}% of your annual consumption value`,
-        body: `ABC analysis ranks every item by its contribution to total inventory value. A-class items (${abc.a_count} SKUs, ${Math.round((abc.a_count / metrics.total_skus) * 100)}% of your range) account for ${abc.a_revenue_pct}% of value. B-class items (${abc.b_count} SKUs) account for ${abc.b_revenue_pct}%, and C-class (${abc.c_count} SKUs) account for the rest.`,
-        impact: `Mismanaging A-class items — either by stocking out or over-ordering — has an outsized financial impact. B and C items offer opportunities to reduce carrying cost without significant annual consumption value risk.`,
-        action: `Apply tighter reorder policies and shorter review cycles to A-class items. For C-class items, consider rationalising the range — eliminating slow-sellers reduces complexity and frees capital for high-performers.`,
+        body: `ABC analysis ranks every item by annual consumption value. A-class items (${abc.a_count} SKUs, ${((abc.a_count / metrics.total_skus) * 100).toFixed(1)}% of your range) account for ${abc.a_revenue_pct}% of annual consumption value. B-class items (${abc.b_count} SKUs) account for ${abc.b_revenue_pct}%, and C-class (${abc.c_count} SKUs) account for the rest.`,
+        impact: `ABC supports prioritisation, but replenishment policy must also consider criticality, lead time, service requirements and supplier constraints.`,
+        action: `Use ABC class as one prioritisation input alongside demand, lead time, operational requirements and supplier constraints.`,
         confidence: "High",
         audience: ["CEO", "Finance Manager", "Procurement"],
       };
@@ -466,7 +529,7 @@ export function getWhyExplanation(
     case "inventory_value": {
       return {
         headline: `Your total inventory is valued at ${formatCurrency(metrics.total_inventory_value)}`,
-        body: `This is the sum of (units on hand × unit cost) for all ${metrics.total_skus} SKUs in your uploaded file. It represents the total capital currently locked in physical stock. The annual carrying cost — storage, insurance, obsolescence, and capital cost — is estimated at ${formatCurrency(metrics.annual_carrying_cost)} (25% of inventory value, standard industry rate).`,
+        body: `This is the sum of (units on hand × unit cost) for all ${metrics.total_skus} SKUs in your uploaded file. It represents the total capital currently locked in physical stock. The annual carrying cost â€” storage, insurance, obsolescence, and capital cost â€” is estimated at ${formatCurrency(metrics.annual_carrying_cost)} (25% of inventory value, standard industry rate).`,
         impact: `Every dollar of inventory that is not generating sales is incurring carrying costs. ${formatCurrency(metrics.recoverable_capital)} (${((metrics.recoverable_capital / metrics.total_inventory_value) * 100).toFixed(0)}% of total value) is in dead or slow-moving stock.`,
         action: `Compare your inventory value to monthly consumption cost to assess turns. If inventory exceeds 3 months of cost of goods sold, there is likely over-stocking that warrants a buying freeze on slow categories.`,
         confidence: "High",
@@ -488,10 +551,10 @@ export function getWhyExplanation(
 
     case "recoverable_capital": {
       return {
-        headline: `${formatCurrency(metrics.recoverable_capital)} is locked in non-performing stock`,
-        body: `This figure combines dead stock (${formatCurrency(metrics.dead_stock_value)} across ${metrics.dead_stock_count} SKUs) and slow-moving inventory (${formatCurrency(metrics.slow_mover_value)} across ${metrics.slow_mover_count} SKUs). These items are generating little or no annual consumption value and are actively costing money through carrying costs.`,
-        impact: `If even 30% of this capital were recovered through liquidation or write-downs, it could free ${formatCurrency(metrics.recoverable_capital * 0.3)} for investment in faster-moving stock, reducing carrying costs and improving cash flow.`,
-        action: `Prioritise dead stock for immediate action (liquidation, return to supplier, or write-off). For slow movers, a targeted clearance promotion often recovers 40–60% of book value while freeing shelf space.`,
+        headline: `${formatCurrency(metrics.recoverable_capital)} is the policy-based potentially recoverable value`,
+        body: `This estimate applies active recovery-rate and target-coverage policies to dead stock and slow-moving excess inventory. It is inventory under recovery review, not guaranteed cash recovery.`,
+        impact: `Actual recovery depends on item condition, future demand, disposition channel, supplier terms and execution.`,
+        action: `Review affected items, validate recovery assumptions, and confirm operational requirements before disposition decisions.`,
         confidence: "High",
         audience: ["CEO", "Finance Manager"],
       };
@@ -499,10 +562,10 @@ export function getWhyExplanation(
 
     case "reorder_count": {
       return {
-        headline: `${metrics.reorder_count} items need to be reordered now`,
-        body: `These items have stock levels at or below their calculated reorder point. The reorder point is the minimum stock needed to cover expected demand during the supplier delivery lead time, plus a safety buffer. Waiting longer increases the risk of stockouts.`,
-        impact: `The ${metrics.critical_stockout_count} critical items are most urgent — their stock may be exhausted before the next scheduled delivery. Expedite cost and service impact depend on supplier and customer context.`,
-        action: `Export the purchase order draft from the dashboard and send to your procurement team today. Prioritise items marked "Immediate" — they require same-day action.`,
+        headline: `${metrics.reorder_count} items are in replenishment review`,
+        body: `These active-demand, non-dead-stock items have stock levels at or below their calculated reorder point. The reorder point covers expected demand during lead time plus active safety-stock days.`,
+        impact: `The ${metrics.critical_stockout_count} critical items are most urgent â€” their stock may be exhausted before the next scheduled delivery. Expedite cost and service impact depend on supplier and customer context.`,
+        action: `Verify open orders, inbound stock, transfers, supplier constraints and operational requirements before raising a purchase order.`,
         confidence: "High",
         audience: ["Procurement", "Supply Chain Manager", "Operations"],
       };
@@ -520,7 +583,7 @@ export function getWhyExplanation(
   }
 }
 
-// ── Data Lineage ──────────────────────────────────────────────────────────────
+// â”€â”€ Data Lineage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const FIELD_MAP: Record<KPIKey, { column: string; displayName?: string; role: string; required: boolean }[]> = {
   inventory_value: [
@@ -530,8 +593,9 @@ const FIELD_MAP: Record<KPIKey, { column: string; displayName?: string; role: st
   dead_stock: [
     { column: "units_on_hand",      role: "Stock quantity",     required: true },
     { column: "unit_cost",          role: "Per-unit cost",      required: true },
-    { column: "last_movement_date", role: "Days-since-sale",    required: false },
-    { column: "monthly_usage",      role: "Sales velocity",     required: true },
+    { column: "ageing_days",        role: "Optional primary movement-history input when supplied", required: false },
+    { column: "last_movement_date", role: "Used to calculate days since last inventory movement", required: false },
+    { column: "monthly_usage",      role: "Fallback classification input when movement history is unavailable", required: false },
   ],
   slow_moving: [
     { column: "units_on_hand",  role: "Stock quantity",  required: true },
@@ -551,7 +615,7 @@ const FIELD_MAP: Record<KPIKey, { column: string; displayName?: string; role: st
     { column: "lead_time",      role: "Supplier lead time", required: false },
   ],
   abc_analysis: [
-    { column: "units_on_hand",  role: "Stock quantity",  required: true },
+    { column: "monthly_usage",  role: "Units consumed, issued or sold during a typical 30-day period",  required: true },
     { column: "unit_cost",      role: "Per-unit cost",   required: true },
   ],
   turnover_ratio: [
@@ -563,6 +627,8 @@ const FIELD_MAP: Record<KPIKey, { column: string; displayName?: string; role: st
     { column: "units_on_hand",  role: "Stock quantity",  required: true },
     { column: "unit_cost",      role: "Per-unit cost",   required: true },
     { column: "monthly_usage",  role: "Units consumed, issued or sold during a typical 30-day period",  required: true },
+    { column: "ageing_days",    role: "Primary movement-history input when supplied", required: false },
+    { column: "last_movement_date", role: "Used to calculate days since last inventory movement when direct ageing is unavailable", required: false },
   ],
   reorder_count: [
     { column: "units_on_hand",  role: "Stock quantity",  required: true },
@@ -623,9 +689,11 @@ export function getDataLineage(
       health_score: [
         { field: "weight_dead_stock", label: "Dead stock weight", suffix: "%" },
         { field: "weight_slow_moving", label: "Slow moving weight", suffix: "%" },
-        { field: "weight_stockout_risk", label: "Stockout risk weight", suffix: "%" },
+        { field: "weight_stockout_risk", label: "Replenishment exposure weight", suffix: "%" },
       ],
       recoverable_capital: [
+        { field: "dead_stock_days", label: "Dead stock threshold", suffix: " days" },
+        { field: "slow_moving_days", label: "Slow moving threshold", suffix: " days" },
         { field: "dead_stock_recovery_rate", label: "Dead stock recovery rate", suffix: "%" },
         { field: "slow_moving_recovery_rate", label: "Slow moving recovery rate", suffix: "%" },
         { field: "target_coverage_months", label: "Target coverage", suffix: " months" },
@@ -644,8 +712,10 @@ export function getDataLineage(
   }
 
   if (key === "inventory_value") derivedValues.push({ label: "Inventory value", value: "stock_qty * unit_cost" });
+  if (key === "dead_stock") derivedValues.push({ label: "Primary dead-stock classification", value: "stock_qty > 0 AND days_since_last_movement >= active dead_stock_days" }, { label: "Fallback dead-stock classification", value: "when movement history is unavailable: stock_qty > 0 AND monthly_usage = 0" });
   if (key === "slow_moving") derivedValues.push({ label: "Daily usage", value: "monthly_usage / 30" }, { label: "Days of supply", value: "stock_qty / daily_usage" }, { label: "Classification dependency", value: "dead_stock items are excluded" });
-  if (key === "stockout_risk" || key === "reorder_count") derivedValues.push({ label: "Safety stock", value: "daily_usage * safety_stock_days" }, { label: "Reorder point", value: "lead-time demand + safety stock" });
+  if (key === "stockout_risk") derivedValues.push({ label: "CRITICAL Stockout Risk", value: "STOCKED_OUT or days_of_stock < lead_time_days" }, { label: "WATCH", value: "at or below ROP after excluding CRITICAL and dead-stock records" });
+  if (key === "reorder_count") derivedValues.push({ label: "Safety stock", value: "daily_usage * safety_stock_days" }, { label: "Reorder point", value: "lead-time demand + safety stock" }, { label: "Eligibility", value: "NOT dead_stock AND daily_velocity > 0 AND ROP > 0 AND stock_qty <= ROP" });
   if (key === "abc_analysis") derivedValues.push({ label: "Annual consumption value", value: "monthly_usage * 12 * unit_cost" });
   if (key === "turnover_ratio") {
     assumptions.push({ label: "Annualisation", value: "Monthly usage multiplied by 12" }, { label: "Days conversion", value: "365 / turnover" });
@@ -654,8 +724,10 @@ export function getDataLineage(
   if (key === "ageing_score" || key === "blocked_capital" || key === "avg_ageing_days") {
     derivedValues.push({ label: "Ageing source", value: "ageing_days used directly when present; otherwise derived from last_movement_date" });
   }
-  if (key === "recoverable_capital") assumptions.push({ label: "Recovery rates", value: "Policy assumptions, not uploaded data" });
-
+  if (key === "recoverable_capital") {
+    assumptions.push({ label: "Recovery rates", value: "Policy assumptions, not uploaded data" }, { label: "Recovery estimate", value: "Potentially recoverable value; not guaranteed cash recovery" });
+    derivedValues.push({ label: "Target stock", value: "monthly_usage * active target_coverage_months" }, { label: "Slow-moving excess quantity", value: "MAX(stock_qty - target stock, 0)" }, { label: "Slow-moving excess value", value: "slow-moving excess quantity * unit_cost" });
+  }
   return {
     source: "Uploaded Excel/CSV file",
     fields,
@@ -668,17 +740,17 @@ export function getDataLineage(
   };
 }
 
-// ── Score Breakdown ───────────────────────────────────────────────────────────
+// â”€â”€ Score Breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function buildScoreBreakdown(metrics: DashboardMetrics): ScoreBreakdown {
   const factors = getHealthScoreContributions(metrics);
   const deductions: ScoreDeduction[] = factors.map((factor) => ({
-    factor: factor.label,
+    factor: validationHealthLabel(factor.label),
     weight: factor.weight,
     rawScore: factor.score,
     contribution: factor.displayedContribution,
     deduction: Math.round((100 - factor.score) * (factor.weight / 100)),
-    detail: factor.detail,
+    detail: factor.key === "stockout_risk" ? "Broader at/below-ROP population used by the approved Health Score factor" : factor.detail,
   }));
 
   return {
@@ -688,68 +760,3 @@ export function buildScoreBreakdown(metrics: DashboardMetrics): ScoreBreakdown {
     formula: getHealthFormula(metrics),
   };
 }
-// -- Validation Export ─────────────────────────────────────────────────────────
-
-export function buildValidationExport(
-  metrics: DashboardMetrics,
-  filename: string,
-  detectedFields: string[]
-): string {
-  const lines: string[] = [
-    "SupplySense Validation Report",
-    `Generated: ${new Date().toISOString()}`,
-    `Source file: ${filename}`,
-    `Total SKUs analysed: ${metrics.total_skus}`,
-    "",
-    "=== KPI VALUES ===",
-    `Health Score,${metrics.health_score}/100`,
-    `Inventory Value,${formatCurrency(metrics.total_inventory_value)}`,
-    `Dead Stock Count,${metrics.dead_stock_count}`,
-    `Dead Stock Value,${formatCurrency(metrics.dead_stock_value)}`,
-    `Slow Moving Count,${metrics.slow_mover_count}`,
-    `Slow Moving Value,${formatCurrency(metrics.slow_mover_value)}`,
-    `Stockout Risk Count,${metrics.stockout_risk_count}`,
-    `Critical Stockout Count,${metrics.critical_stockout_count}`,
-    `Recoverable Capital,${formatCurrency(metrics.recoverable_capital)}`,
-    `Turnover Ratio,${metrics.turnover_ratio.toFixed(2)}x`,
-    `Reorder Count,${metrics.reorder_count}`,
-    "",
-    "=== HEALTH SCORE BREAKDOWN ===",
-    ...getHealthScoreContributions(metrics).map((factor) => `${factor.label} Score,${factor.isNeutral ? "Neutral" : `${factor.score}/100`},Weight ${factor.weight}%,Contribution +${factor.displayedContribution}`),
-    `Composite Score,${metrics.health_score}/100`,
-    "",
-    "=== ACTIVE POLICY ===",
-    `Policy Source,${metrics.active_policy?.source ?? "system defaults"}`,
-    `Dead Stock Threshold,${metrics.active_policy?.policy.dead_stock_days ?? 365} days`,
-    `Slow Moving Threshold,${metrics.active_policy?.policy.slow_moving_days ?? 180} days`,
-    `Safety Stock Days,${metrics.active_policy?.policy.safety_stock_days ?? 15} days`,
-    `Critical Coverage Days,${metrics.active_policy?.policy.critical_coverage_days ?? 30} days`,
-    `ABC A Threshold,${metrics.active_policy?.policy.abc_a_pct ?? 70}%`,
-    "",
-    "=== DETECTED COLUMNS ===",
-    detectedFields.join(", "),
-    "",
-    "=== FORMULA LIBRARY ===",
-    "Inventory Value,SUM(units_on_hand × unit_cost)",
-    "Dead Stock,units where daily_velocity=0 AND days_since_last_sale >= threshold",
-    "Slow Moving,units where days_of_supply > slow_moving_threshold AND NOT dead_stock",
-    "Stockout Risk,units where stock_qty <= ROP AND daily_velocity > 0",
-    "ROP,daily_velocity × lead_time_days + safety_stock_days × daily_velocity",
-    "Health Score,weighted average of active InventoryPolicy factor scores",
-    "Turnover Ratio,annualised_consumption_cost / current_inventory_value",
-    "",
-    "=== TRUST STATEMENT ===",
-    "All analytics are generated directly from uploaded data and can be independently verified.",
-    "Policy values, annualisation, and labelled assumptions are disclosed where used.",
-    "This report can be independently audited against the source file.",
-  ];
-  return lines.join("\n");
-}
-
-
-
-
-
-
-
-
