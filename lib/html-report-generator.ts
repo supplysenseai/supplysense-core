@@ -334,8 +334,8 @@ export function generateHtmlReport(
 
   const aging = metrics.aging_metrics;
   const agingAvailable = !!aging?.has_ageing_data;
-  const agingBucketCount = (label: string) =>
-    agingAvailable ? String(aging.buckets.find((b) => b.label === label)?.count ?? 0) : "Not available";
+  const agingBucketCount = (index: number) =>
+    agingAvailable ? String(aging.buckets[index]?.count ?? 0) : "Not available";
   const agingHtml = agingAvailable ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
       ${[
@@ -351,10 +351,10 @@ export function generateHtmlReport(
         <tr><th>Ageing Bucket</th><th style="text-align:right;">SKU Count</th></tr>
       </thead>
       <tbody>
-        ${["0-30 Days", "31-90 Days", "91-180 Days", "181-365 Days", "365+ Days"].map(label => `
+        ${["0-30 Days", "31-90 Days", "91-180 Days", "181-365 Days", "365+ Days"].map((label, index) => `
           <tr style="border-bottom:1px solid #f3f4f6;">
             <td style="padding:8px 12px;font-size:12px;color:#374151;font-weight:500;">${esc(label)}</td>
-            <td style="padding:8px 12px;font-size:12px;color:#111827;font-weight:700;text-align:right;">${agingBucketCount(label)}</td>
+            <td style="padding:8px 12px;font-size:12px;color:#111827;font-weight:700;text-align:right;">${agingBucketCount(index)}</td>
           </tr>`).join("")}
       </tbody>
     </table>` : `

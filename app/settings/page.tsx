@@ -245,6 +245,12 @@ function ABCBar({ aPct, bPct }: { aPct: number; bPct: number }) {
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
+function getSourceInfo(source: "file" | "user" | "system"): string {
+  return source === "file" ? "File settings active for some fields" :
+    source === "user" ? "User preferences active" :
+    "Using System Defaults";
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -254,19 +260,30 @@ export default function SettingsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  // Load user policy from localStorage on mount
+  // Load active policy. Demo mode uses the session policy that produced the
+  // current demo metrics; normal mode keeps the saved local defaults behavior.
   useEffect(() => {
+    try {
+      const isDemoSession = sessionStorage.getItem("supplysense_demo_mode") === "true";
+      const sessionPolicy = isDemoSession ? sessionStorage.getItem("supplysense_policy") : null;
+      if (sessionPolicy) {
+        const parsed = JSON.parse(sessionPolicy);
+        if (parsed?.policy && parsed?.source) {
+          setValues({ ...parsed.policy });
+          setSavedValues({ ...parsed.policy });
+          setSourceInfo(getSourceInfo(parsed.source));
+          setLoaded(true);
+          return;
+        }
+      }
+    } catch { /* fall back to saved user policy */ }
+
     const userPolicy = loadUserPolicy();
     const resolved = resolvePolicy(undefined, userPolicy);
     setValues({ ...resolved.policy });
     setSavedValues({ ...resolved.policy });
 
-    const src = resolved.source;
-    setSourceInfo(
-      src === "file" ? "File settings active for some fields" :
-      src === "user" ? "User preferences active" :
-      "Using System Defaults"
-    );
+    setSourceInfo(getSourceInfo(resolved.source));
     setLoaded(true);
   }, []);
 
@@ -298,11 +315,10 @@ export default function SettingsPage() {
         (partial as Record<string, number>)[key] = values[key];
       }
     }
-    saveUserPolicy(partial);
+    const isDemoSession = typeof window !== "undefined" && sessionStorage.getItem("supplysense_demo_mode") === "true";
+    if (!isDemoSession) saveUserPolicy(partial);
     setSavedValues({ ...values });
-    setSourceInfo(
-      Object.keys(partial).length > 0 ? "User preferences active" : "Using System Defaults"
-    );
+    setSourceInfo(Object.keys(partial).length > 0 ? "User preferences active" : "Using System Defaults");
 
     // Re-run analysis with new policy if raw items are available in sessionStorage
     if (typeof window !== "undefined") {
@@ -310,7 +326,6 @@ export default function SettingsPage() {
       const filePolicyJson = sessionStorage.getItem("supplysense_file_policy");
       let fieldsJson    = sessionStorage.getItem("supplysense_fields");
 
-      const isDemoSession = sessionStorage.getItem("supplysense_demo_mode") === "true";
       let demoAnalysisDate: string | undefined;
 
       if (isDemoSession) {
@@ -360,7 +375,8 @@ export default function SettingsPage() {
 
   const handleResetAll = useCallback(async () => {
     resetAll();
-    resetUserPolicy();
+    const isDemoSession = typeof window !== "undefined" && sessionStorage.getItem("supplysense_demo_mode") === "true";
+    if (!isDemoSession) resetUserPolicy();
     setSavedValues({ ...SYSTEM_DEFAULTS });
     setSourceInfo("Using System Defaults");
 
@@ -370,7 +386,6 @@ export default function SettingsPage() {
       const filePolicyJson = sessionStorage.getItem("supplysense_file_policy");
       let fieldsJson     = sessionStorage.getItem("supplysense_fields");
 
-      const isDemoSession = sessionStorage.getItem("supplysense_demo_mode") === "true";
       let demoAnalysisDate: string | undefined;
 
       if (isDemoSession) {

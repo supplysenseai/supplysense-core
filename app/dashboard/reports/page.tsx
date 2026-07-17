@@ -12,7 +12,7 @@ import type { DashboardMetrics } from "@/lib/types";
 
 // ── CSV helpers ────────────────────────────────────────────────────────────────
 function downloadCsv(filename: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -100,8 +100,8 @@ function exportInventorySummary(metrics: DashboardMetrics) {
   const aging = metrics.aging_metrics;
   const agingValue = aging?.has_ageing_data ? `${Math.round(aging.avg_ageing_days)} days` : "Not available";
   const agingHealth = aging?.has_ageing_data ? `${aging.ageing_health_score}/100` : "Not available";
-  const bucketCount = (label: string) =>
-    aging?.has_ageing_data ? String(aging.buckets.find((b) => b.label === label)?.count ?? 0) : "Not available";
+  const bucketCount = (index: number) =>
+    aging?.has_ageing_data ? String(aging.buckets[index]?.count ?? 0) : "Not available";
   const lines = [
     "SupplySense Inventory Summary Report",
     `Generated: ${date}`,
@@ -118,23 +118,23 @@ function exportInventorySummary(metrics: DashboardMetrics) {
     `Stockout Risk SKUs,${metrics.stockout_risk_count}`,
     `Critical Stockout SKUs,${metrics.critical_stockout_count}`,
     `Estimated Recoverable Capital,$${metrics.recoverable_capital.toFixed(2)}`,
-    `Estimated Inventory Turnover,${metrics.turnover_ratio}x`,
+    `Estimated Inventory Turnover,${metrics.turnover_ratio}×`,
     `Reorder Actions Needed,${metrics.reorder_count}`,
     `Average Ageing,${agingValue}`,
     `Ageing Health Score,${agingHealth}`,
-    `Ageing 0-30 Days,${bucketCount("0-30 Days")}`,
-    `Ageing 31-90 Days,${bucketCount("31-90 Days")}`,
-    `Ageing 91-180 Days,${bucketCount("91-180 Days")}`,
-    `Ageing 181-365 Days,${bucketCount("181-365 Days")}`,
-    `Ageing 365+ Days,${bucketCount("365+ Days")}`,
+    `Ageing 0-30 Days,${bucketCount(0)}`,
+    `Ageing 31-90 Days,${bucketCount(1)}`,
+    `Ageing 91-180 Days,${bucketCount(2)}`,
+    `Ageing 181-365 Days,${bucketCount(3)}`,
+    `Ageing 365+ Days,${bucketCount(4)}`,
     "",
-    "ABC Classification",
+    "ABC Classification,",
     `A-Class SKUs,${metrics.abc_summary.a_count}`,
     `B-Class SKUs,${metrics.abc_summary.b_count}`,
     `C-Class SKUs,${metrics.abc_summary.c_count}`,
     `A-Class Annual Consumption Value Share,${metrics.abc_summary.a_revenue_pct}%`,
     "",
-    "Risk Distribution",
+    "Risk Distribution,",
     `Critical,${metrics.risk_distribution.critical}`,
     `Dead,${metrics.risk_distribution.dead}`,
     `Elevated,${metrics.risk_distribution.elevated}`,

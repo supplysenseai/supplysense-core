@@ -7,7 +7,7 @@
  */
 import { DEMO_ANALYSIS_DATE, DEMO_FIELDS, getDemoInventoryItems } from "@/lib/demo-data";
 import { analyzeInventoryItems } from "@/lib/inventory-analyzer";
-import { loadUserPolicy, resolvePolicy } from "@/lib/policy";
+import { resolvePolicy } from "@/lib/policy";
 
 export const DEMO_MODE_KEY = "supplysense_demo_mode";
 export const METRICS_KEY = "supplysense_metrics";
@@ -36,7 +36,7 @@ const SESSION_DEMO_KEYS = [
 
 export function loadDemoIntoSession(): void {
   const rawItems = getDemoInventoryItems();
-  const activePolicy = resolvePolicy(undefined, loadUserPolicy());
+  const activePolicy = resolvePolicy();
   const { metrics } = analyzeInventoryItems(rawItems, DEMO_FIELDS, activePolicy, { analysisDate: DEMO_ANALYSIS_DATE });
   const metricsJson = JSON.stringify(metrics);
   const rawItemsJson = JSON.stringify(rawItems);
