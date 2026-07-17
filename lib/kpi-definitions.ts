@@ -59,7 +59,10 @@ export interface KPIDefinition {
 export const TURNOVER_ASSURANCE_TEXT =
   "Calculated from uploaded inventory data using disclosed annualisation and 365-day conventions. Item-level values and turnover estimates are shown for calculation transparency.";
 
-export function getKPIAssuranceText(key: KPIKey): string {
+export function getKPIAssuranceText(key: KPIKey, isDemoMode = false): string {
+  if (isDemoMode) {
+    return "Records from the deterministic built-in demo dataset that contribute to this KPI. All figures are derived directly from the demo dataset.";
+  }
   return key === "turnover_ratio"
     ? TURNOVER_ASSURANCE_TEXT
     : "Records from your uploaded dataset that contribute to this KPI. All figures are derived directly from the uploaded file.";

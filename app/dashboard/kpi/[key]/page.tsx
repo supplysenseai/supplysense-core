@@ -93,7 +93,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
         
         .map((item) => ({
           label: item.product_name,
-          value: isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)}d left` : "—",
+          value: isFinite(item.days_stock_remaining) ? `${Math.floor(item.days_stock_remaining)}d left` : "—",
           sub: `${item.sku_id} · ${item.scenario} · Risk score: ${item.stockout_risk_score}`,
           accent: item.scenario === "CRITICAL" ? "text-red-400" : "text-amber-400",
         }));
@@ -235,6 +235,7 @@ export default function KPIDetailPage() {
   const [tab, setTab] = useState<Tab>("definition");
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [detectedFields, setDetectedFields] = useState<string[]>([]);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [whyOpen, setWhyOpen] = useState(false);
 
   useEffect(() => {
@@ -243,6 +244,7 @@ export default function KPIDetailPage() {
       const fl = sessionStorage.getItem("supplysense_fields");
       if (s) setMetrics(JSON.parse(s));
       if (fl) setDetectedFields(JSON.parse(fl));
+      setIsDemoMode(sessionStorage.getItem("supplysense_demo_mode") === "true");
     } catch { /* ignore */ }
   }, []);
 
@@ -504,7 +506,7 @@ export default function KPIDetailPage() {
 
         {/* ── Tab: Data Lineage ── */}
         {tab === "lineage" && (() => {
-          const lineage = getDataLineage(kpiKey, detectedFields, metrics?.active_policy);
+          const lineage = getDataLineage(kpiKey, detectedFields, metrics?.active_policy, isDemoMode);
           return (
             <div className="space-y-5">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
@@ -585,7 +587,7 @@ export default function KPIDetailPage() {
             ) : (
               <>
                 <p className="text-xs text-slate-500">
-                  {getKPIAssuranceText(kpiKey)}
+                  {getKPIAssuranceText(kpiKey, isDemoMode)}
                 </p>
                 <div className="rounded-xl border border-white/6 overflow-hidden">
                   <div className="px-5 py-2.5 border-b border-white/5 bg-white/2">

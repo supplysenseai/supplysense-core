@@ -132,14 +132,14 @@ export function buildLiveCalculation(
       const steps: LiveCalcStep[] = [
         {
           label: fallbackActive ? "Potential Dead Stock fallback" : "Movement-history method",
-          expr: `daily_velocity = 0 AND days_since_last_sale â‰¥ ${thresholdDays} days`,
+          expr: `daily_velocity = 0 AND days_since_last_sale ≥ ${thresholdDays} days`,
           value: "",
           detail: `Threshold: ${thresholdDays} days (${thresholdDays >= 365 ? "system default" : "policy override"})`,
         },
         { isHeader: true, label: "Sample dead stock items", value: "" },
         ...sample.map((s) => ({
           label: `${s.product_name} (${s.sku_id})`,
-          expr: `${s.units_on_hand} units Ã— ${formatCurrency(s.unit_cost)}`,
+          expr: `${s.units_on_hand} units × ${formatCurrency(s.unit_cost)}`,
           value: formatCurrency(s.inventory_value),
           detail: `No movement for ${s.days_since_last_sale} days`,
         })),
@@ -147,7 +147,7 @@ export function buildLiveCalculation(
         { label: "Dead stock SKUs", value: String(metrics.dead_stock_count), expr: "COUNT(is_dead_stock = true)" },
         {
           label: "Total dead stock value",
-          expr: "Î£ (Units Ã— Unit Cost) for dead items",
+          expr: "Σ (Units × Unit Cost) for dead items",
           value: formatCurrency(metrics.dead_stock_value),
           isFinal: true,
         },
@@ -193,14 +193,14 @@ export function buildLiveCalculation(
         { isHeader: true, label: "Sample slow-moving items", value: "" },
         ...sample.map((s) => ({
           label: `${s.product_name} (${s.sku_id})`,
-          expr: `${s.units_on_hand} units, ${isFinite(s.days_stock_remaining) ? Math.round(s.days_stock_remaining) + "d supply" : "âˆž supply"}`,
+          expr: `${s.units_on_hand} units, ${isFinite(s.days_stock_remaining) ? Math.floor(s.days_stock_remaining) + "d supply" : "∞ supply"}`,
           value: formatCurrency(s.inventory_value),
         })),
         { isHeader: true, label: "Totals", value: "" },
         { label: "Slow-moving SKUs", value: String(metrics.slow_mover_count), expr: "COUNT(daily_usage > 0 AND days_of_supply > active slow_moving_days AND NOT dead_stock)" },
         {
           label: "Total slow-moving value",
-          expr: "Î£ (Units Ã— Unit Cost) for slow movers",
+          expr: "Σ (Units × Unit Cost) for slow movers",
           value: formatCurrency(metrics.slow_mover_value),
           isFinal: true,
         },
@@ -233,7 +233,7 @@ export function buildLiveCalculation(
       const steps: LiveCalcStep[] = [
         {
           label: "Reorder Point formula",
-          expr: "ROP = (daily_velocity Ã— lead_time_days) + safety_stock\nsafety_stock = daily_velocity Ã— " + safetyDays + " days",
+          expr: "ROP = (daily_velocity × lead_time_days) + safety_stock\nsafety_stock = daily_velocity × " + safetyDays + " days",
           value: "",
         },
         {
@@ -251,7 +251,7 @@ export function buildLiveCalculation(
         ...sample.map((s) => ({
           label: `${s.product_name} (${s.sku_id})`,
           value: s.replenishment_status === "STOCKED_OUT" || s.days_stock_remaining < s.lead_time_days ? "CRITICAL" : "WATCH",
-          expr: `${s.units_on_hand} on hand â‰¤ ROP ${Math.round(s.reorder_point_calc)}, ${isFinite(s.days_stock_remaining) ? Math.round(s.days_stock_remaining) + "d stock" : "â€”"}`,
+          expr: `${s.units_on_hand} on hand ≤ ROP ${Math.round(s.reorder_point_calc)}, ${isFinite(s.days_stock_remaining) ? Math.floor(s.days_stock_remaining) + "d stock" : "—"}`,
           detail: `Lead time: ${s.lead_time_days}d, velocity: ${s.daily_velocity.toFixed(2)} units/day`,
         })),
         { isHeader: true, label: "Summary", value: "" },
@@ -529,7 +529,7 @@ export function getWhyExplanation(
     case "inventory_value": {
       return {
         headline: `Your total inventory is valued at ${formatCurrency(metrics.total_inventory_value)}`,
-        body: `This is the sum of (units on hand × unit cost) for all ${metrics.total_skus} SKUs in your uploaded file. It represents the total capital currently locked in physical stock. The annual carrying cost â€” storage, insurance, obsolescence, and capital cost â€” is estimated at ${formatCurrency(metrics.annual_carrying_cost)} (25% of inventory value, standard industry rate).`,
+        body: `This is the sum of (units on hand × unit cost) for all ${metrics.total_skus} SKUs in your uploaded file. It represents the total capital currently locked in physical stock. The annual carrying cost — storage, insurance, obsolescence, and capital cost — is estimated at ${formatCurrency(metrics.annual_carrying_cost)} (25% of inventory value, standard industry rate).`,
         impact: `Every dollar of inventory that is not generating sales is incurring carrying costs. ${formatCurrency(metrics.recoverable_capital)} (${((metrics.recoverable_capital / metrics.total_inventory_value) * 100).toFixed(0)}% of total value) is in dead or slow-moving stock.`,
         action: `Compare your inventory value to monthly consumption cost to assess turns. If inventory exceeds 3 months of cost of goods sold, there is likely over-stocking that warrants a buying freeze on slow categories.`,
         confidence: "High",
@@ -564,7 +564,7 @@ export function getWhyExplanation(
       return {
         headline: `${metrics.reorder_count} items are in replenishment review`,
         body: `These active-demand, non-dead-stock items have stock levels at or below their calculated reorder point. The reorder point covers expected demand during lead time plus active safety-stock days.`,
-        impact: `The ${metrics.critical_stockout_count} critical items are most urgent â€” their stock may be exhausted before the next scheduled delivery. Expedite cost and service impact depend on supplier and customer context.`,
+        impact: `The ${metrics.critical_stockout_count} critical items are most urgent — their stock may be exhausted before the next scheduled delivery. Expedite cost and service impact depend on supplier and customer context.`,
         action: `Verify open orders, inbound stock, transfers, supplier constraints and operational requirements before raising a purchase order.`,
         confidence: "High",
         audience: ["Procurement", "Supply Chain Manager", "Operations"],
@@ -657,7 +657,8 @@ const FIELD_MAP: Record<KPIKey, { column: string; displayName?: string; role: st
 export function getDataLineage(
   key: KPIKey,
   detectedFields: string[],
-  activePolicy?: ActivePolicy | null
+  activePolicy?: ActivePolicy | null,
+  isDemoMode = false
 ): DataLineage {
   const fields = (FIELD_MAP[key] ?? []).map((f) => ({
     columnName: f.column,
@@ -729,14 +730,16 @@ export function getDataLineage(
     derivedValues.push({ label: "Target stock", value: "monthly_usage * active target_coverage_months" }, { label: "Slow-moving excess quantity", value: "MAX(stock_qty - target stock, 0)" }, { label: "Slow-moving excess value", value: "slow-moving excess quantity * unit_cost" });
   }
   return {
-    source: "Uploaded Excel/CSV file",
+    source: isDemoMode ? "Deterministic built-in demo dataset" : "Uploaded Excel/CSV file",
     fields,
     policySource,
     policyFields,
     assumptions,
     derivedValues,
     trustStatement:
-      "Calculations are performed client-side from uploaded data, active policy values, and labelled system assumptions where applicable.",
+      isDemoMode
+        ? "Calculations are performed client-side from the deterministic built-in demo dataset, active policy values, and labelled system assumptions where applicable."
+        : "Calculations are performed client-side from uploaded data, active policy values, and labelled system assumptions where applicable.",
   };
 }
 

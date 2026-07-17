@@ -58,7 +58,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
       return risk.map((item) => ({
         label: item.product_name,
         value: isFinite(item.days_stock_remaining)
-          ? `${Math.round(item.days_stock_remaining)}d left`
+          ? `${Math.floor(item.days_stock_remaining)}d left`
           : "—",
         sub: `${item.sku_id} · ${item.scenario} · Risk score: ${item.stockout_risk_score}`,
         accent: item.scenario === "CRITICAL" ? "text-red-400" : "text-amber-400",
@@ -207,10 +207,11 @@ interface KPIInfoModalProps {
 export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
   const [tab, setTab] = useState<Tab>("definition");
   const [whyOpen, setWhyOpen] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const def = KPI_DEFINITIONS[kpiKey];
   const supportRows = buildSupportingData(kpiKey, metrics);
   const liveCalc = buildLiveCalculation(kpiKey, metrics);
-  const lineage = getDataLineage(kpiKey, [], metrics.active_policy);
+  const lineage = getDataLineage(kpiKey, [], metrics.active_policy, isDemoMode);
   const interpretationLabels = getKPIInterpretationLabels(def);
 
   // Close on Escape
@@ -222,6 +223,12 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [handleKey]);
+
+  useEffect(() => {
+    try {
+      setIsDemoMode(sessionStorage.getItem("supplysense_demo_mode") === "true");
+    } catch { /* ignore */ }
+  }, []);
 
   if (!def) return null;
 
@@ -530,7 +537,7 @@ export function KPIInfoModal({ kpiKey, metrics, onClose }: KPIInfoModalProps) {
               ) : (
                 <>
                   <p className="text-xs text-slate-500">
-                    {getKPIAssuranceText(kpiKey)}
+                    {getKPIAssuranceText(kpiKey, isDemoMode)}
                   </p>
                   <div className="divide-y divide-white/4 rounded-xl border border-white/6 overflow-hidden">
                     {supportRows.map((row, i) => (
