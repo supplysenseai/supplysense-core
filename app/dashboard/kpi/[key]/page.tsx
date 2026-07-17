@@ -99,12 +99,22 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
         }));
     }
     case "reorder_count": {
-      return metrics.reorder_recommendations.map((rec) => ({
-        label: rec.product_name,
-        value: `EOQ ${rec.eoq} units`,
-        sub: `${rec.sku_id} · ${rec.urgency.replace("_", " ")} · ${isFinite(rec.days_until_stockout) ? `${rec.days_until_stockout}d` : "—"} remaining`,
-        accent: rec.urgency === "immediate" ? "text-red-400" : rec.urgency === "this_week" ? "text-amber-400" : "text-blue-400",
-      }));
+      return metrics.reorder_recommendations.map((rec) => {
+        const item = metrics.all_skus.find((sku) => sku.sku_id === rec.sku_id);
+        const displayedDays =
+          item && isFinite(item.days_stock_remaining)
+            ? Math.floor(item.days_stock_remaining)
+            : isFinite(rec.days_until_stockout)
+              ? rec.days_until_stockout
+              : null;
+
+        return {
+          label: rec.product_name,
+          value: `EOQ ${rec.eoq} units`,
+          sub: `${rec.sku_id} \u00B7 ${rec.urgency.replace("_", " ")} \u00B7 ${displayedDays !== null ? `${displayedDays}d` : "\u2014"} remaining`,
+          accent: rec.urgency === "immediate" ? "text-red-400" : rec.urgency === "this_week" ? "text-amber-400" : "text-blue-400",
+        };
+      });
     }
     case "abc_analysis": {
       const { abc_summary: abc, total_skus } = metrics;
