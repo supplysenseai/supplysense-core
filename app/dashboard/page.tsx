@@ -9,17 +9,17 @@ import {
 } from "lucide-react";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
-import { RiskChart } from "@/components/dashboard/RiskChart";
-import { ABCChart } from "@/components/dashboard/ABCChart";
-import { TopRiskTable } from "@/components/dashboard/TopRiskTable";
-import { AgingDashboard } from "@/components/dashboard/AgingDashboard";
-import { DataCompletenessAdvisor } from "@/components/dashboard/DataCompletenessAdvisor";
-import { DemoBanner, DemoWelcomeToast } from "@/components/demo/DemoBanner";
-import { TrustBadge } from "@/components/validation/TrustBadge";
-import { ScoreBreakdown } from "@/components/validation/ScoreBreakdown";
-import { formatCurrency, getHealthColor, getHealthLabel } from "@/lib/utils";
+import { DemoWelcomeToast } from "@/components/demo/DemoBanner";
+import {
+  CompactIntelligenceGrid,
+  ControlTowerDecisionBrief,
+  ControlTowerHeader,
+  ControlTowerPriorities,
+  ExecutiveCommandBar,
+  QuickNavigation,
+  ThinMetadataFooter,
+} from "@/components/dashboard/DashboardNarrative";
+import { formatCurrency } from "@/lib/utils";
 import { isDemoMode, hasSessionData, clearSession } from "@/lib/demo-loader";
 import { DEMO_ANALYSIS_DATE } from "@/lib/demo-data";
 import { MODE_LABELS, MODE_DESCRIPTIONS } from "@/lib/analysis-detector";
@@ -241,183 +241,7 @@ export default function DashboardPage() {
 
   const mode = metrics.analysis_mode ?? "health";
   const completeness = computeCompleteness(detectedFields);
-  const healthColor = getHealthColor(metrics.health_score);
-  const healthLabel = getHealthLabel(metrics.health_score);
-  const healthIconColor  = metrics.health_score >= 80 ? "text-emerald-400" : metrics.health_score >= 60 ? "text-blue-400" : metrics.health_score >= 40 ? "text-amber-400" : "text-red-400";
-  const healthValueColor = healthIconColor;
-  const aging = metrics.aging_metrics;
-  const hasAgingData = Boolean(aging?.has_ageing_data);
   const displayDate = new Date(isDemo ? DEMO_ANALYSIS_DATE : Date.now());
-
-  // ── Aging-specific KPI cards (Mode B) ───────────────────────────────────
-  const AGING_KPI_CARDS = [
-    {
-      label: "Ageing Health Score",
-      value: hasAgingData ? `${aging?.ageing_health_score ?? 0}/100` : "N/A",
-      icon: Zap,
-      iconBg: "bg-white/5",
-      iconColor: hasAgingData ? ((aging?.ageing_health_score ?? 0) >= 80 ? "text-emerald-400" : (aging?.ageing_health_score ?? 0) >= 60 ? "text-blue-400" : (aging?.ageing_health_score ?? 0) >= 40 ? "text-amber-400" : "text-red-400") : "text-slate-500",
-      valueColor: hasAgingData ? ((aging?.ageing_health_score ?? 0) >= 80 ? "text-emerald-400" : (aging?.ageing_health_score ?? 0) >= 60 ? "text-blue-400" : (aging?.ageing_health_score ?? 0) >= 40 ? "text-amber-400" : "text-red-400") : "text-slate-500",
-      sub: hasAgingData ? "Based on ageing distribution" : "Movement history required",
-      kpiKey: "ageing_score" as const,
-    },
-    {
-      label: "Inventory Value",
-      value: formatCurrency(aging?.total_value ?? metrics.total_inventory_value, true),
-      icon: Package,
-      iconBg: "bg-white/5",
-      iconColor: "text-slate-400",
-      valueColor: "text-white",
-      sub: `${aging?.total_items ?? metrics.total_skus} items`,
-      kpiKey: "inventory_value" as const,
-    },
-    {
-      label: "Dead Stock Value",
-      value: formatCurrency(aging?.dead_stock_value ?? 0, true),
-      icon: TrendingDown,
-      iconBg: "bg-red-500/10",
-      iconColor: "text-red-400",
-      valueColor: "text-red-300",
-      sub: `${aging?.dead_stock_count ?? 0} items · 181+ days`,
-      kpiKey: "dead_stock" as const,
-    },
-    {
-      label: "Non-Performing Inventory",
-      value: formatCurrency(aging?.blocked_capital ?? 0, true),
-      icon: DollarSign,
-      iconBg: "bg-orange-500/10",
-      iconColor: "text-orange-400",
-      valueColor: "text-orange-400",
-      sub: "Dead stock + slow-moving value",
-      kpiKey: "blocked_capital" as const,
-    },
-    {
-      label: "Avg Ageing Days",
-      value: `${aging?.avg_ageing_days ?? 0}d`,
-      icon: RotateCcw,
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-400",
-      valueColor: (aging?.avg_ageing_days ?? 0) <= 90 ? "text-emerald-400" : (aging?.avg_ageing_days ?? 0) <= 180 ? "text-amber-400" : "text-red-400",
-      sub: "Weighted by inventory value",
-      kpiKey: "avg_ageing_days" as const,
-    },
-    {
-      label: "Slow Moving Value",
-      value: formatCurrency(aging?.slow_moving_value ?? 0, true),
-      icon: AlertTriangle,
-      iconBg: "bg-amber-500/10",
-      iconColor: "text-amber-400",
-      valueColor: "text-amber-400",
-      sub: `${aging?.slow_moving_count ?? 0} items · 91–180 days`,
-      kpiKey: "slow_moving" as const,
-    },
-    {
-      label: "Fresh Stock",
-      value: `${aging?.buckets[0]?.pct_count ?? 0}%`,
-      icon: BarChart3,
-      iconBg: "bg-emerald-500/10",
-      iconColor: "text-emerald-400",
-      valueColor: "text-emerald-400",
-      sub: `${aging?.buckets[0]?.count ?? 0} items aged 0–30 days`,
-      kpiKey: undefined,
-    },
-    {
-      label: "Liquidation Items",
-      value: String(aging?.liquidation_opportunities.length ?? 0),
-      icon: ShoppingCart,
-      iconBg: "bg-purple-500/10",
-      iconColor: "text-purple-400",
-      valueColor: "text-purple-400",
-      sub: "Items ready to liquidate",
-      kpiKey: undefined,
-    },
-  ];
-
-  // ── Health KPI cards (Mode A) ────────────────────────────────────────────
-  const KPI_CARDS = [
-    {
-      label: "Health Score",
-      value: `${metrics.health_score}/100`,
-      icon: Zap,
-      iconBg: "bg-white/5",
-      iconColor: healthIconColor,
-      valueColor: healthValueColor,
-      sub: healthLabel,
-      kpiKey: "health_score" as const,
-    },
-    {
-      label: "Inventory Value",
-      value: formatCurrency(metrics.total_inventory_value, true),
-      icon: Package,
-      iconBg: "bg-white/5",
-      iconColor: "text-slate-400",
-      valueColor: "text-white",
-      sub: `${formatCurrency(metrics.annual_carrying_cost, true)}/yr carry`,
-      kpiKey: "inventory_value" as const,
-    },
-    {
-      label: "Dead Stock Value",
-      value: formatCurrency(metrics.dead_stock_value, true),
-      icon: TrendingDown,
-      iconBg: "bg-purple-500/10",
-      iconColor: "text-purple-400",
-      valueColor: "text-purple-300",
-      sub: `${metrics.dead_stock_count} SKUs · ${formatCurrency(metrics.dead_stock_carrying_cost, true)}/yr`,
-      kpiKey: "dead_stock" as const,
-    },
-    {
-      label: "Stockout Risk Count",
-      value: String(metrics.stockout_risk_count),
-      icon: AlertTriangle,
-      iconBg: "bg-red-500/10",
-      iconColor: "text-red-400",
-      valueColor: metrics.stockout_risk_count > 0 ? "text-red-400" : "text-emerald-400",
-      sub: "Expected to run out before replenishment arrives",
-      delta: metrics.stockout_risk_count > 0 ? `⚠ ${metrics.stockout_risk_count} urgent` : undefined,
-      kpiKey: "stockout_risk" as const,
-    },
-    {
-      label: "Slow Mover Value",
-      value: formatCurrency(metrics.slow_mover_value, true),
-      icon: RotateCcw,
-      iconBg: "bg-amber-500/10",
-      iconColor: "text-amber-400",
-      valueColor: "text-amber-400",
-      sub: `${metrics.slow_mover_count} SKUs slowing`,
-      kpiKey: "slow_moving" as const,
-    },
-    {
-      label: "Estimated Recoverable Capital",
-      value: formatCurrency(metrics.recoverable_capital, true),
-      icon: DollarSign,
-      iconBg: "bg-emerald-500/10",
-      iconColor: "text-emerald-400",
-      valueColor: "text-emerald-400",
-      sub: "Policy-based recovery estimate",
-      kpiKey: "recoverable_capital" as const,
-    },
-    {
-      label: "Turnover Ratio",
-      value: `${metrics.turnover_ratio}×`,
-      icon: BarChart3,
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-400",
-      valueColor: "text-blue-400",
-      sub: "Snapshot estimate based on annualised consumption",
-      kpiKey: "turnover_ratio" as const,
-    },
-    {
-      label: "Reorder Count",
-      value: String(metrics.reorder_count),
-      icon: ShoppingCart,
-      iconBg: "bg-orange-500/10",
-      iconColor: "text-orange-400",
-      valueColor: "text-orange-400",
-      sub: `items at or below reorder point`,
-      kpiKey: "reorder_count" as const,
-    },
-  ];
-
   return (
     <div className="flex h-screen bg-[#020617] ss-page overflow-hidden">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -558,173 +382,35 @@ export default function DashboardPage() {
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 pt-5 pb-28 sm:pt-6 sm:pb-32 space-y-5 sm:space-y-6">
 
-            {/* Analysis mode banner */}
-            {mode !== "health" && (
-              <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border ${
-                mode === "aging"    ? "bg-blue-500/8 border-blue-500/20" :
-                                     "bg-[#6366f1]/8 border-[#6366f1]/20"
-              }`}>
-                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${mode === "aging" ? "bg-blue-400" : "bg-[#818cf8]"}`} />
-                <span className={`text-xs font-medium ${mode === "aging" ? "text-blue-300" : "text-[#818cf8]"}`}>
-                  {MODE_LABELS[mode]}
-                </span>
-                <span className="text-[11px] text-slate-500 ml-1">{MODE_DESCRIPTIONS[mode]}</span>
-              </div>
-            )}
+            <ControlTowerHeader
+              metrics={metrics}
+              rowCount={rowCount}
+              isDemo={isDemo}
+              activePolicy={activePolicy}
+              displayDate={displayDate}
+            />
 
-            {/* Policy banner — prominent warning when user/file settings override defaults */}
-            {activePolicy && activePolicy.source !== "system" && (() => {
-              const p = activePolicy.policy;
-              const src = activePolicy.source;
-              const isUser = src === "user";
-              const cPct = Math.max(0, 100 - p.abc_a_pct - p.abc_b_pct);
-              // Show which fields differ from system defaults
-              const DEFAULTS_REF = { slow_moving_days: 180, dead_stock_days: 365, critical_coverage_days: 30, safety_stock_days: 15 };
-              const pRec = p as unknown as Record<string, number>;
-              const changed = (Object.entries(DEFAULTS_REF) as [string, number][])
-                .filter(([k, v]) => pRec[k] !== v)
-                .map(([k, v]) => `${k.replace(/_days$|_/g, " ").replace(/^\w/, (c) => c.toUpperCase())}: ${pRec[k]}d (default ${v}d)`);
-              return (
-                <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-[11px] flex-wrap sm:flex-nowrap ${
-                  isUser ? "bg-amber-500/10 border-amber-500/25 text-amber-300" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
-                }`}>
-                  <div className="flex items-center gap-2 font-semibold">
-                    <Settings className="w-3.5 h-3.5 flex-shrink-0" />
-                    {isUser ? "Custom analysis settings are active" : "File-embedded settings are active"}
-                  </div>
-                  {changed.length > 0 && (
-                    <span className="text-white/50">
-                      {changed.join(" · ")}
-                    </span>
-                  )}
-                  {changed.length === 0 && (
-                    <span className="text-white/40">
-                      Slow: {p.slow_moving_days}d · Dead: {p.dead_stock_days}d · Critical: {p.critical_coverage_days}d · ABC: {p.abc_a_pct}/{p.abc_b_pct}/{cPct}
-                    </span>
-                  )}
-                  {/* suppress unused-var for cPct */}
-                  <span className="hidden">{cPct}</span>
-                  <div className="sm:ml-auto flex items-center gap-3 flex-shrink-0">
-                    {isUser && (
-                      <Link href="/settings" className="text-amber-400 hover:text-white transition-colors underline underline-offset-2">
-                        Reset to defaults →
-                      </Link>
-                    )}
-                    <Link href="/settings" className="flex items-center gap-1 text-white/60 hover:text-white transition-colors">
-                      <Settings className="w-3 h-3" />
-                      Edit
-                    </Link>
-                  </div>
-                </div>
-              );
-            })()}
+            <ExecutiveCommandBar metrics={metrics} />
 
-            {/* Critical alert banner */}
-            {metrics.critical_stockout_count > 0 && mode !== "aging" && (
-              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 animate-in">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                <span className="text-xs text-red-300">
-                  <strong className="font-medium">{metrics.critical_stockout_count} critical alert{metrics.critical_stockout_count > 1 ? "s" : ""}:</strong>
-                  {" "}
-                  {metrics.top_risk_items[0]?.product_name} stockout in {Math.floor(metrics.top_risk_items[0]?.days_stock_remaining ?? 0)} days
-                </span>
-                <Link href="/dashboard/insights" className="sm:ml-auto text-xs text-red-400/70 hover:text-red-300 transition-colors whitespace-nowrap flex-shrink-0">
-                  View all →
-                </Link>
-              </div>
-            )}
-
-            {/* Page header */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="min-w-0">
-                <h1 className="text-lg font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
-                  Inventory overview
-                </h1>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {isDemo ? "Demo Company" : filename.replace(/\.\w+$/, "")} · {displayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {metrics.total_skus} SKUs
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-                <TrustBadge variant="compact" />
-                <Link
-                  href="/dashboard/insights"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-[#818cf8] border border-[#6366f1]/25 bg-[#6366f1]/8 hover:bg-[#6366f1]/15 hover:text-white transition-colors"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  Insights
-                </Link>
-                <Link
-                  href="/dashboard/reports"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-400 border border-white/8 hover:border-white/16 hover:text-white transition-colors"
-                >
-                  <FileDown className="w-3.5 h-3.5" />
-                  Export
-                </Link>
-              </div>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[0.45fr_0.55fr]">
+              <ControlTowerPriorities metrics={metrics} />
+              <ControlTowerDecisionBrief metrics={metrics} />
             </div>
 
-            {/* KPI Grid — adapts to analysis mode */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-              {(mode === "aging" ? AGING_KPI_CARDS : KPI_CARDS).map((card, i) => (
-                <KPICard
-                  key={card.label}
-                  label={card.label}
-                  value={card.value}
-                  icon={card.icon}
-                  iconBg={card.iconBg}
-                  iconColor={card.iconColor}
-                  valueColor={card.valueColor}
-                  sub={card.sub}
-                  delta={"delta" in card ? (card.delta as string | undefined) : undefined}
-                  animDelay={i * 60}
-                  kpiKey={card.kpiKey}
-                  metrics={metrics}
-                />
-              ))}
-            </div>
+            <CompactIntelligenceGrid metrics={metrics} completenessScore={completeness.score} />
 
-            {/* Transparency statement */}
-            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-              <p className="text-[11px] text-slate-500 flex-1">
-                <span className="text-emerald-400 font-medium">Transparent calculations.</span>
-                {" "}All calculations are based on your uploaded data and can be independently verified.
-                Hover any KPI card and click{" "}
-                <span className="text-[#818cf8] font-semibold">ⓘ</span>
-                {" "}to see the formula, fields used, and a worked example.
-              </p>
-            </div>
+            <QuickNavigation />
 
-            {/* ── Mode A / C: Health analysis charts ─────────────────────── */}
-            {mode !== "aging" && (
-              <>
-                {/* Charts row — ABC chart fills blank space below risk chart on the right */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                  <div className="lg:col-span-2 space-y-3">
-                    <HealthScoreCard metrics={metrics} />
-                    <ScoreBreakdown metrics={metrics} />
-                  </div>
-                  <div className="lg:col-span-3 space-y-3">
-                    <RiskChart metrics={metrics} />
-                    <ABCChart metrics={metrics} />
-                  </div>
-                </div>
-
-                {/* Top Risk Table */}
-                <TopRiskTable items={metrics.top_risk_items} />
-
-              </>
-            )}
-
-            {/* ── Mode B / C: Aging analysis section ─────────────────────── */}
-            {(mode === "aging" || mode === "complete") && aging && (
-              <AgingDashboard aging={aging} metrics={metrics} />
-            )}
-
+            <ThinMetadataFooter
+              metrics={metrics}
+              rowCount={rowCount}
+              isDemo={isDemo}
+              activePolicy={activePolicy}
+              completenessScore={completeness.score}
+            />
           </div>
         </main>
       </div>
-      <DemoBanner />
       <DemoWelcomeToast />
     </div>
   );

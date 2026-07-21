@@ -117,9 +117,9 @@ export function TopRiskTable({ items, limit = 10 }: TopRiskTableProps) {
                   {/* Action */}
                   <td className="px-4 py-3">
                     <button className="text-xs text-[#818cf8] hover:text-white transition-colors whitespace-nowrap">
-                      {item.scenario === "CRITICAL" ? "Order now" :
-                       item.scenario === "DEAD" ? "Liquidate" :
-                       item.scenario === "SLOW" ? "Promote" : "Review"}
+                      {item.scenario === "CRITICAL" ? "Review Replenishment" :
+                       item.scenario === "DEAD" ? "Review Dead Stock" :
+                       item.scenario === "SLOW" ? "Review Slow Movers" : "Review"}
                     </button>
                   </td>
                 </tr>

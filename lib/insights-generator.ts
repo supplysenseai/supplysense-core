@@ -317,7 +317,7 @@ function buildOverviewBody(
     lines.push(`No dead stock, slow movers, or stockout risk has been identified. The portfolio is operating cleanly within defined thresholds.`);
   }
 
-  lines.push(`ABC classification shows ${aCount} A-class items accounting for ${aRevPct}% of inventory value. Inventory turnover of ${turnover}x is a snapshot estimate to interpret against company targets, history and relevant industry context.`);
+  lines.push(`ABC classification shows ${aCount} A-class items accounting for ${aRevPct}% of Annual Consumption Value. Inventory turnover of ${turnover}x is a snapshot estimate to interpret against company targets, history and relevant industry context.`);
 
   if (recoverable > 0) {
     lines.push(`An estimated ${$(recoverable)} in recoverable capital may be available through disposition or reduction options for dead stock and slow-mover excess.`);
@@ -411,10 +411,10 @@ function buildActions(
     actions.push({
       priority: priority++,
       action: "Review purchasing attention for A-class annual-consumption drivers",
-      rationale: `A-items currently represent ${abc.a_revenue_pct}% of inventory value — below the 65–70% Pareto ideal. Review whether replenishment attention and stocking policy match consumption concentration.`,
+      rationale: `A-items currently represent ${abc.a_revenue_pct}% of Annual Consumption Value — below the 65–70% Pareto ideal. Review whether replenishment attention and stocking policy match consumption concentration.`,
       timeline: "Next quarter",
       owner: "Supply Chain",
-      estimated_impact: "Improves fill rates on high-value SKUs and ABC health score",
+      estimated_impact: "Improves fill rates on high-consumption-value SKUs and ABC health score",
     });
   }
 

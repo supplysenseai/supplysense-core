@@ -319,7 +319,7 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
                 {[
                   { cls: "A", label: "High annual-consumption items", count: metrics.abc_summary.a_count, pct: metrics.abc_summary.a_revenue_pct, target: 65, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15", note: "Review service exposure" },
                   { cls: "B", label: "Mid-tier items", count: metrics.abc_summary.b_count, pct: metrics.abc_summary.b_revenue_pct, target: null, color: "text-blue-400", bg: "bg-blue-500/8", border: "border-blue-500/15", note: "Standard replenishment" },
-                  { cls: "C", label: "Low-value / tail items", count: metrics.abc_summary.c_count, pct: metrics.abc_summary.c_revenue_pct, target: null, color: "text-slate-400", bg: "bg-white/3", border: "border-white/8", note: "Review ordering policy" },
+                  { cls: "C", label: "Low consumption value / tail items", count: metrics.abc_summary.c_count, pct: metrics.abc_summary.c_revenue_pct, target: null, color: "text-slate-400", bg: "bg-white/3", border: "border-white/8", note: "Review ordering policy" },
                 ].map(a => (
                   <div key={a.cls} className={`rounded-lg border px-3 py-2 ${a.bg} ${a.border}`}>
                     <div className="flex items-center justify-between mb-0.5">
@@ -329,7 +329,7 @@ function SupplyChainBrief({ metrics, summary, visible }: { metrics: DashboardMet
                       </div>
                       <div className="flex items-center gap-1">
                         <span className={`text-xs font-bold tabular-nums ${a.color}`}>{a.pct}%</span>
-                        <span className="text-[9px] text-slate-600">of value</span>
+                        <span className="text-[9px] text-slate-600">of consumption value</span>
                         {a.target && <span className={`text-[9px] ${a.pct >= a.target ? "text-emerald-500" : "text-amber-500"}`}>{a.pct >= a.target ? "✓" : "↓"}{a.target}%</span>}
                       </div>
                     </div>

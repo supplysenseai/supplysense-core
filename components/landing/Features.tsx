@@ -13,7 +13,7 @@ const FEATURES = [
     color: "text-amber-400",
     bg: "bg-amber-500/10",
     title: "Inventory Health Score",
-    desc: "0-100 composite score across 4 weighted factors: dead stock %, slow mover %, stockout risk %, and A-item revenue concentration. One number your CEO can present in any board meeting.",
+    desc: "0-100 composite score across 4 weighted factors: dead stock %, slow mover %, stockout risk %, and A-item consumption value concentration. One number your CEO can present in any board meeting.",
   },
   {
     icon: TrendingDown,
@@ -34,7 +34,7 @@ const FEATURES = [
     color: "text-blue-400",
     bg: "bg-blue-500/10",
     title: "ABC Analysis",
-    desc: "Full Pareto classification: A-items drive 70% of revenue. Prioritize safety stock, reorder frequency, and management attention automatically.",
+    desc: "Full Pareto classification: A-items drive 70% of Annual Consumption Value. Prioritize safety stock, reorder frequency, and management attention automatically.",
   },
   {
     icon: ShoppingCart,

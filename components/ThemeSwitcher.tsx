@@ -11,22 +11,22 @@ const THEMES: {
 }[] = [
   {
     id: "dark",
-    label: "Dark",
-    desc: "Deep navy — easy on the eyes for extended analysis sessions.",
+    label: "Executive Dark",
+    desc: "Deep navy control-room theme for operations and low-light monitoring.",
     icon: Moon,
     preview: { page: "#020617", card: "#0f172a", accent: "#6366f1", text: "#94a3b8" },
   },
   {
     id: "light",
-    label: "Light",
-    desc: "Clean white — ideal for presentations and daylight environments.",
+    label: "Executive Light",
+    desc: "Soft office theme for finance, procurement, and daytime review.",
     icon: Sun,
     preview: { page: "#f1f5f9", card: "#ffffff", accent: "#6366f1", text: "#64748b" },
   },
   {
     id: "professional",
-    label: "Professional",
-    desc: "Charcoal dark — high contrast, enterprise-grade terminal aesthetic.",
+    label: "Executive Professional",
+    desc: "Premium graphite theme for boardroom demos and commercial deployments.",
     icon: Briefcase,
     preview: { page: "#0d1117", card: "#161b22", accent: "#0ea5e9", text: "#8b949e" },
   },

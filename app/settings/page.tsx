@@ -68,7 +68,7 @@ const ABC_FIELDS: Array<{
   {
     key: "abc_a_pct",
     label: "A-Class Percentage",
-    description: "Cumulative inventory value % that defines the A tier (high-value items).",
+    description: "Cumulative Annual Consumption Value % that defines the A tier (high-consumption-value items).",
   },
   {
     key: "abc_b_pct",
@@ -554,7 +554,7 @@ export default function SettingsPage() {
                 <div>
                   <h2 className="text-sm font-semibold text-white">ABC Classification</h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Pareto-based tiers by cumulative inventory value. A = high-value, C = low-value.
+                    Pareto-based tiers by cumulative Annual Consumption Value. A = high consumption value, C = low consumption value.
                   </p>
                 </div>
                 <button

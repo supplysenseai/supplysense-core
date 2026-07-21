@@ -174,14 +174,14 @@ export default function HealthScorePage() {
                   "Slow Movers": "Run targeted promotions or halt replenishment orders to reduce excess stock without write-offs.",
                   "Stockout Risk": "Review replenishment parameters, demand assumptions and recent purchasing decisions for CRITICAL items.",
                   "ABC Profile": "Treat ABC as segmentation context. A normal Pareto curve is not inherently unhealthy.",
-                  "ABC Quality": "Ensure A-class items have maximum service levels and never stock out; they drive the majority of value.",
+                  "ABC Quality": "Ensure A-class items have maximum service levels and never stock out; they drive the majority of consumption value.",
                 };
                 const benchmarks: Record<string, string> = {
                   "Dead Stock": "Target < 5% of portfolio",
                   "Slow Movers": "Target < 10% of portfolio",
                   "Stockout Risk": "Target < 5% of portfolio",
                   "ABC Profile": "Informational only",
-                  "ABC Quality": "Target > 65% value from A-items",
+                  "ABC Quality": "Target > 65% consumption value from A-items",
                 };
                 return (
                   <div key={f.label} className="space-y-3 pb-5 border-b border-white/5 last:border-0 last:pb-0">

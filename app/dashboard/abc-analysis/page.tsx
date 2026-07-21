@@ -11,11 +11,11 @@ import { openDrilldown } from "@/lib/drilldown";
 
 const ABC_CONFIG = {
   A: { color: "#10b981", bg: "bg-emerald-500/10", border: "border-emerald-500/20", text: "text-emerald-400",
-       desc: "Top revenue contributors. Highest priority — monitor closely, keep safety stock, never stockout." },
+       desc: "Top consumption value contributors. Highest priority — monitor closely, keep safety stock, never stockout." },
   B: { color: "#3b82f6", bg: "bg-blue-500/10",    border: "border-blue-500/20",    text: "text-blue-400",
-       desc: "Mid-tier items with moderate revenue. Balanced ordering — review monthly." },
+       desc: "Mid-tier items with moderate consumption value. Balanced ordering — review monthly." },
   C: { color: "#6366f1", bg: "bg-indigo-500/10",  border: "border-indigo-500/25",  text: "text-indigo-400",
-       desc: "Low revenue, high SKU count. Candidates for rationalisation or lean inventory policies." },
+       desc: "Low consumption value, high SKU count. Candidates for rationalisation or lean inventory policies." },
 };
 
 type ABCTab = "A" | "B" | "C";
@@ -65,15 +65,15 @@ export default function ABCAnalysisPage() {
 
   // Pareto chart data
   const paretoData = [
-    { name: "A-Class", skus: abc.a_count, revenue: abc.a_revenue_pct, fill: "#10b981" },
-    { name: "B-Class", skus: abc.b_count, revenue: abc.b_revenue_pct, fill: "#3b82f6" },
-    { name: "C-Class", skus: abc.c_count, revenue: abc.c_revenue_pct, fill: "#6366f1" },
+    { name: "A-Class", skus: abc.a_count, consumptionValuePct: abc.a_revenue_pct, fill: "#10b981" },
+    { name: "B-Class", skus: abc.b_count, consumptionValuePct: abc.b_revenue_pct, fill: "#3b82f6" },
+    { name: "C-Class", skus: abc.c_count, consumptionValuePct: abc.c_revenue_pct, fill: "#6366f1" },
   ];
 
   // Cumulative for Pareto line
   let cumulative = 0;
   const paretoLine = paretoData.map((d) => {
-    cumulative += d.revenue;
+    cumulative += d.consumptionValuePct;
     return { ...d, cumulative };
   });
 
@@ -105,7 +105,7 @@ export default function ABCAnalysisPage() {
                 <KPIInfoTrigger kpiKey="abc_analysis" metrics={metrics} />
               </h1>
               <p className="text-xs text-slate-500 mt-1">
-                Pareto-based classification. A-items drive ~70% of revenue with ~{Math.round((abc.a_count/totalSkus)*100)}% of SKUs.
+                Pareto-based classification. A-items drive ~70% of Annual Consumption Value with ~{Math.round((abc.a_count/totalSkus)*100)}% of SKUs.
               </p>
             </div>
 
@@ -123,7 +123,7 @@ export default function ABCAnalysisPage() {
               {(["A","B","C"] as ABCTab[]).map((cls) => {
                 const cfg = ABC_CONFIG[cls];
                 const count = abc[`${cls.toLowerCase()}_count` as keyof typeof abc] as number;
-                const rev   = abc[`${cls.toLowerCase()}_revenue_pct` as keyof typeof abc] as number;
+                const consumptionValuePct = abc[`${cls.toLowerCase()}_revenue_pct` as keyof typeof abc] as number;
                 const skuPct = totalSkus > 0 ? Math.round((count / totalSkus) * 100) : 0;
                 return (
                   <div key={cls} className="card p-5 text-center space-y-2">
@@ -133,10 +133,10 @@ export default function ABCAnalysisPage() {
                     <div className={`text-2xl font-bold ${cfg.text}`}>{count}</div>
                     <div className="text-xs text-slate-500">SKUs ({skuPct}% of total)</div>
                     <div className="h-px bg-white/5 my-1" />
-                    <div className="text-lg font-semibold text-white">{rev}%</div>
-                    <div className="text-xs text-slate-500">of total revenue</div>
+                    <div className="text-lg font-semibold text-white">{consumptionValuePct}%</div>
+                    <div className="text-xs text-slate-500">of Total Consumption Value</div>
                     <div className="h-1.5 bg-white/6 rounded-full overflow-hidden mt-2">
-                      <div className="h-full rounded-full" style={{ width: `${rev}%`, background: cfg.color }} />
+                      <div className="h-full rounded-full" style={{ width: `${consumptionValuePct}%`, background: cfg.color }} />
                     </div>
                   </div>
                 );
@@ -145,8 +145,8 @@ export default function ABCAnalysisPage() {
 
             {/* Pareto chart */}
             <div className="card p-6">
-              <p className="text-sm font-semibold text-white mb-1">Revenue Distribution (Pareto)</p>
-              <p className="text-[11px] text-slate-500 mb-5">Bars = revenue % per class · Line = cumulative revenue</p>
+              <p className="text-sm font-semibold text-white mb-1">Consumption Value Distribution (Pareto)</p>
+              <p className="text-[11px] text-slate-500 mb-5">Bars = consumption value % per class · Line = cumulative consumption value</p>
               <div className="h-52">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={paretoLine} margin={{ top: 4, right: 24, bottom: 0, left: -16 }}>
@@ -156,11 +156,11 @@ export default function ABCAnalysisPage() {
                     <Tooltip
                       contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, fontSize: 12 }}
                       labelStyle={{ color: "#f1f5f9" }}
-                      formatter={(v, name) => [`${Number(v).toFixed(1)}%`, name === "revenue" ? "Revenue share" : "Cumulative"]}
+                      formatter={(v, name) => [`${Number(v).toFixed(1)}%`, name === "consumptionValuePct" ? "Consumption Value %" : "Cumulative"]}
                     />
                     <Bar
                       yAxisId="left"
-                      dataKey="revenue"
+                      dataKey="consumptionValuePct"
                       radius={[6,6,0,0]}
                       style={{ cursor: "pointer" }}
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any

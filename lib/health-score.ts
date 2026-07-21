@@ -94,7 +94,7 @@ export function getHealthScoreContributions(metrics: DashboardMetrics): HealthSc
       weight: weights.abc,
       exactContribution: (abcExcluded ? 100 : hc.abc_score) * (weights.abc / 100),
       pct: hc.a_item_revenue_pct,
-      pctLabel: `A-items: ${hc.a_item_revenue_pct}% value`,
+      pctLabel: `A-items: ${hc.a_item_revenue_pct}% consumption value`,
       detail: abcExcluded
         ? "Informational only; normal Pareto concentration is not penalised"
         : `A-items represent ${hc.a_item_revenue_pct.toFixed(1)}% of annual consumption value`,
