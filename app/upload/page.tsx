@@ -2,9 +2,10 @@
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Zap } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import { DropZone } from "@/components/upload/DropZone";
 import { ValidationProgress } from "@/components/upload/ValidationProgress";
+import { BrandLogo } from "@/components/BrandLogo";
 import type { UploadResult, AnalysisMode } from "@/lib/types";
 import { detectAnalysisMode } from "@/lib/analysis-detector";
 import { getAuth } from "@/lib/auth";
@@ -153,10 +154,10 @@ export default function UploadPage() {
             Back
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[#6366f1] flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold" style={{ fontFamily: "Syne, sans-serif" }}>S</span>
+            <div className="w-6 h-6 flex items-center justify-center">
+              <BrandLogo />
             </div>
-            <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>SupplySense</span>
+            <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>Event2Act</span>
           </div>
           <Link
             href="/dashboard"
@@ -173,14 +174,14 @@ export default function UploadPage() {
           {/* Page header */}
           <div className="text-center mb-7 sm:mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20 mb-4">
-              <Zap className="w-3 h-3" />
+              <Clock className="w-3 h-3" />
               60-second analysis
             </div>
             <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "Syne, sans-serif" }}>
               Upload your inventory file
             </h1>
             <p className="text-sm text-slate-500 max-w-xs mx-auto">
-              Any Excel or CSV format. SupplySense auto-maps your columns.
+              Any Excel or CSV format. Event2Act auto-maps your columns.
               No reformatting required.
             </p>
           </div>

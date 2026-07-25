@@ -228,7 +228,7 @@ export const KPI_DEFINITIONS: Record<KPIKey, KPIDefinition> = {
       good: "CRITICAL count = 0. All SKUs have sufficient buffer above their lead time.",
       warning: "1-5 CRITICAL SKUs. Review replenishment parameters, demand assumptions and recent purchasing decisions for those items.",
       critical: "6+ CRITICAL SKUs or any operationally critical item at risk. Possible production stoppage or consumption-value impact should be reviewed.",
-      tip: "SupplySense uses active safety_stock_days for ROP safety stock. Review safety-stock policy, open orders, transfers and supplier constraints before action.",
+      tip: "Event2Act uses active safety_stock_days for ROP safety stock. Review safety-stock policy, open orders, transfers and supplier constraints before action.",
     },
     linkedKPIs: ["reorder_count", "health_score"],
   },

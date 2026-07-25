@@ -2,10 +2,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, RotateCcw, RefreshCw, Upload, TrendingUp, TrendingDown, Minus, ShieldCheck } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Cell } from "recharts";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { KPIInfoTrigger } from "@/components/dashboard/KPIInfoModal";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDaysOfCover } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import type { DashboardMetrics } from "@/lib/types";
 import { openDrilldown } from "@/lib/drilldown";
 
@@ -17,8 +17,8 @@ export default function TurnoverPage() {
 
   useEffect(() => {
     try {
-      const s = sessionStorage.getItem("supplysense_metrics");
-      if (s) setMetrics(JSON.parse(s));
+      const storedMetrics = readStoredDashboardMetrics();
+      if (storedMetrics) setMetrics(storedMetrics);
       else setNoData(true);
     } catch { setNoData(true); }
   }, []);
@@ -131,7 +131,7 @@ export default function TurnoverPage() {
                 },
                 {
                   label: "Days of Inventory",
-                  value: `${daysOfInventory}d`,
+                  value: formatDaysOfCover(daysOfInventory),
                   sub: "avg days on hand",
                   color: daysOfInventory <= 60 ? "#10b981" : daysOfInventory <= 120 ? "#3b82f6" : "#f59e0b",
                   Icon: daysOfInventory <= 60 ? TrendingUp : TrendingDown,
@@ -205,7 +205,7 @@ export default function TurnoverPage() {
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-xs font-semibold text-white">{sc.label}</p>
                       <span className="text-[11px] font-bold text-emerald-400 tabular-nums whitespace-nowrap">
-                        Save {formatCurrency(sc.saving, true)}/yr
+                        {sc.saving > 0 ? `Save ${formatCurrency(sc.saving, true)}/yr` : "No current opportunity detected"}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">{sc.action}</p>
@@ -303,7 +303,9 @@ export default function TurnoverPage() {
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="text-xs font-semibold text-amber-400">
-                              {isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)}d cover` : "∞"}
+                              <span title={isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)} days` : undefined}>
+                                {formatDaysOfCover(item.days_stock_remaining)}
+                              </span>
                             </p>
                             <p className="text-[10px] text-slate-600">{formatCurrency(item.inventory_value, true)}</p>
                           </div>

@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { X, BookOpen, Database, FlaskConical, TrendingUp, ShieldCheck, ChevronRight, HelpCircle, Activity } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatDaysOfCover, formatUnitCost } from "@/lib/utils";
 import { KPI_DEFINITIONS, getKPIAssuranceText, getKPIInterpretationLabels, type KPIKey } from "@/lib/kpi-definitions";
 import { buildLiveCalculation, getDataLineage } from "@/lib/validation-engine";
 import { WhyDrawer } from "@/components/validation/WhyDrawer";
@@ -27,7 +26,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
       return top.map((item) => ({
         label: item.product_name,
         value: formatCurrency(item.inventory_value),
-        sub: `${item.sku_id} · ${item.units_on_hand} units @ ${formatCurrency(item.unit_cost)}`,
+        sub: `${item.sku_id} · ${item.units_on_hand} units @ ${formatUnitCost(item.unit_cost)}`,
         accent: "text-white",
       }));
     }
@@ -47,7 +46,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
       return slow.map((item) => ({
         label: item.product_name,
         value: formatCurrency(item.inventory_value),
-        sub: `${item.sku_id} · ${item.units_on_hand} units · ${isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)}d stock` : "∞ stock"}`,
+        sub: `${item.sku_id} · ${item.units_on_hand} units · ${formatDaysOfCover(item.days_stock_remaining)} stock`,
         accent: "text-amber-400",
       }));
     }
@@ -58,7 +57,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
       return risk.map((item) => ({
         label: item.product_name,
         value: isFinite(item.days_stock_remaining)
-          ? `${Math.floor(item.days_stock_remaining)}d left`
+          ? `${formatDaysOfCover(item.days_stock_remaining)} left`
           : "—",
         sub: `${item.sku_id} · ${item.scenario} · Risk score: ${item.stockout_risk_score}`,
         accent: item.scenario === "CRITICAL" ? "text-red-400" : "text-amber-400",
@@ -77,7 +76,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
         return {
           label: rec.product_name,
           value: `EOQ ${rec.eoq} units`,
-          sub: `${rec.sku_id} \u00B7 ${rec.urgency.replace("_", " ")} \u00B7 ${displayedDays !== null ? `${displayedDays}d` : "\u2014"} remaining`,
+          sub: `${rec.sku_id} · ${rec.urgency.replace("_", " ")} · ${displayedDays !== null ? formatDaysOfCover(displayedDays) : "—"} remaining`,
           accent: rec.urgency === "immediate" ? "text-red-400" : rec.urgency === "this_week" ? "text-amber-400" : "text-blue-400",
         };
       });

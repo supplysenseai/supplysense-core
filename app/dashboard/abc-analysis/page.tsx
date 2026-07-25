@@ -1,11 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, BarChart3, RefreshCw, Upload, ShieldCheck } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell, LineChart, Line, ReferenceLine } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, Line, ReferenceLine } from "recharts";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { KPIInfoTrigger } from "@/components/dashboard/KPIInfoModal";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatUnitCost } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import type { DashboardMetrics, AnalyzedSKU } from "@/lib/types";
 import { openDrilldown } from "@/lib/drilldown";
 
@@ -25,13 +26,24 @@ export default function ABCAnalysisPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [noData, setNoData] = useState(false);
   const [activeTab, setActiveTab] = useState<ABCTab>("A");
+  const chartRef = useRef<HTMLDivElement | null>(null);
+  const [chartWidth, setChartWidth] = useState(0);
 
   useEffect(() => {
     try {
-      const s = sessionStorage.getItem("supplysense_metrics");
-      if (s) setMetrics(JSON.parse(s));
+      const storedMetrics = readStoredDashboardMetrics();
+      if (storedMetrics) setMetrics(storedMetrics);
       else setNoData(true);
     } catch { setNoData(true); }
+  }, []);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setChartWidth(Math.max(1, Math.floor(entry.contentRect.width)));
+    });
+    observer.observe(chartRef.current);
+    return () => observer.disconnect();
   }, []);
 
   if (noData) return (
@@ -147,9 +159,9 @@ export default function ABCAnalysisPage() {
             <div className="card p-6">
               <p className="text-sm font-semibold text-white mb-1">Consumption Value Distribution (Pareto)</p>
               <p className="text-[11px] text-slate-500 mb-5">Bars = consumption value % per class · Line = cumulative consumption value</p>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={paretoLine} margin={{ top: 4, right: 24, bottom: 0, left: -16 }}>
+              <div ref={chartRef} className="h-52 min-w-0 overflow-hidden">
+                {chartWidth > 0 && (
+                  <BarChart width={chartWidth} height={208} data={paretoLine} margin={{ top: 4, right: 24, bottom: 0, left: -16 }}>
                     <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="left" domain={[0, 100]} tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                     <YAxis yAxisId="right" orientation="right" domain={[0, 100]} tick={{ fontSize: 11, fill: "#475569" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
@@ -171,7 +183,7 @@ export default function ABCAnalysisPage() {
                     <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="#f59e0b" strokeWidth={2} dot={{ fill: "#f59e0b", r: 4 }} />
                     <ReferenceLine yAxisId="right" y={80} stroke="rgba(245,158,11,0.3)" strokeDasharray="4 3" />
                   </BarChart>
-                </ResponsiveContainer>
+                )}
               </div>
             </div>
 
@@ -237,7 +249,7 @@ export default function ABCAnalysisPage() {
                           <td className="px-4 py-2.5 text-white font-medium max-w-[180px] truncate">{item.product_name}</td>
                           <td className="px-4 py-2.5 text-slate-400">{item.category || "—"}</td>
                           <td className="px-4 py-2.5 text-slate-300 tabular-nums">{item.units_on_hand}</td>
-                          <td className="px-4 py-2.5 text-slate-300 tabular-nums">{formatCurrency(item.unit_cost)}</td>
+                          <td className="px-4 py-2.5 text-slate-300 tabular-nums">{formatUnitCost(item.unit_cost)}</td>
                           <td className="px-4 py-2.5 text-white tabular-nums font-medium">{formatCurrency(item.inventory_value, true)}</td>
                           <td className="px-4 py-2.5">
                             <div className="flex items-center gap-2">

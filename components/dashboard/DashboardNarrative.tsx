@@ -13,7 +13,7 @@ import {
   RotateCcw,
   ShieldCheck,
   TrendingDown,
-  Zap,
+  Brain,
   type LucideIcon,
 } from "lucide-react";
 import { KPIInfoTrigger } from "@/components/dashboard/KPIInfoModal";
@@ -278,7 +278,7 @@ export function AiDecisionBrief({ metrics }: { metrics: DashboardMetrics }) {
     <section className="card p-5 sm:p-6">
       <div className="mb-4 flex items-center gap-2">
         <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-2">
-          <Zap className="h-4 w-4 text-blue-400" />
+          <Brain className="h-4 w-4 text-blue-400" />
         </div>
         <div>
           <h2 className="text-sm font-semibold text-white">AI Decision Brief</h2>
@@ -488,12 +488,12 @@ export function ControlTowerHeader({
   return (
     <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
-        <h1 className="text-xl font-semibold tracking-tight text-white">SupplySense Inventory Intelligence Hub</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-white">Event2Act AI</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Your central workspace for inventory performance, operational risk, working capital and business decisions.
+          Inventory Intelligence for performance, operational risk, working capital and business decisions.
         </p>
         <p className="mt-2 text-xs text-slate-500">
-          {dateLabel} Â· {(rowCount || metrics.total_skus).toLocaleString()} records analysed Â· {compactPolicyLabel(activePolicy ?? metrics.active_policy)}
+          {dateLabel} | {(rowCount || metrics.total_skus).toLocaleString()} records analysed | {compactPolicyLabel(activePolicy ?? metrics.active_policy)}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -525,10 +525,10 @@ export function ExecutiveCommandBar({ metrics }: { metrics: DashboardMetrics }) 
       {cells.map((cell) => {
         const Icon = cell.icon;
         return (
-          <div key={cell.label} className="group flex min-h-[86px] items-center gap-3 border-b border-white/8 px-4 py-3 transition-colors hover:bg-white/[0.04] sm:border-r 2xl:border-b-0">
+          <div key={cell.label} className="group flex min-h-[92px] items-center gap-3 border-b border-white/8 px-4 py-3 transition-colors hover:bg-white/[0.04] sm:border-r 2xl:border-b-0">
             <Icon className={cn("h-4 w-4 flex-shrink-0", toneStyles[cell.tone].icon)} />
             <Link href={cell.href} className="min-w-0 flex-1">
-              <span className="block truncate text-[11px] font-medium uppercase tracking-wider text-slate-500">{cell.label}</span>
+              <span className="block text-[11px] font-medium uppercase leading-tight tracking-wider text-slate-500">{cell.label}</span>
               <span className="mt-0.5 block truncate text-lg font-semibold leading-tight text-white">{cell.value}</span>
               <span className="mt-0.5 block truncate text-xs text-slate-500">{cell.context}</span>
             </Link>
@@ -562,7 +562,7 @@ export function ControlTowerPriorities({ metrics }: { metrics: DashboardMetrics 
               <p className="truncate text-xs text-slate-500">{row.value}</p>
             </div>
             <div className="mt-2 sm:mt-0">{compactStatus(row.tone, row.status)}</div>
-            <Link href={row.href} className="mt-2 text-xs font-medium text-blue-300 hover:text-white sm:mt-0">Review -&gt;</Link>
+            <Link href={row.href} className="mt-2 text-xs font-medium text-blue-300 hover:text-white sm:mt-0">Review →</Link>
           </div>
         ))}
       </div>
@@ -606,7 +606,7 @@ export function ControlTowerDecisionBrief({ metrics }: { metrics: DashboardMetri
         </ul>
       </div>
       <Link href={hasCritical ? "/dashboard/risk" : "/dashboard/insights"} className="mt-4 inline-flex rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-white/5 hover:text-white">
-        {hasCritical ? "Investigate risk -&gt;" : "Review insights -&gt;"}
+        {hasCritical ? "Investigate risk →" : "Review insights →"}
       </Link>
     </section>
   );
@@ -624,7 +624,7 @@ export function CompactIntelligenceGrid({ metrics, completenessScore }: { metric
   const widgets = [
     {
       title: "Inventory Health",
-      body: `${metrics.health_score}/100 Â· ${getHealthLabel(metrics.health_score)}`,
+      body: `${metrics.health_score}/100 | ${getHealthLabel(metrics.health_score)}`,
       detail: "Overall policy-based inventory condition.",
       href: "/dashboard/health-score",
       action: "Review",
@@ -650,7 +650,7 @@ export function CompactIntelligenceGrid({ metrics, completenessScore }: { metric
     },
     {
       title: "ABC Profile",
-      body: `A ${abc.a_count} Â· B ${abc.b_count} Â· C ${abc.c_count}`,
+      body: `A ${abc.a_count} | B ${abc.b_count} | C ${abc.c_count}`,
       detail: `A-items drive ${abc.a_revenue_pct}% Annual Consumption Value.`,
       href: "/dashboard/abc-analysis",
       action: "Review",
@@ -673,7 +673,7 @@ export function CompactIntelligenceGrid({ metrics, completenessScore }: { metric
     {
       title: "Financial Snapshot",
       body: formatCurrency(metrics.total_inventory_value, true),
-      detail: `${formatCurrency(metrics.recoverable_capital, true)} estimated recoverable Â· ${formatCurrency(metrics.annual_carrying_cost, true)} annual carrying cost.`,
+      detail: `${formatCurrency(metrics.recoverable_capital, true)} estimated recoverable | ${formatCurrency(metrics.annual_carrying_cost, true)} annual carrying cost.`,
       href: "/dashboard/financial-impact",
       action: "Optimise",
       content: <MiniBar value={metrics.total_inventory_value ? (metrics.recoverable_capital / metrics.total_inventory_value) * 100 : 0} tone="healthy" />,
@@ -696,7 +696,7 @@ export function CompactIntelligenceGrid({ metrics, completenessScore }: { metric
           <Link key={widget.title} href={widget.href} className="ss-panel flex min-h-[146px] flex-col p-4 transition-colors hover:bg-white/[0.04]">
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-sm font-semibold text-white">{widget.title}</h3>
-              <span className="text-xs text-blue-300">{widget.action} -&gt;</span>
+              <span className="text-xs text-blue-300">{widget.action} →</span>
             </div>
             <p className="mt-3 text-xl font-semibold text-white">{widget.body}</p>
             <p className="mt-1 flex-1 text-xs leading-relaxed text-slate-500">{widget.detail}</p>
@@ -746,7 +746,7 @@ export function ThinMetadataFooter({
 }) {
   return (
     <footer className="pb-2 text-xs text-slate-500">
-      {(rowCount || metrics.total_skus).toLocaleString()} records analysed Â· {compactPolicyLabel(activePolicy ?? metrics.active_policy)} Â· {isDemo ? "Demo snapshot: 30 Jun 2026" : "Current session analysis"} Â· Data completeness: {completenessScore}% Â· Calculation status: explainable
+      {(rowCount || metrics.total_skus).toLocaleString()} records analysed | {compactPolicyLabel(activePolicy ?? metrics.active_policy)} | {isDemo ? "Demo snapshot: 30 Jun 2026" : "Current session analysis"} | Data completeness: {completenessScore}% | Calculation status: explainable
     </footer>
   );
 }

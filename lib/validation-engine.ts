@@ -1,11 +1,11 @@
 ﻿/**
- * Validation Engine â€” Phase 13: Explainable Analytics & Trust Framework
+ * Validation Engine - Phase 13: Explainable Analytics & Trust Framework
  *
  * Provides:
- *  - buildLiveCalculation() â€” step-by-step real-data computations for each KPI
- *  - getWhyExplanation()    â€” plain-English "why am I seeing this?" per KPI
- *  - getDataLineage()       â€” source columns + policy info per KPI
- *  - buildScoreBreakdown()  â€” health-score decomposition from 100 down
+ *  - buildLiveCalculation() - step-by-step real-data computations for each KPI
+ *  - getWhyExplanation()    - plain-English "why am I seeing this?" per KPI
+ *  - getDataLineage()       - source columns + policy info per KPI
+ *  - buildScoreBreakdown()  - health-score decomposition from 100 down
  */
 
 import { formatCurrency } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { getHealthFormula, getHealthScoreContributions } from "@/lib/health-scor
 const validationHealthLabel = (label: string) =>
   label === "Stockout Risk" ? "Replenishment Exposure" : label;
 
-// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Types
 
 export interface LiveCalcStep {
   label: string;
@@ -37,7 +37,7 @@ export interface LiveCalculation {
 
 export interface WhyExplanation {
   headline: string;       // 1-line bold headline
-  body: string;           // 2â€“3 sentence plain-English explanation
+  body: string;           // 2-3 sentence plain-English explanation
   impact: string;         // business impact
   action: string;         // recommended action
   confidence: "High" | "Medium" | "Low";
@@ -78,7 +78,7 @@ export interface ScoreBreakdown {
   formula: string;
 }
 
-// â”€â”€ Live Calculation Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Live Calculation Builder
 
 export function buildLiveCalculation(
   key: KPIKey,
@@ -489,7 +489,7 @@ export function buildLiveCalculation(
   }
 }
 
-// â”€â”€ Plain-English "Why am I seeing this?" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Plain-English Why am I seeing this?
 
 export function getWhyExplanation(
   key: KPIKey,
@@ -583,7 +583,7 @@ export function getWhyExplanation(
   }
 }
 
-// â”€â”€ Data Lineage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Data Lineage
 
 const FIELD_MAP: Record<KPIKey, { column: string; displayName?: string; role: string; required: boolean }[]> = {
   inventory_value: [
@@ -743,7 +743,7 @@ export function getDataLineage(
   };
 }
 
-// â”€â”€ Score Breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Score Breakdown
 
 export function buildScoreBreakdown(metrics: DashboardMetrics): ScoreBreakdown {
   const factors = getHealthScoreContributions(metrics);

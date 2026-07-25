@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Zap, Package, TrendingDown, AlertTriangle, RotateCcw,
+  Package, TrendingDown, AlertTriangle, RotateCcw,
   DollarSign, BarChart3, ShoppingCart, Upload, Bell, Menu,
   FileDown, CheckCircle2, RefreshCw, UserCircle, X, ShieldCheck, Settings,
 } from "lucide-react";
@@ -20,6 +20,7 @@ import {
   ThinMetadataFooter,
 } from "@/components/dashboard/DashboardNarrative";
 import { formatCurrency } from "@/lib/utils";
+import { clearStoredDashboardMetrics, readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import { isDemoMode, hasSessionData, clearSession } from "@/lib/demo-loader";
 import { DEMO_ANALYSIS_DATE } from "@/lib/demo-data";
 import { MODE_LABELS, MODE_DESCRIPTIONS } from "@/lib/analysis-detector";
@@ -31,12 +32,11 @@ import { getAuth, clearAuth } from "@/lib/auth";
 // Inline demo loader button used in the no-data gate screen
 function NoDataDemoButton() {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const handleClick = async () => {
     setLoading(true);
     const { loadDemoIntoSession } = await import("@/lib/demo-loader");
     loadDemoIntoSession();
-    router.push("/dashboard");
+    window.location.assign("/dashboard");
   };
   return (
     <button onClick={handleClick} disabled={loading}
@@ -62,7 +62,7 @@ function exportPOCsv(recs: DashboardMetrics["reorder_recommendations"]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `SupplySense-PO-Draft-${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `Event2Act-PO-Draft-${new Date().toISOString().split("T")[0]}.csv`;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
@@ -142,10 +142,6 @@ export default function DashboardPage() {
   const [activePolicy, setActivePolicy] = useState<ActivePolicy | null>(null);
   const [companyName, setCompanyName] = useState("");
 
-  // Bump this any time the analyzer logic changes so stale sessionStorage
-  // is automatically invalidated and the user is prompted to re-upload.
-  const METRICS_VERSION = "6";
-
   useEffect(() => {
     const auth = getAuth();
     if (auth) setAuthUser({ name: auth.name, email: auth.email, plan: auth.plan });
@@ -164,23 +160,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const storedVersion = sessionStorage.getItem("supplysense_metrics_version");
-      // If version doesn't match, wipe old metrics so stale numbers aren't shown
-      if (storedVersion !== METRICS_VERSION) {
-        sessionStorage.removeItem("supplysense_metrics");
-        sessionStorage.removeItem("supplysense_filename");
-        sessionStorage.removeItem("supplysense_rows");
-        sessionStorage.removeItem("supplysense_fields");
-        sessionStorage.removeItem("supplysense_metrics_version");
-        setNoData(true);
-        return;
-      }
-      const stored   = sessionStorage.getItem("supplysense_metrics");
+      const parsedMetrics = readStoredDashboardMetrics({ validateVersion: true });
       const storedFn = sessionStorage.getItem("supplysense_filename");
       const storedRw = sessionStorage.getItem("supplysense_rows");
       const storedFl = sessionStorage.getItem("supplysense_fields");
-      if (stored) {
-        const parsedMetrics: DashboardMetrics = JSON.parse(stored);
+      if (parsedMetrics) {
         setMetrics(parsedMetrics);
         setFilename(storedFn ?? "Uploaded file");
         setRowCount(parseInt(storedRw ?? "0", 10));
@@ -197,7 +181,7 @@ export default function DashboardPage() {
         }
         return;
       }
-    } catch { /* corrupt storage */ }
+    } catch { clearStoredDashboardMetrics(); }
     // No data at all — signal redirect state
     setNoData(true);
   }, []);

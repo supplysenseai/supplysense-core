@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Zap } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { loadDemoIntoSession } from "@/lib/demo-loader";
 
 interface DemoButtonProps {
@@ -29,7 +29,7 @@ export function DemoButton({ variant = "hero" }: DemoButtonProps) {
         className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-[#6366f1] hover:bg-[#5558e8] text-white font-semibold border border-[#6366f1]/50 transition-all duration-200 disabled:opacity-80 disabled:cursor-wait shadow-lg shadow-[#6366f1]/20"
       >
         {loading
-          ? <Zap className="w-4 h-4 animate-pulse" />
+          ? <Loader2 className="w-4 h-4 animate-spin" />
           : <Play className="w-4 h-4 fill-current" />
         }
         {loading ? label : "Start Demo Mode"}
@@ -48,7 +48,7 @@ export function DemoButton({ variant = "hero" }: DemoButtonProps) {
         }`}
     >
       {loading
-        ? <Zap className="w-4 h-4 animate-pulse" />
+        ? <Loader2 className="w-4 h-4 animate-spin" />
         : <Play className="w-4 h-4 fill-current" />
       }
       {loading ? label : "View Live Demo"}

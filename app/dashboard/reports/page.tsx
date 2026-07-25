@@ -40,7 +40,7 @@ function exportPODraft(metrics: DashboardMetrics) {
     ].join(",")
   );
   downloadCsv(
-    `SupplySense-PO-Draft-${new Date().toISOString().split("T")[0]}.csv`,
+    `Event2Act-PO-Draft-${new Date().toISOString().split("T")[0]}.csv`,
     [header, ...rows].join("\n")
   );
 }
@@ -65,7 +65,7 @@ function exportStockoutReport(metrics: DashboardMetrics) {
       ].join(",")
     );
   downloadCsv(
-    `SupplySense-Stockout-Risk-${new Date().toISOString().split("T")[0]}.csv`,
+    `Event2Act-Stockout-Risk-${new Date().toISOString().split("T")[0]}.csv`,
     [header, ...rows].join("\n")
   );
 }
@@ -90,7 +90,7 @@ function exportDeadStockReport(metrics: DashboardMetrics) {
     ].join(",")
   );
   downloadCsv(
-    `SupplySense-Dead-Stock-${new Date().toISOString().split("T")[0]}.csv`,
+    `Event2Act-Dead-Stock-${new Date().toISOString().split("T")[0]}.csv`,
     [header, ...rows].join("\n")
   );
 }
@@ -103,7 +103,7 @@ function exportInventorySummary(metrics: DashboardMetrics) {
   const bucketCount = (index: number) =>
     aging?.has_ageing_data ? String(aging.buckets[index]?.count ?? 0) : "Not available";
   const lines = [
-    "SupplySense Inventory Summary Report",
+    "Event2Act Inventory Summary Report",
     `Generated: ${date}`,
     "",
     "KPI,Value",
@@ -142,7 +142,7 @@ function exportInventorySummary(metrics: DashboardMetrics) {
     `Low,${metrics.risk_distribution.low}`,
   ];
   downloadCsv(
-    `SupplySense-Summary-${new Date().toISOString().split("T")[0]}.csv`,
+    `Event2Act-Summary-${new Date().toISOString().split("T")[0]}.csv`,
     lines.join("\n")
   );
 }

@@ -185,7 +185,7 @@ export default function PreferencesPage() {
               <SectionHeader
                 icon={Palette}
                 label="Colour Theme"
-                desc="Choose how SupplySense looks across all pages. Saved automatically."
+                desc="Choose how Event2Act looks across all pages. Saved automatically."
               />
               <ThemeSwitcher variant="full" />
             </div>

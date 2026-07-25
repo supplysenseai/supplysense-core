@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useCallback } from "react";
-import { X, ShieldCheck, Users, Zap, TrendingUp, ArrowRight } from "lucide-react";
+import { X, ShieldCheck, Users, Gauge, TrendingUp, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getWhyExplanation } from "@/lib/validation-engine";
 import { getKPIAssuranceText, type KPIKey } from "@/lib/kpi-definitions";
@@ -49,7 +49,7 @@ export function WhyDrawer({ kpiKey, metrics, onClose }: WhyDrawerProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-5 h-5 rounded-md bg-[#6366f1]/20 flex items-center justify-center">
-                <Zap className="w-3 h-3 text-[#818cf8]" />
+                <Gauge className="w-3 h-3 text-[#818cf8]" />
               </div>
               <span className="text-[10px] font-semibold text-[#818cf8] uppercase tracking-widest">
                 Why am I seeing this?

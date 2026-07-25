@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  Brain, AlertTriangle, DollarSign, Zap, FileDown, RefreshCw,
+  Brain, AlertTriangle, DollarSign, Wallet, FileDown, RefreshCw,
   CheckCircle2, ShieldAlert, Menu, Upload, TrendingUp, TrendingDown,
   Package, BarChart2, Clock, Target, Activity, ChevronRight,
   ShoppingCart, Ban, RotateCcw, Star,
@@ -13,7 +13,8 @@ import { getDemoData } from "@/lib/demo-data";
 import { isDemoMode } from "@/lib/demo-loader";
 import { generateExecutiveSummary } from "@/lib/insights-generator";
 import { openHtmlReport } from "@/lib/html-report-generator";
-import { formatCurrency, getHealthColor, getHealthLabel, cn } from "@/lib/utils";
+import { formatCurrency, formatDaysOfCover, getHealthColor, getHealthLabel, cn } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import type { DashboardMetrics } from "@/lib/types";
 import type { ExecutiveSummary } from "@/lib/insights-generator";
 
@@ -464,7 +465,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                       <p className="text-[11px] font-semibold text-white truncate mb-0.5">{item.product_name}</p>
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-[9px] text-red-400 font-medium">
-                          {isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)}d left` : "0d left"}
+                          {isFinite(item.days_stock_remaining) ? `${formatDaysOfCover(item.days_stock_remaining)} left` : "0 days left"}
                         </span>
                         <span className="text-[9px] text-slate-500">{item.abc_class}-class · LT {item.lead_time_days}d</span>
                       </div>
@@ -503,7 +504,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                       <p className="text-[11px] font-semibold text-white truncate mb-0.5">{item.product_name}</p>
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-[9px] text-amber-400 font-medium">
-                          {isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)}d cover` : "—"}
+                          {isFinite(item.days_stock_remaining) ? `${formatDaysOfCover(item.days_stock_remaining)} cover` : "—"}
                         </span>
                         <span className="text-[9px] text-slate-500">{item.abc_class}-class</span>
                       </div>
@@ -581,7 +582,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                   { label: "Estimated recovery", value: formatCurrency(metrics.recoverable_capital, true), color: "text-emerald-400", icon: TrendingUp },
                   { label: "Dead stock holding cost/yr",  value: formatCurrency(metrics.dead_stock_carrying_cost, true), color: "text-red-400", icon: TrendingDown },
                   { label: "Total inventory portfolio",   value: formatCurrency(metrics.total_inventory_value, true), color: "text-white", icon: DollarSign },
-                  { label: "Annual holding cost",         value: formatCurrency(metrics.annual_carrying_cost, true), color: "text-orange-400", icon: Zap },
+                  { label: "Annual holding cost",         value: formatCurrency(metrics.annual_carrying_cost, true), color: "text-orange-400", icon: Wallet },
                 ].map(m => (
                   <div key={m.label} className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/3 border border-white/6">
                     <m.icon className={`w-3 h-3 ${m.color} flex-shrink-0`} />
@@ -640,11 +641,11 @@ export default function InsightsPage() {
     let m: DashboardMetrics;
     let fields: string[] = [];
     try {
-      const stored = typeof window !== "undefined" && sessionStorage.getItem("supplysense_metrics");
+      const storedMetrics = readStoredDashboardMetrics();
       const fn     = typeof window !== "undefined" && sessionStorage.getItem("supplysense_filename");
       const fl     = typeof window !== "undefined" && sessionStorage.getItem("supplysense_fields");
-      if (stored) {
-        m = JSON.parse(stored);
+      if (storedMetrics) {
+        m = storedMetrics;
         setIsDemo(false);
         if (fn) setSourceFile(fn);
         if (fl) fields = JSON.parse(fl);
@@ -772,7 +773,7 @@ export default function InsightsPage() {
             )}
             {/* Footer */}
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-              <p className="text-[10px] text-slate-600">Generated analysis · Powered by SupplySense</p>
+              <p className="text-[10px] text-slate-600">Generated analysis · Powered by Event2Act</p>
               <Link href="/dashboard" className="inline-flex items-center gap-1 text-[10px] text-[#818cf8] hover:text-white transition-colors">
                 Full dashboard <ChevronRight className="w-3 h-3" />
               </Link>

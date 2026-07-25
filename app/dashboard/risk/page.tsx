@@ -3,8 +3,9 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ArrowLeft, AlertTriangle, RefreshCw, Upload, Search, ChevronUp, ChevronDown } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { formatCurrency, truncate, getRiskColor } from "@/lib/utils";
+import { formatCurrency, formatDaysOfCover, truncate, getRiskColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import type { DashboardMetrics, AnalyzedSKU } from "@/lib/types";
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
@@ -36,9 +37,8 @@ export default function RiskAnalysisPage() {
 
   useEffect(() => {
     try {
-      // sessionStorage is tab-specific; fall back to localStorage when opened in a new tab
-      const s = sessionStorage.getItem("supplysense_metrics") ?? localStorage.getItem("supplysense_metrics");
-      if (s) setMetrics(JSON.parse(s));
+      const storedMetrics = readStoredDashboardMetrics({ fallbackToLocalStorage: true });
+      if (storedMetrics) setMetrics(storedMetrics);
       else setNoData(true);
     } catch { setNoData(true); }
   }, []);
@@ -250,7 +250,7 @@ export default function RiskAnalysisPage() {
                             <span className={cn("badge", status.bg, status.text)}>{status.label}</span>
                           </td>
                           <td className={cn("px-4 py-3 text-xs font-medium", daysIsCritical ? "text-red-400" : "text-slate-300")}>
-                            {daysLeft === "∞" ? "∞" : `${daysLeft}d`}
+                            {daysLeft === "∞" ? "∞" : <span title={`${daysLeft} days`}>{formatDaysOfCover(daysLeft)}</span>}
                           </td>
                           <td className="px-4 py-3 text-xs text-slate-500">{item.lead_time_days}d</td>
                           <td className="px-4 py-3">

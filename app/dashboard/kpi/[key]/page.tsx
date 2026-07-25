@@ -7,8 +7,8 @@ import {
   Activity, HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatDaysOfCover, formatUnitCost } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import { KPI_DEFINITIONS, getKPIAssuranceText, getKPIInterpretationLabels, type KPIKey } from "@/lib/kpi-definitions";
 import { buildLiveCalculation, getDataLineage } from "@/lib/validation-engine";
 import { WhyDrawer } from "@/components/validation/WhyDrawer";
@@ -60,11 +60,12 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
     case "inventory_value": {
       return [...metrics.all_skus]
         .sort((a, b) => b.inventory_value - a.inventory_value)
+        .slice(0, 50)
         
         .map((item) => ({
           label: item.product_name,
           value: formatCurrency(item.inventory_value),
-          sub: `${item.sku_id} · ${item.units_on_hand} units @ ${formatCurrency(item.unit_cost)} · ${item.scenario}`,
+          sub: `${item.sku_id} · ${item.units_on_hand} units @ ${formatUnitCost(item.unit_cost)} · ${item.scenario}`,
           accent: "text-white",
         }));
     }
@@ -79,27 +80,29 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
     case "slow_moving": {
       return metrics.top_risk_items
         .filter((i) => i.scenario === "SLOW")
+        .slice(0, 50)
         
         .map((item) => ({
           label: item.product_name,
           value: formatCurrency(item.inventory_value),
-          sub: `${item.sku_id} · ${item.units_on_hand} units · ${isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)}d stock` : "∞ stock"}`,
+          sub: `${item.sku_id} · ${item.units_on_hand} units · ${formatDaysOfCover(item.days_stock_remaining)} stock`,
           accent: "text-amber-400",
         }));
     }
     case "stockout_risk": {
       return metrics.top_risk_items
         .filter((i) => i.scenario === "CRITICAL")
+        .slice(0, 50)
         
         .map((item) => ({
           label: item.product_name,
-          value: isFinite(item.days_stock_remaining) ? `${Math.floor(item.days_stock_remaining)}d left` : "—",
+          value: isFinite(item.days_stock_remaining) ? `${formatDaysOfCover(item.days_stock_remaining)} left` : "—",
           sub: `${item.sku_id} · ${item.scenario} · Risk score: ${item.stockout_risk_score}`,
           accent: item.scenario === "CRITICAL" ? "text-red-400" : "text-amber-400",
         }));
     }
     case "reorder_count": {
-      return metrics.reorder_recommendations.map((rec) => {
+      return metrics.reorder_recommendations.slice(0, 50).map((rec) => {
         const item = metrics.all_skus.find((sku) => sku.sku_id === rec.sku_id);
         const displayedDays =
           item && isFinite(item.days_stock_remaining)
@@ -111,7 +114,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
         return {
           label: rec.product_name,
           value: `EOQ ${rec.eoq} units`,
-          sub: `${rec.sku_id} \u00B7 ${rec.urgency.replace("_", " ")} \u00B7 ${displayedDays !== null ? `${displayedDays}d` : "\u2014"} remaining`,
+          sub: `${rec.sku_id} · ${rec.urgency.replace("_", " ")} · ${displayedDays !== null ? formatDaysOfCover(displayedDays) : "—"} remaining`,
           accent: rec.urgency === "immediate" ? "text-red-400" : rec.urgency === "this_week" ? "text-amber-400" : "text-blue-400",
         };
       });
@@ -191,6 +194,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
     case "turnover_ratio": {
       return [...metrics.all_skus]
         .sort((a, b) => b.inventory_value - a.inventory_value)
+        .slice(0, 50)
         
         .map((item) => ({
           label: item.product_name,
@@ -250,9 +254,9 @@ export default function KPIDetailPage() {
 
   useEffect(() => {
     try {
-      const s  = sessionStorage.getItem("supplysense_metrics");
+      const storedMetrics = readStoredDashboardMetrics();
       const fl = sessionStorage.getItem("supplysense_fields");
-      if (s) setMetrics(JSON.parse(s));
+      if (storedMetrics) setMetrics(storedMetrics);
       if (fl) setDetectedFields(JSON.parse(fl));
       setIsDemoMode(sessionStorage.getItem("supplysense_demo_mode") === "true");
     } catch { /* ignore */ }

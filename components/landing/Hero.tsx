@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, Upload, TrendingDown, AlertTriangle, BarChart3, Zap } from "lucide-react";
+import { ArrowRight, Upload, TrendingDown, AlertTriangle, BarChart3, ShieldCheck } from "lucide-react";
 import { DemoButton } from "@/components/landing/DemoButton";
 
 const MINI_STATS = [
-  { label: "Health Score", value: "61/100", color: "text-amber-400", icon: Zap },
+  { label: "Health Score", value: "61/100", color: "text-amber-400", icon: ShieldCheck },
   { label: "Dead Stock", value: "$469K", color: "text-purple-300", icon: TrendingDown },
   { label: "Critical Alerts", value: "10", color: "text-red-400", icon: AlertTriangle },
   { label: "Recoverable", value: "$1.02M", color: "text-emerald-400", icon: BarChart3 },
@@ -60,7 +60,7 @@ export function Hero() {
                 <div className="w-2 h-2 rounded-full bg-yellow-500" />
                 <div className="w-2 h-2 rounded-full bg-green-500" />
               </div>
-              <span className="text-[11px] text-slate-500 font-mono">supplysense.ai/dashboard</span>
+              <span className="text-[11px] text-slate-500 font-mono">event2act.ai/dashboard</span>
               <div className="w-16" />
             </div>
 

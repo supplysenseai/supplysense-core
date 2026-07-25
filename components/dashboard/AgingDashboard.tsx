@@ -141,7 +141,7 @@ export function AgingDashboard({ aging, metrics }: AgingDashboardProps) {
 
           {/* Bar chart — count */}
           <div style={{ height: 160 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={chartData} barCategoryGap="25%">
                 <XAxis
                   dataKey="label"

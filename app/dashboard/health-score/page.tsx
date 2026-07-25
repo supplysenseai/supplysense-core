@@ -6,6 +6,7 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, RadialBarC
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { KPIInfoTrigger } from "@/components/dashboard/KPIInfoModal";
 import { getHealthColor, getHealthLabel } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import type { DashboardMetrics } from "@/lib/types";
 import { getHealthScoreContributions } from "@/lib/health-score";
 
@@ -45,8 +46,8 @@ export default function HealthScorePage() {
 
   useEffect(() => {
     try {
-      const s = sessionStorage.getItem("supplysense_metrics");
-      if (s) setMetrics(JSON.parse(s));
+      const storedMetrics = readStoredDashboardMetrics();
+      if (storedMetrics) setMetrics(storedMetrics);
       else setNoData(true);
     } catch { setNoData(true); }
   }, []);
@@ -252,7 +253,7 @@ export default function HealthScorePage() {
               <div className="card p-6">
                 <p className="text-sm font-semibold text-white mb-4">Score Trend</p>
                 <div className="h-40">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <AreaChart data={metrics.health_trend} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
                       <defs>
                         <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">

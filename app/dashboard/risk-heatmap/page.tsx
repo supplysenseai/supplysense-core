@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, AlertTriangle, RefreshCw, Upload, Search, ShieldCheck } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { KPIInfoTrigger } from "@/components/dashboard/KPIInfoModal";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDaysOfCover } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import type { DashboardMetrics, AnalyzedSKU, RiskScenario } from "@/lib/types";
 
 const SCENARIO_CONFIG: Record<RiskScenario, { label: string; bg: string; text: string; border: string; dot: string; order: number }> = {
@@ -27,8 +28,8 @@ export default function RiskHeatmapPage() {
 
   useEffect(() => {
     try {
-      const s = sessionStorage.getItem("supplysense_metrics");
-      if (s) setMetrics(JSON.parse(s));
+      const storedMetrics = readStoredDashboardMetrics();
+      if (storedMetrics) setMetrics(storedMetrics);
       else setNoData(true);
     } catch { setNoData(true); }
   }, []);
@@ -234,7 +235,7 @@ export default function RiskHeatmapPage() {
                           <td className="px-4 py-2.5 text-white tabular-nums">{item.units_on_hand}</td>
                           <td className="px-4 py-2.5 tabular-nums whitespace-nowrap">
                             {isFinite(item.days_stock_remaining)
-                              ? <span className={item.days_stock_remaining <= 7 ? "text-red-400 font-semibold" : item.days_stock_remaining <= 30 ? "text-amber-400" : "text-slate-400"}>{Math.round(item.days_stock_remaining)}d</span>
+                              ? <span title={`${Math.round(item.days_stock_remaining)} days`} className={item.days_stock_remaining <= 7 ? "text-red-400 font-semibold" : item.days_stock_remaining <= 30 ? "text-amber-400" : "text-slate-400"}>{formatDaysOfCover(item.days_stock_remaining)}</span>
                               : <span className="text-slate-600">—</span>}
                           </td>
                           <td className="px-4 py-2.5">

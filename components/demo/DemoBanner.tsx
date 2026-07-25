@@ -6,9 +6,10 @@
  */
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Play, ChevronRight, X, Zap } from "lucide-react";
+import { Play, ChevronRight, X } from "lucide-react";
 import { isDemoMode } from "@/lib/demo-loader";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/BrandLogo";
 
 // ── Story definition ────────────────────────────────────────────────────────
 
@@ -97,8 +98,8 @@ export function DemoBanner() {
 
           {/* Brand pill */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-6 h-6 rounded-md bg-[#6366f1] flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-white" />
+            <div className="w-6 h-6 flex items-center justify-center">
+              <BrandLogo />
             </div>
             <span className="text-[10px] font-bold text-[#818cf8] uppercase tracking-widest hidden sm:block">
               Live Demo

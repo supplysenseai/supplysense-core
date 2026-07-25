@@ -1,14 +1,14 @@
-# SupplySense
+# Event2Act
 
 **Version 1.0 Release Candidate**
 
-> SupplySense Inventory Intelligence Suite helps manufacturers turn inventory spreadsheets into operational dashboards, executive reports, and replenishment actions.
+> Event2Act AI Inventory Intelligence helps manufacturers turn inventory spreadsheets into operational dashboards, executive reports, and replenishment actions.
 
 ---
 
 ## Overview
 
-SupplySense Inventory Intelligence Suite transforms raw inventory spreadsheets into actionable intelligence. It auto-maps 50+ column naming variations, runs inventory analytics modules, and delivers a printable executive brief - all client-side, with no data ever leaving the browser.
+Event2Act AI Inventory Intelligence transforms raw inventory spreadsheets into actionable intelligence. It auto-maps 50+ column naming variations, runs inventory analytics modules, and delivers a printable executive brief - all client-side, with no data ever leaving the browser.
 
 Built for operations managers, supply chain leads, and CFOs who need inventory visibility without a long ERP implementation.
 
@@ -47,7 +47,7 @@ Built for operations managers, supply chain leads, and CFOs who need inventory v
 ## Project Structure
 
 ```
-supplysense-app/
+event2act-app/
 |-- app/                        # Next.js App Router pages
 |   |-- api/analyze/            # Server-side file analysis API route
 |   |-- dashboard/              # All dashboard pages
@@ -107,8 +107,8 @@ supplysense-app/
 
 ```bash
 # Clone the repository
-git clone https://github.com/supplysense/supplysense-app.git
-cd supplysense-ai
+git clone https://github.com/event2act/event2act-app.git
+cd event2act-app
 
 # Install dependencies
 npm install
@@ -226,4 +226,4 @@ All modern browsers - Chrome, Edge, Firefox, Safari. File parsing runs entirely 
 
 ## License
 
-Private - All rights reserved (c) 2026 SupplySense
+Private - All rights reserved (c) 2026 Event2Act

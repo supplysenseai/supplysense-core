@@ -11,7 +11,8 @@ import {
 } from "recharts";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DemoBanner } from "@/components/demo/DemoBanner";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDaysOfCover } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import type { DashboardMetrics } from "@/lib/types";
 
 // ── Assumptions ──────────────────────────────────────────────────────────────
@@ -137,8 +138,8 @@ export default function FinancialImpactPage() {
 
   useEffect(() => {
     try {
-      const s = sessionStorage.getItem("supplysense_metrics");
-      if (s) setMetrics(JSON.parse(s));
+      const storedMetrics = readStoredDashboardMetrics();
+      if (storedMetrics) setMetrics(storedMetrics);
       else setNoData(true);
     } catch { setNoData(true); }
   }, []);
@@ -464,7 +465,7 @@ export default function FinancialImpactPage() {
                   <p className="text-[11px] text-slate-500 mt-0.5">Components of the 25% annual inventory carrying rate.</p>
                 </div>
                 <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <PieChart>
                       <Pie
                         data={pieData}
@@ -508,7 +509,7 @@ export default function FinancialImpactPage() {
                 </p>
               </div>
               <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={projectionData} margin={{ top: 4, right: 20, bottom: 0, left: 8 }}>
                     <XAxis
                       dataKey="year"
@@ -682,7 +683,9 @@ export default function FinancialImpactPage() {
                               </td>
                               <td className="px-4 py-2 text-white font-medium tabular-nums">{formatCurrency(item.inventory_value, true)}</td>
                               <td className="px-4 py-2 text-amber-400 tabular-nums">
-                                {isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)}d` : "∞"}
+                                <span title={isFinite(item.days_stock_remaining) ? `${Math.round(item.days_stock_remaining)} days` : undefined}>
+                                  {formatDaysOfCover(item.days_stock_remaining)}
+                                </span>
                               </td>
                             </tr>
                           ))}

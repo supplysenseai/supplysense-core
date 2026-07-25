@@ -240,7 +240,7 @@ export function downloadEnhancedTemplate(): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "SupplySense-Enhanced-Template.csv";
+  a.download = "Event2Act-Enhanced-Template.csv";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

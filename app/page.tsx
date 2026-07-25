@@ -4,16 +4,17 @@ import { Hero } from "@/components/landing/Hero";
 import { SocialProof } from "@/components/landing/SocialProof";
 import { Features } from "@/components/landing/Features";
 import { DemoButton } from "@/components/landing/DemoButton";
+import { BrandLogo } from "@/components/BrandLogo";
 
 function Navbar() {
   return (
     <nav className="nav-glass fixed top-0 left-0 right-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#6366f1] flex items-center justify-center">
-            <span className="text-white text-xs font-bold" style={{ fontFamily: "Syne, sans-serif" }}>S</span>
+          <div className="w-7 h-7 flex items-center justify-center">
+            <BrandLogo />
           </div>
-          <span className="font-semibold text-white text-sm" style={{ fontFamily: "Syne, sans-serif" }}>SupplySense</span>
+          <span className="font-semibold text-white text-sm" style={{ fontFamily: "Syne, sans-serif" }}>Event2Act</span>
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm text-slate-400">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -52,7 +53,7 @@ function ProblemSection() {
               just for implementation.
             </p>
             <p className="text-slate-400 leading-relaxed">
-              SupplySense Inventory Intelligence Suite brings commercial-grade inventory intelligence
+              Event2Act AI brings commercial-grade Inventory Intelligence
               to growing manufacturers. No ERP. No consultant. No 6-month onboard.
             </p>
           </div>
@@ -87,7 +88,7 @@ function HowItWorks() {
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { step: "01", title: "Upload", desc: "Drag your existing inventory Excel or CSV. No reformatting. SupplySense auto-maps your column names.", color: "text-[#818cf8]" },
+            { step: "01", title: "Upload", desc: "Drag your existing inventory Excel or CSV. No reformatting. Event2Act auto-maps your column names.", color: "text-[#818cf8]" },
             { step: "02", title: "Analyze", desc: "8 analytics modules run in under 60 seconds. Health score, dead stock, ABC class, stockout risk - all computed.", color: "text-emerald-400" },
             { step: "03", title: "Act", desc: "View your live dashboard, download the executive brief, export the PO draft. Every insight has a next action.", color: "text-amber-400" },
           ].map((s) => (
@@ -138,13 +139,13 @@ function Footer() {
     <footer className="border-t border-white/5 py-10 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-[#6366f1] flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold" style={{ fontFamily: "Syne, sans-serif" }}>S</span>
+          <div className="w-6 h-6 flex items-center justify-center">
+            <BrandLogo />
           </div>
-          <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>SupplySense</span>
+          <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>Event2Act</span>
         </div>
         <p className="text-xs text-slate-600 text-center">
-          SupplySense Inventory Intelligence Suite · Commercial product foundation · {year}
+          Event2Act AI · Inventory Intelligence · {year}
         </p>
         <div className="flex items-center gap-4 text-xs text-slate-600">
           <span>SOC 2 (in progress)</span>

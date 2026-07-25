@@ -314,7 +314,7 @@ export default function DrilldownPage() {
           {search && ` matching "${search}"`}
           {" · "}Click any column header to sort
         </p>
-        <p className="text-[11px] text-slate-700">SupplySense · Drill-through</p>
+        <p className="text-[11px] text-slate-700">Event2Act · Drill-through</p>
       </div>
     </div>
   );

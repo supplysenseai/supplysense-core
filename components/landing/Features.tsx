@@ -1,4 +1,4 @@
-import { Zap, FileSpreadsheet, Brain, BarChart3, TrendingDown, AlertTriangle, ShoppingCart, DollarSign } from "lucide-react";
+import { FileSpreadsheet, Brain, BarChart3, TrendingDown, AlertTriangle, ShoppingCart, DollarSign, Timer } from "lucide-react";
 
 const FEATURES = [
   {
@@ -6,10 +6,10 @@ const FEATURES = [
     color: "text-brand-400",
     bg: "bg-brand-500/10",
     title: "Instant Excel Ingestion",
-    desc: "Upload any .xlsx or .csv. SupplySense auto-maps 50+ column name variations - SKU, Item Code, Part Number all work. No reformatting, no templates.",
+    desc: "Upload any .xlsx or .csv. Event2Act auto-maps 50+ column name variations - SKU, Item Code, Part Number all work. No reformatting, no templates.",
   },
   {
-    icon: Zap,
+    icon: Timer,
     color: "text-amber-400",
     bg: "bg-amber-500/10",
     title: "Inventory Health Score",

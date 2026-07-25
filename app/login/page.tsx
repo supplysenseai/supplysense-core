@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Zap } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { setAuth, getAuth, type Plan } from "@/lib/auth";
+import { BrandLogo } from "@/components/BrandLogo";
 
 type Tab = "signin" | "signup";
 
@@ -23,7 +24,7 @@ export default function LoginPage() {
     if (getAuth()) router.replace("/dashboard");
   }, [router]);
 
-  function mockToken(email: string) {
+  function createLocalToken(email: string) {
     return btoa(email + ":ss-" + Date.now()).slice(0, 32);
   }
 
@@ -48,7 +49,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    setAuth({ email: account.email, name: account.name, plan: account.plan, token: mockToken(email) });
+    setAuth({ email: account.email, name: account.name, plan: account.plan, token: createLocalToken(email) });
     router.replace("/dashboard");
   }
 
@@ -70,7 +71,7 @@ export default function LoginPage() {
     }
     stored.push({ email, password, name, plan: LOCAL_ACCESS_PLAN });
     localStorage.setItem("supplysense_accounts", JSON.stringify(stored));
-    setAuth({ email, name, plan: LOCAL_ACCESS_PLAN, token: mockToken(email) });
+    setAuth({ email, name, plan: LOCAL_ACCESS_PLAN, token: createLocalToken(email) });
     router.replace("/dashboard");
   }
 
@@ -78,10 +79,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 py-12">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 mb-10">
-        <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
-          <Zap className="w-4 h-4 text-white" />
+        <div className="w-8 h-8 flex items-center justify-center">
+          <BrandLogo />
         </div>
-        <span className="font-display font-bold text-white text-lg">SupplySense</span>
+        <span className="font-display font-bold text-white text-lg">Event2Act</span>
       </Link>
 
       <div className="w-full max-w-md">
@@ -90,6 +91,7 @@ export default function LoginPage() {
           {(["signin", "signup"] as Tab[]).map((t) => (
             <button
               key={t}
+              aria-label={t === "signin" ? "Show sign in form" : "Show create account form"}
               onClick={() => { setTab(t); setError(""); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 tab === t
@@ -106,7 +108,7 @@ export default function LoginPage() {
           {tab === "signin" ? (
             <form onSubmit={handleSignin} className="space-y-4">
               <h1 className="text-lg font-semibold text-white mb-1">Welcome back</h1>
-              <p className="text-sm text-slate-400 mb-4">Sign in to your SupplySense account.</p>
+              <p className="text-sm text-slate-400 mb-4">Sign in to your Event2Act account.</p>
 
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5">Username</label>
@@ -131,7 +133,7 @@ export default function LoginPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 pr-10"
                     placeholder="••••••••"
                   />
-                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                  <button type="button" aria-label={showPass ? "Hide password" : "Show password"} onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
@@ -193,7 +195,7 @@ export default function LoginPage() {
                       className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 pr-10"
                       placeholder="At least 6 characters"
                     />
-                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                    <button type="button" aria-label={showPass ? "Hide password" : "Show password"} onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>

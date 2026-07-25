@@ -9,6 +9,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TrustBadge } from "@/components/validation/TrustBadge";
 import { ScoreBreakdown } from "@/components/validation/ScoreBreakdown";
 import { formatCurrency, cn } from "@/lib/utils";
+import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import { KPI_DEFINITIONS, getKPIReconciliationStatus, type KPIKey } from "@/lib/kpi-definitions";
 import {
   buildLiveCalculation,
@@ -26,12 +27,12 @@ const KPI_CATALOGUE: Array<{
 }> = [
   { key: "health_score",        label: "Health Score",          valueFrom: (m) => `${m.health_score}/100`,                             color: "text-blue-400" },
   { key: "inventory_value",     label: "Inventory Value",       valueFrom: (m) => formatCurrency(m.total_inventory_value, true),       color: "text-white" },
-  { key: "dead_stock",          label: "Dead Stock",            valueFrom: (m) => `${m.dead_stock_count} SKUs · ${formatCurrency(m.dead_stock_value, true)}`, color: "text-red-400" },
-  { key: "slow_moving",         label: "Slow Moving",           valueFrom: (m) => `${m.slow_mover_count} SKUs · ${formatCurrency(m.slow_mover_value, true)}`, color: "text-amber-400" },
+  { key: "dead_stock",          label: "Dead Stock",            valueFrom: (m) => `${m.dead_stock_count} SKUs | ${formatCurrency(m.dead_stock_value, true)}`, color: "text-red-400" },
+  { key: "slow_moving",         label: "Slow Moving",           valueFrom: (m) => `${m.slow_mover_count} SKUs | ${formatCurrency(m.slow_mover_value, true)}`, color: "text-amber-400" },
   { key: "stockout_risk",       label: "Stockout Risk",         valueFrom: (m) => `${m.stockout_risk_count} at risk`,                  color: "text-orange-400" },
   { key: "abc_analysis",        label: "ABC Analysis",          valueFrom: (m) => `A:${m.abc_summary.a_count} B:${m.abc_summary.b_count} C:${m.abc_summary.c_count}`, color: "text-emerald-400" },
   { key: "recoverable_capital", label: "Recoverable Capital",   valueFrom: (m) => formatCurrency(m.recoverable_capital, true),         color: "text-purple-400" },
-  { key: "turnover_ratio",      label: "Turnover Ratio",        valueFrom: (m) => `${m.turnover_ratio.toFixed(2)}×`,                   color: "text-cyan-400" },
+  { key: "turnover_ratio",      label: "Turnover Ratio",        valueFrom: (m) => `${m.turnover_ratio.toFixed(2)}x`,                   color: "text-cyan-400" },
   { key: "reorder_count",       label: "Reorder Count",         valueFrom: (m) => `${m.reorder_count} items`,                         color: "text-rose-400" },
 ];
 
@@ -281,16 +282,15 @@ export default function ValidationPage() {
 
   useEffect(() => {
     try {
-      const s  = sessionStorage.getItem("supplysense_metrics");
+      const storedMetrics = readStoredDashboardMetrics();
       const fn = sessionStorage.getItem("supplysense_filename");
       const fl = sessionStorage.getItem("supplysense_fields");
       const sp = sessionStorage.getItem("supplysense_policy");
-      if (s) {
-        const m: DashboardMetrics = JSON.parse(s);
-        setMetrics(m);
+      if (storedMetrics) {
+        setMetrics(storedMetrics);
         if (fn) setFilename(fn);
         if (fl) setDetectedFields(JSON.parse(fl));
-        if (m.active_policy) setActivePolicy(m.active_policy);
+        if (storedMetrics.active_policy) setActivePolicy(storedMetrics.active_policy);
         else if (sp) { try { setActivePolicy(JSON.parse(sp)); } catch { /* ignore */ } }
       }
     } catch { /* ignore */ }

@@ -34,7 +34,7 @@ export function ABCChart({ metrics }: ABCChartProps) {
       <div className="flex items-center gap-6">
         {/* Donut chart */}
         <div className="w-24 h-24 flex-shrink-0">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <PieChart>
               <Pie
                 data={pieData}

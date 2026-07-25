@@ -7,6 +7,7 @@
 
 import type { DashboardMetrics } from "./types";
 import type { ExecutiveSummary } from "./insights-generator";
+import { EVENT2ACT_LOGO_SRC } from "./brand-assets";
 import { getHealthScoreContributions } from "./health-score";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -476,7 +477,7 @@ export function generateHtmlReport(
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>${companyName ? esc(companyName) + " — " : ""}SupplySense Inventory Report — ${esc(generatedAt)}</title>
+  <title>${companyName ? esc(companyName) + " — " : ""}Event2Act Inventory Report — ${esc(generatedAt)}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;background:#fff;color:#111827;font-size:13px;}
@@ -487,7 +488,8 @@ export function generateHtmlReport(
     #btn-close{background:#334155;color:#cbd5e1;}#btn-close:hover{background:#475569;}
     #report{max-width:900px;margin:0 auto;padding:76px 40px 60px;}
     .report-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #6366f1;padding-bottom:20px;margin-bottom:24px;}
-    .brand-icon{width:36px;height:36px;background:#6366f1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;}
+    .brand-icon{width:36px;height:36px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+    .brand-icon img{width:100%;height:100%;object-fit:contain;display:block;}
     .section{margin-bottom:28px;page-break-inside:avoid;}
     .section-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e5e7eb;}
     .section-dot{width:10px;height:10px;border-radius:50%;background:#6366f1;flex-shrink:0;}
@@ -514,7 +516,7 @@ export function generateHtmlReport(
 
 <!-- Print bar -->
 <div id="print-bar">
-  <span>${companyName ? esc(companyName) + " &mdash; " : ""}SupplySense &mdash; Inventory Report &mdash; ${esc(generatedAt)}</span>
+  <span>${companyName ? esc(companyName) + " &mdash; " : ""}Event2Act &mdash; Inventory Report &mdash; ${esc(generatedAt)}</span>
   <div style="display:flex;gap:8px;">
     <button id="btn-print" onclick="window.print()">&#128438; Save as PDF / Print</button>
     <button id="btn-close" onclick="window.close()">&#10005; Close</button>
@@ -528,9 +530,9 @@ export function generateHtmlReport(
 ════════════════════════════════════════════════════════ -->
 <div class="report-header">
   <div style="display:flex;align-items:center;gap:12px;">
-    <div class="brand-icon">S</div>
+    <div class="brand-icon"><img src="${EVENT2ACT_LOGO_SRC}" alt="Event2Act"></div>
     <div>
-      <div style="font-size:20px;font-weight:800;color:#111827;letter-spacing:-0.02em;">SupplySense</div>
+      <div style="font-size:20px;font-weight:800;color:#111827;letter-spacing:-0.02em;">Event2Act</div>
       ${companyName ? `<div style="font-size:14px;font-weight:700;color:#374151;margin-top:1px;">${esc(companyName)}</div>` : ""}
       <div style="font-size:11px;color:#6b7280;margin-top:2px;">Inventory Intelligence Report</div>
     </div>
@@ -892,7 +894,7 @@ export function generateHtmlReport(
 
 <!-- Footer -->
 <div class="report-footer">
-  <span>SupplySense Inventory Intelligence Suite</span>
+  <span>Event2Act AI - Inventory Intelligence</span>
   <span>Generated ${esc(generatedAt)} &bull; ${esc(sourceFile)}</span>
   <span>CONFIDENTIAL &mdash; ${metrics.total_skus} SKUs analyzed</span>
 </div>
@@ -916,7 +918,7 @@ export function openHtmlReport(
   const url      = URL.createObjectURL(blob);
   const dateStr  = new Date().toISOString().split("T")[0];
   const orgSlug  = companyName ? companyName.replace(/[^a-zA-Z0-9]/g, "-").replace(/-+/g, "-") + "-" : "";
-  const filename = `${orgSlug}SupplySense-Report-${dateStr}.html`;
+  const filename = `${orgSlug}Event2Act-Report-${dateStr}.html`;
   const win      = window.open(url, "_blank", "width=1100,height=900,scrollbars=yes,resizable=yes");
   if (!win) {
     const a    = document.createElement("a");

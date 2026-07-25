@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clearAuth } from "@/lib/auth";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const NAV_MAIN = [
   { label: "Dashboard",  href: "/dashboard",            icon: LayoutDashboard },
@@ -57,11 +58,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-4 h-[46px] border-b border-white/5 flex-shrink-0">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[#6366f1] flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-[10px] font-bold" style={{ fontFamily: "Syne, sans-serif" }}>S</span>
+            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+              <BrandLogo />
             </div>
             <span className="text-xs font-semibold text-white leading-tight" style={{ fontFamily: "Syne, sans-serif" }}>
-              SupplySense
+              Event2Act
             </span>
           </Link>
           <button

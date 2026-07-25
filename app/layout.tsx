@@ -1,17 +1,38 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-context";
+import { EVENT2ACT_LOGO_SRC } from "@/lib/brand-assets";
 
 export const metadata: Metadata = {
-  title: "SupplySense — Inventory Intelligence Suite",
+  title: "Event2Act AI - Inventory Intelligence",
   description:
-    "Upload your inventory spreadsheet and get inventory health, stockout risk, dead stock, ABC classification, and executive reporting in minutes.",
+    "Event2Act AI turns inventory spreadsheets into Inventory Intelligence dashboards for health, stockout risk, dead stock, ABC classification, and executive action.",
+  applicationName: "Event2Act",
   keywords: "supply chain analytics, inventory management, dead stock, stockout risk, ABC analysis, SME manufacturing",
-  authors: [{ name: "SupplySense" }],
+  authors: [{ name: "Event2Act" }],
   robots: "index, follow",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: EVENT2ACT_LOGO_SRC,
+    shortcut: EVENT2ACT_LOGO_SRC,
+    apple: EVENT2ACT_LOGO_SRC,
+  },
+  openGraph: {
+    title: "Event2Act AI - Inventory Intelligence",
+    description:
+      "Turn inventory spreadsheets into operational Inventory Intelligence dashboards, executive insights, and replenishment actions.",
+    siteName: "Event2Act",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Event2Act AI - Inventory Intelligence",
+    description:
+      "Turn inventory spreadsheets into operational Inventory Intelligence dashboards, executive insights, and replenishment actions.",
+  },
 };
 
-// Inline script injected before React hydrates — prevents flash of wrong theme
+// Inline script injected before React hydrates to prevent flash of wrong theme.
 const themeScript = `
 (function(){
   try {
@@ -29,11 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Anti-FOUC: apply stored theme before first paint */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {/* Favicon — inline SVG data URI, no file dependency */}
-        <link
-          rel="icon"
-          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%236366f1'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='800' font-size='18' fill='white'>S</text></svg>"
-        />
+        <link rel="icon" href={EVENT2ACT_LOGO_SRC} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -45,9 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body className="h-full antialiased" suppressHydrationWarning>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
