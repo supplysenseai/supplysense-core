@@ -89,7 +89,7 @@ export const FIELD_DEFS: FieldDef[] = [
     group: "operational",
     unlocks: [
       "Reorder Point Calculation",
-      "Economic Order Quantity (EOQ)",
+      "Recommended Order Quantity",
       "Safety Stock Calculation",
       "Reorder Recommendations",
     ],

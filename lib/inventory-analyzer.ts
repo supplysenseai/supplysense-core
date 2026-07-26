@@ -9,9 +9,9 @@ import { detectAnalysisMode } from "@/lib/analysis-detector";
 import { analyzeAging } from "@/lib/aging-analyzer";
 
 const CARRYING_RATE = 0.25; // disclosed system assumption: 25% annual holding cost
-const EOQ_ORDERING_COST = 50; // disclosed system assumption: $50/order
+const RECOMMENDED_ORDERING_COST = 50; // disclosed system assumption: $50/order
 
-function calcEOQ(annual_demand: number, unit_cost: number, ordering_cost = EOQ_ORDERING_COST): number {
+function calcRecommendedOrderQuantity(annual_demand: number, unit_cost: number, ordering_cost = RECOMMENDED_ORDERING_COST): number {
   if (annual_demand <= 0 || unit_cost <= 0) return 0;
   const holding = unit_cost * CARRYING_RATE;
   return Math.max(1, Math.round(Math.sqrt((2 * annual_demand * ordering_cost) / holding)));
@@ -171,7 +171,7 @@ export function analyzeInventoryItems(
     else if (replenishment_status === "WATCH") scenario = "WATCH";
 
     const stockout_risk_score = deadStock.isDead ? 0 : calcRiskScore(days_stock_remaining, lead_time_days);
-    const eoq = calcEOQ(annual_usage, item.unit_cost);
+    const eoq = calcRecommendedOrderQuantity(annual_usage, item.unit_cost);
     const targetStock = item.monthly_usage * policy.target_coverage_months;
     const slow_moving_excess_value = isSlowMover
       ? Math.max(item.stock_qty - targetStock, 0) * item.unit_cost
@@ -193,7 +193,7 @@ export function analyzeInventoryItems(
       last_sale_date: item.last_movement_date ? new Date(item.last_movement_date) : (item.monthly_usage > 0 ? new Date(analysisDateMs) : null),
       lead_time_days,
       demand_std_dev: item.monthly_usage * 0.2,
-      supplier_name: item.supplier || "—",
+      supplier_name: item.supplier || "Not Available",
       inventory_value,
       annual_consumption_value,
       abc_class,
@@ -357,7 +357,7 @@ export function analyzeInventoryItems(
     .map((s) => ({
       sku_id: s.sku_id,
       product_name: s.product_name,
-      supplier_name: s.supplier_name ?? "—",
+      supplier_name: s.supplier_name ?? "Not Available",
       eoq: s.reorder_qty_eoq,
       rop: s.reorder_point_calc,
       days_until_stockout: isFinite(s.days_stock_remaining) ? Math.round(s.days_stock_remaining) : 9999,

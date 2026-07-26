@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clearAuth } from "@/lib/auth";
-import { BrandLogo } from "@/components/BrandLogo";
+import { Event2ActLogo } from "@/components/brand/Event2ActLogo";
 
 const NAV_MAIN = [
   { label: "Dashboard",  href: "/dashboard",            icon: LayoutDashboard },
@@ -17,6 +17,7 @@ const NAV_MAIN = [
 ];
 
 const NAV_ANALYTICS = [
+  { label: "Overview",     icon: LayoutDashboard, href: "/dashboard/inventory-intelligence-overview" },
   { label: "Health Score", icon: Activity,      href: "/dashboard/health-score" },
   { label: "Risk Heatmap", icon: AlertTriangle, href: "/dashboard/risk-heatmap" },
   { label: "ABC Analysis", icon: BarChart3,     href: "/dashboard/abc-analysis" },
@@ -57,13 +58,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}>
         {/* Logo */}
         <div className="flex items-center justify-between px-4 h-[46px] border-b border-white/5 flex-shrink-0">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-              <BrandLogo />
-            </div>
-            <span className="text-xs font-semibold text-white leading-tight" style={{ fontFamily: "Syne, sans-serif" }}>
-              Event2Act
-            </span>
+          <Link href="/" className="flex min-w-0 items-center">
+            <Event2ActLogo variant="sidebar" width={132} height={40} priority className="h-8 w-auto" />
           </Link>
           <button
             onClick={onClose}

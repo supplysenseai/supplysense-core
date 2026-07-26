@@ -1,7 +1,7 @@
 "use client";
 import type { DashboardMetrics } from "@/lib/types";
 import type { ExecutiveSummary } from "@/lib/insights-generator";
-import { EVENT2ACT_LOGO_SRC } from "@/lib/brand-assets";
+import { EVENT2ACT_REPORT_LOGO_DATA_URL } from "@/constants/brand-report-logo-data";
 import { formatCurrency, getHealthLabel } from "@/lib/utils";
 
 function $ (v: number) { return formatCurrency(v, true); }
@@ -170,7 +170,7 @@ export function generateReportHTML(
   <!-- Header -->
   <div class="report-header">
     <div class="brand">
-      <div class="brand-dot"><img src="${EVENT2ACT_LOGO_SRC}" alt="Event2Act"></div>
+      <div class="brand-dot"><img src="${EVENT2ACT_REPORT_LOGO_DATA_URL}" alt="Event2Act" width="32" height="32"></div>
       <div>
         <div class="brand-name">Event2Act</div>
         <div style="font-size:11px;color:#94a3b8">Executive Inventory Report</div>

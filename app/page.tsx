@@ -4,17 +4,21 @@ import { Hero } from "@/components/landing/Hero";
 import { SocialProof } from "@/components/landing/SocialProof";
 import { Features } from "@/components/landing/Features";
 import { DemoButton } from "@/components/landing/DemoButton";
-import { BrandLogo } from "@/components/BrandLogo";
+import { Event2ActLogo } from "@/components/brand/Event2ActLogo";
 
 function Navbar() {
   return (
     <nav className="nav-glass fixed top-0 left-0 right-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 flex items-center justify-center">
-            <BrandLogo />
-          </div>
-          <span className="font-semibold text-white text-sm" style={{ fontFamily: "Syne, sans-serif" }}>Event2Act</span>
+          <Event2ActLogo
+            variant="dark"
+            width={3000}
+            height={765}
+            sizes="(max-width: 640px) 170px, 220px"
+            priority
+            className="w-[170px] sm:w-[220px] h-auto"
+          />
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm text-slate-400">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -83,14 +87,14 @@ function HowItWorks() {
         <div className="text-center mb-16">
           <span className="text-xs font-medium text-[#818cf8] uppercase tracking-widest mb-4 block">How it works</span>
           <h2 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
-            Three steps. Under 5 minutes.
+            Three steps. From upload to action.
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
             { step: "01", title: "Upload", desc: "Drag your existing inventory Excel or CSV. No reformatting. Event2Act auto-maps your column names.", color: "text-[#818cf8]" },
-            { step: "02", title: "Analyze", desc: "8 analytics modules run in under 60 seconds. Health score, dead stock, ABC class, stockout risk - all computed.", color: "text-emerald-400" },
-            { step: "03", title: "Act", desc: "View your live dashboard, download the executive brief, export the PO draft. Every insight has a next action.", color: "text-amber-400" },
+            { step: "02", title: "Analyze", desc: "8 analytics modules analyze inventory health, dead stock, ABC classification, stockout risk, and other decision-critical areas.", color: "text-emerald-400" },
+            { step: "03", title: "Act", desc: "View your live dashboard, download the executive brief, export the Procurement Action List. Every insight has a next action.", color: "text-amber-400" },
           ].map((s) => (
             <div key={s.step} className="card p-6">
               <div className={`text-4xl font-bold ${s.color} mb-4 opacity-50`} style={{ fontFamily: "Syne, sans-serif" }}>{s.step}</div>
@@ -115,7 +119,7 @@ function CtaSection() {
             {" "}today.
           </h2>
           <p className="text-slate-400 mb-8 text-lg">
-            Upload your inventory file and get a complete inventory analysis in under 60 seconds.
+            Upload your inventory file and get a complete inventory analysis with actionable recommendations.
             No credit card. No sign-up friction. Just answers.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -139,18 +143,21 @@ function Footer() {
     <footer className="border-t border-white/5 py-10 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 flex items-center justify-center">
-            <BrandLogo />
-          </div>
-          <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>Event2Act</span>
+          <Event2ActLogo
+            variant="dark"
+            width={3000}
+            height={765}
+            sizes="(max-width: 640px) 150px, 175px"
+            className="w-[150px] sm:w-[175px] h-auto"
+          />
         </div>
         <p className="text-xs text-slate-600 text-center">
-          Event2Act AI · Inventory Intelligence · {year}
+          Event2Act AI | Inventory Intelligence | {year}
         </p>
         <div className="flex items-center gap-4 text-xs text-slate-600">
-          <span>SOC 2 (in progress)</span>
-          <span>·</span>
-          <span>GDPR Ready</span>
+          <span>Enterprise Security</span>
+          <span>|</span>
+          <span>Privacy First</span>
         </div>
       </div>
     </footer>

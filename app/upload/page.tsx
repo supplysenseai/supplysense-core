@@ -2,13 +2,14 @@
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { DropZone } from "@/components/upload/DropZone";
 import { ValidationProgress } from "@/components/upload/ValidationProgress";
-import { BrandLogo } from "@/components/BrandLogo";
+import { Event2ActLogo } from "@/components/brand/Event2ActLogo";
 import type { UploadResult, AnalysisMode } from "@/lib/types";
 import { detectAnalysisMode } from "@/lib/analysis-detector";
 import { getAuth } from "@/lib/auth";
+import { loadDemoIntoSession } from "@/lib/demo-loader";
 
 type UploadState = "idle" | "processing" | "done" | "error";
 
@@ -21,6 +22,7 @@ export default function UploadPage() {
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode | undefined>(undefined);
   const [detectedFields, setDetectedFields] = useState<string[]>([]);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   useEffect(() => {
     if (!getAuth()) router.replace("/login");
@@ -129,7 +131,7 @@ export default function UploadPage() {
         sessionStorage.setItem("supplysense_raw_items",      JSON.stringify(parseResult.items));
         sessionStorage.setItem("supplysense_file_policy",    JSON.stringify(parseResult.filePolicy ?? {}));
       } catch {
-        // storage quota — ignore (large files may not fit; re-upload will be needed)
+        // storage quota - ignore (large files may not fit; re-upload will be needed)
       }
     }
   }, []);
@@ -144,6 +146,13 @@ export default function UploadPage() {
     setDetectedFields([]);
   }, []);
 
+  const handleViewDemo = useCallback(() => {
+    if (demoLoading) return;
+    setDemoLoading(true);
+    loadDemoIntoSession();
+    router.push("/dashboard");
+  }, [demoLoading, router]);
+
   return (
     <div className="min-h-screen bg-[#020617] flex flex-col">
       {/* Topbar */}
@@ -153,18 +162,17 @@ export default function UploadPage() {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 flex items-center justify-center">
-              <BrandLogo />
-            </div>
-            <span className="text-sm font-semibold text-white" style={{ fontFamily: "Syne, sans-serif" }}>Event2Act</span>
+          <div className="flex items-center">
+            <Event2ActLogo variant="dark" width={112} height={30} priority className="h-6 w-auto" />
           </div>
-          <Link
-            href="/dashboard"
-            className="text-xs text-slate-500 hover:text-brand-300 transition-colors"
+          <button
+            type="button"
+            onClick={handleViewDemo}
+            disabled={demoLoading}
+            className="text-xs text-slate-500 hover:text-brand-300 transition-colors disabled:cursor-wait disabled:opacity-70"
           >
-            View demo →
-          </Link>
+            {demoLoading ? "Loading demo..." : "View demo"}
+          </button>
         </div>
       </header>
 
@@ -174,8 +182,8 @@ export default function UploadPage() {
           {/* Page header */}
           <div className="text-center mb-7 sm:mb-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#6366f1]/10 text-[#818cf8] border border-[#6366f1]/20 mb-4">
-              <Clock className="w-3 h-3" />
-              60-second analysis
+              <Sparkles className="w-3 h-3" />
+              AI Inventory Analysis
             </div>
             <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "Syne, sans-serif" }}>
               Upload your inventory file
@@ -206,6 +214,9 @@ export default function UploadPage() {
           {state === "idle" && (
             <div className="mt-6 p-4 rounded-xl bg-white/2 border border-white/5 space-y-3">
               <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Auto-detected analysis modes</p>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Event2Act automatically detects the analyses available based on your uploaded columns.
+              </p>
 
               <div className="space-y-2">
                 <div>
@@ -233,7 +244,7 @@ export default function UploadPage() {
               </div>
 
               <p className="text-[10px] text-slate-600">
-                <span className="text-emerald-500">*</span> Always required · Column names auto-detected — no renaming needed · 50+ aliases recognized
+                <span className="text-emerald-500">*</span> Always required | Column names auto-detected - no renaming needed | 50+ aliases recognized
               </p>
             </div>
           )}

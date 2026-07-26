@@ -75,7 +75,7 @@ function buildSupportingData(key: KPIKey, metrics: DashboardMetrics): SupportRow
 
         return {
           label: rec.product_name,
-          value: `EOQ ${rec.eoq} units`,
+          value: `Recommended ${rec.eoq} units`,
           sub: `${rec.sku_id} · ${rec.urgency.replace("_", " ")} · ${displayedDays !== null ? formatDaysOfCover(displayedDays) : "—"} remaining`,
           accent: rec.urgency === "immediate" ? "text-red-400" : rec.urgency === "this_week" ? "text-amber-400" : "text-blue-400",
         };

@@ -7,7 +7,7 @@
 
 import type { DashboardMetrics } from "./types";
 import type { ExecutiveSummary } from "./insights-generator";
-import { EVENT2ACT_LOGO_SRC } from "./brand-assets";
+import { EVENT2ACT_REPORT_LOGO_DATA_URL } from "@/constants/brand-report-logo-data";
 import { getHealthScoreContributions } from "./health-score";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -313,7 +313,7 @@ export function generateHtmlReport(
   const abc = metrics.abc_summary;
   const abcHtml = [
     { cls: "A", count: abc.a_count, rev: abc.a_revenue_pct, color: "#059669", bg: "#d1fae5", guideline: "Maintain 100% service levels — never allow stockout. Highest replenishment priority." },
-    { cls: "B", count: abc.b_count, rev: abc.b_revenue_pct, color: "#2563eb", bg: "#dbeafe", guideline: "Standard EOQ-based replenishment. Review quarterly for reclassification." },
+    { cls: "B", count: abc.b_count, rev: abc.b_revenue_pct, color: "#2563eb", bg: "#dbeafe", guideline: "Standard policy-based replenishment. Review quarterly for reclassification." },
     { cls: "C", count: abc.c_count, rev: abc.c_revenue_pct, color: "#6366f1", bg: "#e0e7ff", guideline: "Minimise stock holding. Consider batch ordering, consolidation, or SKU rationalisation." },
   ].map(a => `
     <tr style="border-bottom:1px solid #f3f4f6;">
@@ -530,7 +530,7 @@ export function generateHtmlReport(
 ════════════════════════════════════════════════════════ -->
 <div class="report-header">
   <div style="display:flex;align-items:center;gap:12px;">
-    <div class="brand-icon"><img src="${EVENT2ACT_LOGO_SRC}" alt="Event2Act"></div>
+    <div class="brand-icon"><img src="${EVENT2ACT_REPORT_LOGO_DATA_URL}" alt="Event2Act" width="36" height="36"></div>
     <div>
       <div style="font-size:20px;font-weight:800;color:#111827;letter-spacing:-0.02em;">Event2Act</div>
       ${companyName ? `<div style="font-size:14px;font-weight:700;color:#374151;margin-top:1px;">${esc(companyName)}</div>` : ""}
@@ -652,7 +652,7 @@ export function generateHtmlReport(
         <th style="text-align:center;">ABC</th>
         <th style="text-align:right;">Days Remaining</th>
         <th style="text-align:right;">Lead Time</th>
-        <th style="text-align:right;">EOQ Order Qty</th>
+        <th style="text-align:right;">Recommended Order Quantity</th>
         <th style="text-align:right;">Annual Consumption Value</th>
       </tr>
     </thead>

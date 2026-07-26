@@ -232,7 +232,7 @@ export function generateExecutiveSummary(metrics: DashboardMetrics, detectedFiel
       sku.scenario === "DEAD"     ? "Review disposition" :
       sku.scenario === "SLOW"     ? "Review excess stock" : "Review",
     action_label:
-      sku.scenario === "CRITICAL" ? `Calculated EOQ: ${sku.reorder_qty_eoq} units` :
+      sku.scenario === "CRITICAL" ? `Recommended order quantity: ${sku.reorder_qty_eoq} units` :
       sku.scenario === "DEAD"     ? "Review disposition options" :
       sku.scenario === "SLOW"     ? "Review demand and replenishment" : "Monitor",
     value: sku.inventory_value,
@@ -454,7 +454,7 @@ function buildAudienceNotes(
         ? `Review replenishment parameters and recent purchasing decisions for ${critical} critical SKU${critical > 1 ? "s" : ""}.`
         : "No emergency purchasing is required at this time.",
       reorders > 0
-        ? `Review EOQ-based reorder quantities for ${reorders} items flagged in the reorder queue.`
+        ? `Review policy-based reorder quantities for ${reorders} items flagged in the reorder queue.`
         : "",
       dead > 0
         ? "Review replenishment for dead-stock SKUs where appropriate and review disposition options."

@@ -9,7 +9,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Play, ChevronRight, X } from "lucide-react";
 import { isDemoMode } from "@/lib/demo-loader";
 import { cn } from "@/lib/utils";
-import { BrandLogo } from "@/components/BrandLogo";
+import { Event2ActLogo } from "@/components/brand/Event2ActLogo";
 
 // ── Story definition ────────────────────────────────────────────────────────
 
@@ -98,8 +98,8 @@ export function DemoBanner() {
 
           {/* Brand pill */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-6 h-6 flex items-center justify-center">
-              <BrandLogo />
+            <div className="w-7 h-7 flex items-center justify-center">
+              <Event2ActLogo variant="icon" width={28} height={28} />
             </div>
             <span className="text-[10px] font-bold text-[#818cf8] uppercase tracking-widest hidden sm:block">
               Live Demo

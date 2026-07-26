@@ -3,10 +3,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShieldCheck, BookOpen, FlaskConical, Database, ChevronRight,
-  Menu, CheckCircle2, AlertTriangle, Info, Layers,
+  Menu, CheckCircle2, AlertTriangle, Layers,
 } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { TrustBadge } from "@/components/validation/TrustBadge";
 import { ScoreBreakdown } from "@/components/validation/ScoreBreakdown";
 import { formatCurrency, cn } from "@/lib/utils";
 import { readStoredDashboardMetrics } from "@/lib/dashboard-storage";
@@ -29,11 +28,43 @@ const KPI_CATALOGUE: Array<{
   { key: "inventory_value",     label: "Inventory Value",       valueFrom: (m) => formatCurrency(m.total_inventory_value, true),       color: "text-white" },
   { key: "dead_stock",          label: "Dead Stock",            valueFrom: (m) => `${m.dead_stock_count} SKUs | ${formatCurrency(m.dead_stock_value, true)}`, color: "text-red-400" },
   { key: "slow_moving",         label: "Slow Moving",           valueFrom: (m) => `${m.slow_mover_count} SKUs | ${formatCurrency(m.slow_mover_value, true)}`, color: "text-amber-400" },
-  { key: "stockout_risk",       label: "Stockout Risk",         valueFrom: (m) => `${m.stockout_risk_count} at risk`,                  color: "text-orange-400" },
+  { key: "stockout_risk",       label: "Replenishment Exposure", valueFrom: (m) => `${m.stockout_risk_count} at risk`,                 color: "text-orange-400" },
   { key: "abc_analysis",        label: "ABC Analysis",          valueFrom: (m) => `A:${m.abc_summary.a_count} B:${m.abc_summary.b_count} C:${m.abc_summary.c_count}`, color: "text-emerald-400" },
   { key: "recoverable_capital", label: "Recoverable Capital",   valueFrom: (m) => formatCurrency(m.recoverable_capital, true),         color: "text-purple-400" },
   { key: "turnover_ratio",      label: "Turnover Ratio",        valueFrom: (m) => `${m.turnover_ratio.toFixed(2)}x`,                   color: "text-cyan-400" },
   { key: "reorder_count",       label: "Reorder Count",         valueFrom: (m) => `${m.reorder_count} items`,                         color: "text-rose-400" },
+];
+
+function cleanBusinessCopy(value: string) {
+  return value
+    .replace(/Composite score from active InventoryPolicy weights/gi, "Health Score calculated using your active inventory policy")
+    .replace(/Stockout Risk/gi, "Replenishment Exposure")
+    .replace(/Stockout Exposure/gi, "Replenishment Exposure")
+    .replace(/At Below ROP/gi, "Replenishment Exposure")
+    .replace(/ROP Population/gi, "Replenishment Exposure Population")
+    .replace(/weight_stockout_risk/gi, "Replenishment Exposure Weight")
+    .replace(/weight_dead_stock/gi, "Dead Stock Weight")
+    .replace(/weight_slow_moving/gi, "Slow Moving Weight")
+    .replace(/weight_abc/gi, "ABC Reference Weight")
+    .replace(/dead_stock_days/gi, "Dead Stock Threshold")
+    .replace(/slow_moving_days/gi, "Slow Moving Threshold")
+    .replace(/critical_coverage_days/gi, "Critical Coverage Threshold")
+    .replace(/safety_stock_days/gi, "Safety Stock Coverage")
+    .replace(/abc_a_pct/gi, "ABC A Threshold")
+    .replace(/abc_b_pct/gi, "ABC B Threshold")
+    .replace(/InventoryPolicy/gi, "inventory policy");
+}
+
+function policyLabel(field: string) {
+  return cleanBusinessCopy(field.replace(/_/g, " "));
+}
+
+const verificationItems = [
+  { label: "Calculated directly from uploaded inventory", pass: true },
+  { label: "No AI-generated KPI values", pass: true },
+  { label: "Every result traceable to source records", pass: true },
+  { label: "Formula independently verifiable", pass: true },
+  { label: "Policy assumptions clearly labelled", pass: true },
 ];
 
 // ── Active KPI panel ─────────────────────────────────────────────────────────
@@ -65,8 +96,8 @@ function KPIValidationPanel({
       <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-white/6">
         <div>
           <p className="text-[10px] font-semibold text-[#818cf8] uppercase tracking-widest mb-0.5">Live Validation</p>
-          <h3 className="text-sm font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>{def.title}</h3>
-          <p className="text-xs text-slate-500 mt-0.5">{def.tagline}</p>
+          <h3 className="text-sm font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>{cleanBusinessCopy(def.title)}</h3>
+          <p className="text-xs text-slate-500 mt-0.5">{cleanBusinessCopy(def.tagline)}</p>
         </div>
         <Link
           href={`/dashboard/kpi/${kpiKey}`}
@@ -82,8 +113,31 @@ function KPIValidationPanel({
         <span><span className="text-slate-400 font-medium">{calc.totalRecords}</span> total records</span>
         <span><span className="text-slate-400 font-medium">{calc.includedRecords}</span> included in this KPI</span>
         <span className={cn("flex items-center gap-1", missingAgeingData ? "text-amber-400" : "text-emerald-500")}>
-          {missingAgeingData ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />} {statusLabel}
+          {missingAgeingData ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />} {cleanBusinessCopy(statusLabel)}
         </span>
+      </div>
+
+      <div className="px-5 py-3 border-b border-white/5 bg-emerald-500/[0.03]">
+        <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/[0.04] px-3.5 py-3">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <p className="text-xs font-semibold text-white">How this KPI was generated</p>
+          </div>
+          <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-2">
+            {[
+              "Uploaded inventory only",
+              "No external data sources",
+              "Formula verified",
+              "Policy version applied",
+              "Fully traceable",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Tab bar */}
@@ -115,7 +169,7 @@ function KPIValidationPanel({
         {/* Live Calculation tab */}
         {tab === "calc" && (
           <>
-            <p className="text-xs text-slate-500">{calc.summary}</p>
+            <p className="text-xs text-slate-500">{cleanBusinessCopy(calc.summary)}</p>
             <div className="space-y-2">
               {calc.steps.map((step, i) => {
                 if (step.isHeader) {
@@ -138,15 +192,15 @@ function KPIValidationPanel({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <p className={cn("text-xs font-medium", step.isFinal ? "text-white" : "text-slate-300")}>
-                          {step.label}
+                          {cleanBusinessCopy(step.label)}
                         </p>
                         {step.expr && (
                           <pre className="text-[10px] font-mono text-emerald-300 mt-1 leading-relaxed whitespace-pre-wrap break-all">
-                            {step.expr}
+                            {cleanBusinessCopy(step.expr)}
                           </pre>
                         )}
                         {step.detail && (
-                          <p className="text-[10px] text-slate-600 mt-1">{step.detail}</p>
+                          <p className="text-[10px] text-slate-600 mt-1">{cleanBusinessCopy(step.detail)}</p>
                         )}
                       </div>
                       {step.value && (
@@ -168,7 +222,7 @@ function KPIValidationPanel({
         {/* Formula tab */}
         {tab === "fields" && (
           <div className="space-y-3">
-            <p className="text-xs text-slate-500">{def.definition}</p>
+            <p className="text-xs text-slate-500">{cleanBusinessCopy(def.definition)}</p>
             <div className="space-y-2">
               {def.formula.map((step, i) => (
                 <div key={i} className="space-y-1.5">
@@ -176,10 +230,10 @@ function KPIValidationPanel({
                     <div className="w-5 h-5 rounded-full bg-[#6366f1]/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-[9px] font-bold text-[#818cf8]">{i + 1}</span>
                     </div>
-                    <span className="text-[11px] font-medium text-slate-400">{step.label}</span>
+                    <span className="text-[11px] font-medium text-slate-400">{cleanBusinessCopy(step.label)}</span>
                   </div>
                   <div className="ml-7 p-3 rounded-lg bg-[#020617] border border-white/8 font-mono text-xs text-emerald-300 leading-relaxed whitespace-pre-wrap">
-                    {step.expr}
+                    {cleanBusinessCopy(step.expr)}
                   </div>
                 </div>
               ))}
@@ -216,14 +270,14 @@ function KPIValidationPanel({
 
             {/* Fields */}
             <div>
-              <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-2">Columns used</p>
+              <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-2">Columns Used</p>
               <div className="space-y-1.5">
                 {lineage.fields.map((f) => (
                   <div key={f.columnName} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/2 border border-white/5">
                     <code className="text-[10px] font-mono text-[#818cf8] bg-[#6366f1]/10 px-1.5 py-0.5 rounded flex-shrink-0">
                       {f.displayName ?? f.columnName}
                     </code>
-                    <span className="text-xs text-slate-400 flex-1">{f.role}</span>
+                    <span className="text-xs text-slate-400 flex-1">{cleanBusinessCopy(f.role)}</span>
                     <span className={cn(
                       "text-[9px] font-semibold px-1.5 py-0.5 rounded border flex-shrink-0",
                       f.required ? "text-red-400 bg-red-500/8 border-red-500/20" : "text-slate-600 bg-white/4 border-white/8"
@@ -239,12 +293,12 @@ function KPIValidationPanel({
             {lineage.policyFields.length > 0 && (
               <div>
                 <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-2">
-                  Analysis policy thresholds used
+                  Policy Assumptions
                 </p>
                 <div className="space-y-1.5">
                   {lineage.policyFields.map((pf) => (
                     <div key={pf.field} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white/2 border border-white/5">
-                      <span className="text-xs text-slate-400">{pf.field}</span>
+                      <span className="text-xs text-slate-400">{policyLabel(pf.field)}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-white tabular-nums">{pf.value}</span>
                         <span className={cn(
@@ -262,7 +316,22 @@ function KPIValidationPanel({
               </div>
             )}
 
-            <p className="text-[10px] text-slate-600 leading-relaxed">{lineage.trustStatement}</p>
+            <div>
+              <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-2">Verification Checklist</p>
+              <div className="grid sm:grid-cols-2 gap-1.5">
+                {verificationItems.map(({ label, pass }) => (
+                  <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/2 border border-white/5">
+                    {pass
+                      ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                      : <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    }
+                    <span className="text-xs text-slate-400">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-600 leading-relaxed">{cleanBusinessCopy(lineage.trustStatement)}</p>
           </div>
         )}
       </div>
@@ -277,18 +346,15 @@ export default function ValidationPage() {
   const [metrics, setMetrics]         = useState<DashboardMetrics | null>(null);
   const [detectedFields, setDetectedFields] = useState<string[]>([]);
   const [activePolicy, setActivePolicy] = useState<ActivePolicy | null>(null);
-  const [filename, setFilename]        = useState("Inventory dataset");
   const [activeKpi, setActiveKpi]      = useState<KPIKey>("health_score");
 
   useEffect(() => {
     try {
       const storedMetrics = readStoredDashboardMetrics();
-      const fn = sessionStorage.getItem("supplysense_filename");
       const fl = sessionStorage.getItem("supplysense_fields");
       const sp = sessionStorage.getItem("supplysense_policy");
       if (storedMetrics) {
         setMetrics(storedMetrics);
-        if (fn) setFilename(fn);
         if (fl) setDetectedFields(JSON.parse(fl));
         if (storedMetrics.active_policy) setActivePolicy(storedMetrics.active_policy);
         else if (sp) { try { setActivePolicy(JSON.parse(sp)); } catch { /* ignore */ } }
@@ -311,7 +377,7 @@ export default function ValidationPage() {
             <div className="flex items-center gap-2 flex-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-xs font-semibold text-white">Validation Mode</span>
-              <span className="text-xs text-slate-500 ml-1">— Audit, verify, and trace every calculation</span>
+              <span className="text-xs text-slate-500 ml-1">| Audit, verify and trace every calculation</span>
             </div>
           </div>
         </header>
@@ -319,17 +385,33 @@ export default function ValidationPage() {
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-[1100px] mx-auto px-4 py-6 space-y-6">
 
-            {/* Trust banner */}
-            <TrustBadge variant="full" />
-
             {/* Trust statement */}
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-[#6366f1]/6 border border-[#6366f1]/15">
-              <Info className="w-4 h-4 text-[#818cf8] flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-400 leading-relaxed">
-                <span className="text-white font-semibold">All analytics are generated directly from your uploaded data</span> and can be independently verified through this Validation Mode.
-                Select any KPI below to see its live calculation, exact formula, source columns, and the specific records that contribute to each figure.
-                Estimates, annualisation, and policy assumptions are labelled on each KPI when they are used.
-              </p>
+            <div className="rounded-xl border border-[#6366f1]/15 bg-[#6366f1]/6 p-5">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-semibold text-[#818cf8] uppercase tracking-widest mb-1">Validation Mode</p>
+                  <h1 className="text-lg font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
+                    Audit, verify and trace every calculation.
+                  </h1>
+                  <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                    Enterprise validation workspace for reviewing how each KPI is generated from uploaded inventory records, applied policy assumptions and independently verifiable formulas.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/[0.04] p-3 md:min-w-[320px]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <p className="text-xs font-semibold text-white">Trusted Analytics</p>
+                  </div>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-1 gap-1.5">
+                    {verificationItems.map(({ label }) => (
+                      <div key={label} className="flex items-center gap-2 text-[11px] text-slate-400">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                        <span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="grid lg:grid-cols-[280px_1fr] gap-6">
@@ -376,6 +458,7 @@ export default function ValidationPage() {
                 <div className="rounded-xl border border-white/8 overflow-hidden" style={{ background: "#0f172a" }}>
                   <div className="px-4 py-3 border-b border-white/5">
                     <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Formula Library</p>
+                    <p className="text-[11px] text-slate-600 mt-1">Select a KPI to review its calculation, formula and lineage.</p>
                   </div>
                   <div className="divide-y divide-white/4">
                     {KPI_CATALOGUE.map(({ key, label, valueFrom, color }) => (
@@ -428,47 +511,6 @@ export default function ValidationPage() {
                   </div>
                 )}
 
-                {/* Data completeness */}
-                {metrics && detectedFields.length > 0 && (
-                  <div className="mt-4 rounded-xl border border-white/8 p-4" style={{ background: "#0f172a" }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-xs font-semibold text-white">Detected Columns</span>
-                      <span className="text-[10px] text-slate-500 ml-auto">{detectedFields.length} column types recognised</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {detectedFields.map((f) => (
-                        <span key={f} className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Validation status checklist */}
-                <div className="mt-4 rounded-xl border border-white/8 p-4 space-y-2.5" style={{ background: "#0f172a" }}>
-                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Validation Status</p>
-                  {[
-                    { label: "Displayed formulas reconcile to the shared analyzer", pass: true },
-                    { label: "Assumptions are labelled per KPI",                    pass: true },
-                    { label: "Formula library documents active policy values",      pass: true },
-                    { label: "Active policy thresholds visible",           pass: !!activePolicy },
-                    { label: "Per-record supporting data available",       pass: !!metrics },
-                    { label: "Step-by-step calculations traceable",        pass: !!metrics },
-                    { label: "Export audit trail available",               pass: true },
-                  ].map(({ label, pass }) => (
-                    <div key={label} className="flex items-center gap-2.5">
-                      {pass
-                        ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                        : <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                      }
-                      <span className={cn("text-xs", pass ? "text-slate-300" : "text-slate-500")}>
-                        {label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </div>

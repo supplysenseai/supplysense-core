@@ -470,7 +470,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
                         <span className="text-[9px] text-slate-500">{item.abc_class}-class · LT {item.lead_time_days}d</span>
                       </div>
                       {item.reorder_qty_eoq > 0 && (
-                        <p className="text-[9px] text-amber-400 mt-0.5">Calculated EOQ: {item.reorder_qty_eoq.toLocaleString()} units - verify before ordering</p>
+                        <p className="text-[9px] text-amber-400 mt-0.5">Recommended order quantity: {item.reorder_qty_eoq.toLocaleString()} units - verify before ordering</p>
                       )}
                     </div>
                   ))}
@@ -561,7 +561,7 @@ function ProcurementBrief({ metrics, summary, visible }: { metrics: DashboardMet
               <div className="space-y-1.5">
                 {[
                   { cls: "A", rule: "Prioritise review cadence and avoid lead-time stockout", count: metrics.abc_summary.a_count, color: "text-emerald-400", bg: "bg-emerald-500/8", border: "border-emerald-500/15" },
-                  { cls: "B", rule: "Standard EOQ-based replenishment cycle", count: metrics.abc_summary.b_count, color: "text-blue-400", bg: "bg-blue-500/6", border: "border-blue-500/10" },
+                  { cls: "B", rule: "Standard policy-based replenishment cycle", count: metrics.abc_summary.b_count, color: "text-blue-400", bg: "bg-blue-500/6", border: "border-blue-500/10" },
                   { cls: "C", rule: "Review ordering frequency, consolidation, and stocking policy.", count: metrics.abc_summary.c_count, color: "text-slate-400", bg: "bg-white/3", border: "border-white/6" },
                 ].map(a => (
                   <div key={a.cls} className={`px-3 py-2 rounded-lg border ${a.bg} ${a.border}`}>

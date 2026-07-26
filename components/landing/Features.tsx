@@ -5,7 +5,7 @@ const FEATURES = [
     icon: FileSpreadsheet,
     color: "text-brand-400",
     bg: "bg-brand-500/10",
-    title: "Instant Excel Ingestion",
+    title: "Excel Ingestion",
     desc: "Upload any .xlsx or .csv. Event2Act auto-maps 50+ column name variations - SKU, Item Code, Part Number all work. No reformatting, no templates.",
   },
   {
@@ -40,8 +40,8 @@ const FEATURES = [
     icon: ShoppingCart,
     color: "text-orange-400",
     bg: "bg-orange-500/10",
-    title: "EOQ Reorder Engine",
-    desc: "Economic Order Quantity + 95% service level safety stock calculated per SKU. Urgency tiers: Order Now, This Week, This Month.",
+    title: "Policy Reorder Engine",
+    desc: "Policy recommended quantities and 95% service level safety stock guidance per SKU. Urgency tiers: Order Now, This Week, This Month.",
   },
   {
     icon: Brain,
@@ -66,7 +66,7 @@ export function Features() {
         {/* Section header */}
         <div className="text-center mb-16">
           <span className="text-xs font-medium text-brand-400 uppercase tracking-widest mb-4 block">
-            What you get in 60 seconds
+            What you get from one upload
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-4">
             8 analytics modules. One upload.

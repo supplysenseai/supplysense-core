@@ -47,7 +47,7 @@ function calcStockoutRiskScore(
   return Math.min(100, Math.max(0, score));
 }
 
-function calcEOQ(
+function calcRecommendedOrderQuantity(
   annualDemand: number,
   orderCost: number,
   holdingCostPerUnit: number
@@ -153,7 +153,7 @@ export function analyzeInventory(rows: InventoryRow[]): {
       row.units_sold_12m ?? row.units_sold_90d * (365 / 90);
     const orderCost = row.order_cost ?? 50;
     const holdingCost = row.unit_cost * 0.25;
-    const eoq = calcEOQ(annualDemand, orderCost, holdingCost);
+    const eoq = calcRecommendedOrderQuantity(annualDemand, orderCost, holdingCost);
     const ss = calcSafetyStock(dailyVelocity, row.lead_time_days, row.demand_std_dev);
     const rop = Math.ceil(dailyVelocity * row.lead_time_days + ss);
     const daysUntilStockout = isFinite(dsr) ? Math.floor(dsr) : Infinity;
@@ -281,7 +281,7 @@ export function analyzeInventory(rows: InventoryRow[]): {
     .map((r) => ({
       sku_id: r.sku_id,
       product_name: r.product_name,
-      supplier_name: r.supplier_name ?? "—",
+      supplier_name: r.supplier_name ?? "Not Available",
       eoq: r.reorder_qty_eoq,
       rop: r.reorder_point_calc,
       days_until_stockout: Math.floor(r.days_stock_remaining),

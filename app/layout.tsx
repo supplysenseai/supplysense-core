@@ -1,34 +1,46 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-context";
-import { EVENT2ACT_LOGO_SRC } from "@/lib/brand-assets";
+import { BRAND } from "@/constants/brand";
 
 export const metadata: Metadata = {
-  title: "Event2Act AI - Inventory Intelligence",
-  description:
-    "Event2Act AI turns inventory spreadsheets into Inventory Intelligence dashboards for health, stockout risk, dead stock, ABC classification, and executive action.",
-  applicationName: "Event2Act",
+  title: {
+    default: BRAND.productName,
+    template: `%s | ${BRAND.productName}`,
+  },
+  description: BRAND.description,
+  applicationName: BRAND.productName,
   keywords: "supply chain analytics, inventory management, dead stock, stockout risk, ABC analysis, SME manufacturing",
-  authors: [{ name: "Event2Act" }],
+  authors: [{ name: BRAND.productName }],
   robots: "index, follow",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: EVENT2ACT_LOGO_SRC,
-    shortcut: EVENT2ACT_LOGO_SRC,
-    apple: EVENT2ACT_LOGO_SRC,
+    icon: [
+      { url: BRAND.assets.favicon16, sizes: "16x16", type: "image/png" },
+      { url: BRAND.assets.favicon32, sizes: "32x32", type: "image/png" },
+    ],
+    shortcut: BRAND.assets.favicon32,
+    apple: BRAND.assets.appleTouchIcon,
+  },
+  appleWebApp: {
+    title: BRAND.productName,
+    capable: true,
+    statusBarStyle: "black-translucent",
   },
   openGraph: {
-    title: "Event2Act AI - Inventory Intelligence",
-    description:
-      "Turn inventory spreadsheets into operational Inventory Intelligence dashboards, executive insights, and replenishment actions.",
-    siteName: "Event2Act",
+    title: BRAND.productName,
+    description: BRAND.description,
+    siteName: BRAND.productName,
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Event2Act AI - Inventory Intelligence",
-    description:
-      "Turn inventory spreadsheets into operational Inventory Intelligence dashboards, executive insights, and replenishment actions.",
+    title: BRAND.productName,
+    description: BRAND.description,
+  },
+  other: {
+    "msapplication-TileImage": BRAND.assets.microsoftTile,
+    "msapplication-TileColor": BRAND.colors.deepNavy,
   },
 };
 
@@ -50,7 +62,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Anti-FOUC: apply stored theme before first paint */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <link rel="icon" href={EVENT2ACT_LOGO_SRC} />
+        <link rel="icon" type="image/png" sizes="16x16" href={BRAND.assets.favicon16} />
+        <link rel="icon" type="image/png" sizes="32x32" href={BRAND.assets.favicon32} />
+        <link rel="apple-touch-icon" href={BRAND.assets.appleTouchIcon} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -58,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           crossOrigin="anonymous"
         />
-        <meta name="theme-color" content="#020617" />
+        <meta name="theme-color" content={BRAND.colors.deepNavy} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body className="h-full antialiased" suppressHydrationWarning>

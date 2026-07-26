@@ -2,7 +2,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
-import { CloudUpload, FileSpreadsheet, Play } from "lucide-react";
+import { CloudUpload, FileSpreadsheet, Play, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { loadDemoIntoSession } from "@/lib/demo-loader";
 
@@ -78,21 +78,18 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
           </p>
         )}
 
-        <p className="text-xs text-slate-500 mb-6">
+        <p className="text-xs text-slate-500 mb-3">
           {isDragReject ? "Use an Excel, CSV, or TSV file." : "Or click to browse your files"}
         </p>
 
-        {/* Format tags */}
-        <div className="flex flex-wrap gap-2 justify-center mb-6">
-          {[".xlsx", ".xls", ".csv", ".tsv", "Max 10 MB"].map((tag) => (
-            <span
-              key={tag}
-              className="px-2.5 py-1 rounded-full text-[11px] bg-white/5 border border-white/8 text-slate-400"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        <p className="mb-2 text-xs text-slate-500">
+          Supports .xlsx, .xls, .csv and .tsv | Maximum file size: 10 MB
+        </p>
+
+        <p className="mb-6 inline-flex items-center gap-1.5 text-[11px] text-slate-600">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400/70" />
+          Your file is processed securely and never shared.
+        </p>
 
         <button
           type="button"
@@ -115,7 +112,7 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
           <FileSpreadsheet className="w-3.5 h-3.5" />
           Download sample
         </a>
-        <span className="text-slate-700">·</span>
+        <span className="text-slate-700">|</span>
         <button
           disabled={demoLoading}
           onClick={async () => {
@@ -126,7 +123,7 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
           className="inline-flex items-center gap-1.5 hover:text-slate-300 transition-colors disabled:opacity-50 disabled:cursor-wait"
         >
           <Play className="w-3 h-3 fill-current" />
-          {demoLoading ? "Loading…" : "Try demo dataset"}
+          {demoLoading ? "Loading..." : "Try demo dataset"}
         </button>
       </div>
     </div>

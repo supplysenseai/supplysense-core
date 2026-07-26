@@ -11,20 +11,15 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DemoWelcomeToast } from "@/components/demo/DemoBanner";
 import {
-  CompactIntelligenceGrid,
   ControlTowerDecisionBrief,
   ControlTowerHeader,
   ControlTowerPriorities,
   ExecutiveCommandBar,
-  QuickNavigation,
-  ThinMetadataFooter,
 } from "@/components/dashboard/DashboardNarrative";
 import { formatCurrency } from "@/lib/utils";
 import { clearStoredDashboardMetrics, readStoredDashboardMetrics } from "@/lib/dashboard-storage";
 import { isDemoMode, hasSessionData, clearSession } from "@/lib/demo-loader";
 import { DEMO_ANALYSIS_DATE } from "@/lib/demo-data";
-import { MODE_LABELS, MODE_DESCRIPTIONS } from "@/lib/analysis-detector";
-import { computeCompleteness } from "@/lib/data-completeness";
 import type { DashboardMetrics } from "@/lib/types";
 import type { ActivePolicy } from "@/lib/policy";
 import { getAuth, clearAuth } from "@/lib/auth";
@@ -50,10 +45,10 @@ function NoDataDemoButton() {
 }
 
 function exportPOCsv(recs: DashboardMetrics["reorder_recommendations"]) {
-  const header = "SKU,Product Name,Supplier,ABC Class,Order Qty (EOQ),Reorder Point,Days Until Stockout,Urgency,Unit Cost,Est. Order Value";
+  const header = "SKU,Product Name,Supplier,ABC Class,Recommended Order Quantity,Reorder Point,Days Until Stockout,Urgency,Unit Cost,Est. Order Value";
   const rows = recs.map((r) =>
-    [r.sku_id, `"${r.product_name}"`, `"${r.supplier_name}"`, r.abc_class,
-     r.eoq, r.rop, isFinite(r.days_until_stockout) ? r.days_until_stockout : "—",
+    [r.sku_id, `"${r.product_name}"`, `"${r.supplier_name?.trim() ? r.supplier_name : "Not Available"}"`, r.abc_class,
+     r.eoq, r.rop, isFinite(r.days_until_stockout) ? r.days_until_stockout : "N/A",
      r.urgency.replace(/_/g, " "), r.unit_cost.toFixed(2), (r.eoq * r.unit_cost).toFixed(2)
     ].join(",")
   );
@@ -62,7 +57,7 @@ function exportPOCsv(recs: DashboardMetrics["reorder_recommendations"]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `Event2Act-PO-Draft-${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `Event2Act-Procurement-Action-List-${new Date().toISOString().split("T")[0]}.csv`;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
@@ -82,7 +77,7 @@ function ReorderList({ metrics }: { metrics: DashboardMetrics }) {
       <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
         <div>
           <h3 className="text-sm font-semibold text-white">Reorder recommendations</h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">EOQ-optimized · 95% service level</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">Policy recommended quantities | 95% service level</p>
         </div>
         <button
           onClick={() => exportPOCsv(metrics.reorder_recommendations)}
@@ -90,7 +85,7 @@ function ReorderList({ metrics }: { metrics: DashboardMetrics }) {
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#818cf8] hover:text-white hover:bg-white/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ShoppingCart className="w-3.5 h-3.5" />
-          Export PO draft
+          Export Procurement Action List
         </button>
       </div>
 
@@ -102,12 +97,12 @@ function ReorderList({ metrics }: { metrics: DashboardMetrics }) {
               <span className={`badge border ${u.bg} ${u.text} ${u.border} shrink-0`}>{u.label}</span>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium text-white truncate">{rec.product_name}</div>
-                <div className="text-[11px] text-slate-500">{rec.sku_id} · {rec.supplier_name}</div>
+                <div className="text-[11px] text-slate-500">{rec.sku_id} | {rec.supplier_name?.trim() ? rec.supplier_name : "Not Available"}</div>
               </div>
               <div className="text-right shrink-0">
-                <div className="text-xs font-medium text-white">EOQ {rec.eoq} units</div>
+                <div className="text-xs font-medium text-white">Recommended {rec.eoq} units</div>
                 <div className="text-[11px] text-slate-500">
-                  {isFinite(rec.days_until_stockout) ? `${rec.days_until_stockout}d left` : "—"}
+                  {isFinite(rec.days_until_stockout) ? `${rec.days_until_stockout}d left` : "N/A"}
                 </div>
               </div>
             </div>
@@ -223,8 +218,6 @@ export default function DashboardPage() {
     );
   }
 
-  const mode = metrics.analysis_mode ?? "health";
-  const completeness = computeCompleteness(detectedFields);
   const displayDate = new Date(isDemo ? DEMO_ANALYSIS_DATE : Date.now());
   return (
     <div className="flex h-screen bg-[#020617] ss-page overflow-hidden">
@@ -380,18 +373,6 @@ export default function DashboardPage() {
               <ControlTowerPriorities metrics={metrics} />
               <ControlTowerDecisionBrief metrics={metrics} />
             </div>
-
-            <CompactIntelligenceGrid metrics={metrics} completenessScore={completeness.score} />
-
-            <QuickNavigation />
-
-            <ThinMetadataFooter
-              metrics={metrics}
-              rowCount={rowCount}
-              isDemo={isDemo}
-              activePolicy={activePolicy}
-              completenessScore={completeness.score}
-            />
           </div>
         </main>
       </div>

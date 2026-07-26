@@ -92,7 +92,7 @@ const REORDER_COLS: DrillColumn[] = [
     badgeColors: { A: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
                    B: "text-blue-400 bg-blue-500/10 border-blue-500/20",
                    C: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" } },
-  { key: "eoq",            label: "EOQ (units)",   align: "right",  format: "number"   },
+  { key: "eoq",            label: "Recommended Qty", align: "right",  format: "number"   },
   { key: "rop",            label: "Reorder Point", align: "right",  format: "number"   },
   { key: "days_until_stockout", label: "Days Left",align: "right",  format: "days"     },
   { key: "unit_cost",      label: "Unit Cost",     align: "right",  format: "currency" },

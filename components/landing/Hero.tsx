@@ -22,7 +22,7 @@ export function Hero() {
         <div className="flex justify-center mb-6">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-brand-500/10 text-brand-300 border border-brand-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            No ERP · No Setup · 60 Seconds
+            No ERP | No setup required
           </span>
         </div>
 
@@ -30,11 +30,11 @@ export function Hero() {
         <h1 className="font-display text-center text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-6 tracking-tight">
           <span className="text-white">Supply chain intelligence</span>
           <br />
-          <span className="gradient-text">in 60 seconds flat.</span>
+          <span className="gradient-text">from upload to action.</span>
         </h1>
 
         <p className="text-center text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-          Upload your existing inventory spreadsheet. Get risk scores, dead stock analysis, ABC classification, reorder guidance, and an executive-ready brief — no ERP required.
+          Upload your existing inventory spreadsheet. Get risk scores, dead stock analysis, ABC classification, reorder guidance, and an executive-ready brief - no ERP required.
         </p>
 
         {/* CTAs */}
@@ -68,7 +68,7 @@ export function Hero() {
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 mb-4 text-xs text-red-300">
               <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
               <strong className="font-medium">10 critical alerts:</strong>
-              <span className="text-red-300/80">Fuse 16A stockout in 3.4 days · Bearing 6205 in 6.4 days</span>
+              <span className="text-red-300/80">Fuse 16A stockout in 3.4 days | Bearing 6205 in 6.4 days</span>
               <span className="ml-auto text-red-400/60 text-[10px] cursor-pointer">View all →</span>
             </div>
 
@@ -93,14 +93,14 @@ export function Hero() {
                 <div className="bg-blue-500 h-full" style={{ width: "26%" }} />
                 <div className="bg-emerald-500 h-full" style={{ width: "60%" }} />
               </div>
-              <span className="text-[10px] text-slate-500">28 A · 66 B · 106 C</span>
+              <span className="text-[10px] text-slate-500">28 A | 66 B | 106 C</span>
             </div>
           </div>
 
           {/* Floating labels */}
           <div className="absolute -left-4 top-12 hidden lg:block">
             <div className="card-elevated px-3 py-2 text-xs text-slate-300 whitespace-nowrap shadow-lg">
-              ✓ 200 SKUs · 4.8s
+              200 SKUs analyzed
             </div>
           </div>
           <div className="absolute -right-4 bottom-16 hidden lg:block">
